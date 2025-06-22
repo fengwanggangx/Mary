@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8CB14594-A940-4C96-8EC3-B560B60AC625}</ProjectGuid>
+    <Keyword>QtVS_v304</Keyword>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">10.0</WindowsTargetPlatformVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
+    <QtInstall>6.9.0_msvc2022_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+    <QtBuildConfig>debug</QtBuildConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
+    <QtInstall>6.9.0_msvc2022_64</QtInstall>
+    <QtModules>core;gui;widgets</QtModules>
+    <QtBuildConfig>release</QtBuildConfig>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidxml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cfg\CIniFile.cpp" />
+    <ClCompile Include="cfg\CINIHandler.cpp" />
+    <ClCompile Include="common\datetime.cpp" />
+    <ClCompile Include="common\modules.cpp" />
+    <ClCompile Include="components\CLoginWindow.cpp" />
+    <ClCompile Include="components\CMainWindow.cpp" />
+    <ClCompile Include="components\CViewProductDateInfo.cpp" />
+    <ClCompile Include="components\CViewProducts.cpp" />
+    <ClCompile Include="components\CViewSettings.cpp" />
+    <ClCompile Include="cryption\Cryption.cpp" />
+    <ClCompile Include="database\CDBEngine.cpp" />
+    <ClCompile Include="database\CMySQL.cpp" />
+    <ClCompile Include="database\CODBC.cpp" />
+    <ClCompile Include="database\COracle.cpp" />
+    <ClCompile Include="database\CSQLite3.cpp" />
+    <ClCompile Include="json\Json.cpp" />
+    <ClCompile Include="log\CLogger.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="network\CNet.cpp" />
+    <ClCompile Include="network\CNetClient.cpp" />
+    <ClCompile Include="network\CNetParser.cpp" />
+    <ClCompile Include="network\CNetPool.cpp" />
+    <ClCompile Include="network\CNetServer.cpp" />
+    <ClCompile Include="network\common.cpp" />
+    <ClCompile Include="protobuf\addressbook.pb.cc" />
+    <ClCompile Include="threadpool\CThreadPool.cpp" />
+    <ClCompile Include="xml\Xml.cpp" />
+    <ClCompile Include="xml\XmlAttribute.cpp" />
+    <ClCompile Include="xml\XmlDocument.cpp" />
+    <ClCompile Include="xml\XmlNode.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="components\CMainWindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="components\CMainWindow.qrc" />
+    <QtRcc Include="Resource.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="components\CLoginWindow.ui" />
+    <QtUic Include="components\CMainWindow.ui" />
+    <QtUic Include="components\CViewProductDateInfo.ui" />
+    <QtUic Include="components\CViewProducts.ui" />
+    <QtUic Include="components\CViewSettings.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="components\CLoginWindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="components\CViewProductDateInfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="components\CViewProducts.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="components\CViewSettings.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cfg\CIniFile.h" />
+    <ClInclude Include="cfg\CINIHandler.h" />
+    <ClInclude Include="common\ISingleton.h" />
+    <ClInclude Include="common\datetime.h" />
+    <ClInclude Include="common\modules.h" />
+    <ClInclude Include="common\utility.h" />
+    <ClInclude Include="cryption\Cryption.h" />
+    <ClInclude Include="database\CDBEngine.h" />
+    <ClInclude Include="database\CMySQL.h" />
+    <ClInclude Include="database\CODBC.h" />
+    <ClInclude Include="database\COracle.h" />
+    <ClInclude Include="database\CSQLite3.h" />
+    <ClInclude Include="database\IDataBase.h" />
+    <ClInclude Include="json\Json.h" />
+    <ClInclude Include="log\CLogger.h" />
+    <ClInclude Include="log\Defines.h" />
+    <ClInclude Include="network\CNet.h" />
+    <ClInclude Include="network\CNetClient.h" />
+    <ClInclude Include="network\CNetParser.h" />
+    <ClInclude Include="network\CNetPool.h" />
+    <ClInclude Include="network\CNetRouter.h" />
+    <ClInclude Include="network\CNetServer.h" />
+    <ClInclude Include="network\common.h" />
+    <ClInclude Include="protobuf\addressbook.pb.h" />
+    <ClInclude Include="threadpool\CThreadPool.h" />
+    <ClInclude Include="threadpool\defines.h" />
+    <ClInclude Include="xml\Xml.h" />
+    <ClInclude Include="xml\XmlAttribute.h" />
+    <ClInclude Include="xml\XmlDocument.h" />
+    <ClInclude Include="xml\XmlNode.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
