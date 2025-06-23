@@ -68,6 +68,7 @@
       <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -79,6 +80,7 @@
       <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -138,6 +140,7 @@
     <ClCompile Include="network\CNetPool.cpp" />
     <ClCompile Include="network\CNetServer.cpp" />
     <ClCompile Include="network\common.cpp" />
+    <ClCompile Include="protobuf\addressbook.pb.cc" />
     <ClCompile Include="threadpool\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
     <ClCompile Include="xml\XmlAttribute.cpp" />
@@ -194,6 +197,7 @@
     <ClInclude Include="network\CNetRouter.h" />
     <ClInclude Include="network\CNetServer.h" />
     <ClInclude Include="network\common.h" />
+    <ClInclude Include="protobuf\addressbook.pb.h" />
     <ClInclude Include="threadpool\CThreadPool.h" />
     <ClInclude Include="threadpool\defines.h" />
     <ClInclude Include="xml\Xml.h" />

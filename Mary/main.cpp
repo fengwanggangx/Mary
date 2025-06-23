@@ -10,7 +10,7 @@
 #include "./network/CNetServer.h"
 #include "./network/common.h"
 #include "./cryption/Cryption.h"
-//#include "./protobuf/addressbook.pb.h"
+#include "./protobuf/addressbook.pb.h"
 #include "./cfg/CINIHandler.h"
 #include "./threadpool/CThreadPool.h"
 
