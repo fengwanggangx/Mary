@@ -1,7 +1,9 @@
-#include "Xml.h"
+#include "XmlDocument.h"
 #include "rapidxml.hpp"
 #include "rapidxml_print.hpp"
-#include <sstream> 
+#include <fstream>
+#include <sstream>
+
 namespace xml
 {
 	XmlDocument::XmlDocument() :m_document(std::make_unique<rapidxml::xml_document<>>()) {}
@@ -24,7 +26,7 @@ namespace xml
 	bool XmlDocument::loadFromFile(const std::string& filename) 
 	{
 		try {
-			std::ifstream file(filename);
+			std::ifstream file(filename.c_str());
 			if (!file.is_open()) {
 				return false;
 			}

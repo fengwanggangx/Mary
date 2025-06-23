@@ -10,7 +10,7 @@
 #include "./network/CNetServer.h"
 #include "./network/common.h"
 #include "./cryption/Cryption.h"
-#include "./protobuf/addressbook.pb.h"
+//#include "./protobuf/addressbook.pb.h"
 #include "./cfg/CINIHandler.h"
 #include "./threadpool/CThreadPool.h"
 
@@ -34,12 +34,15 @@ void client()
 	}
 }
 
-#define ThreadPoolPtr ThreadPool::InstancePtr(2, 3);
+#define ThreadPoolPtr CThreadPool::InstancePtr(2, 3);
 int main(int argc, char *argv[])
 {
 	ThreadPoolPtr;
-	ini::CINIHandler::InstancePtr()->GetValue(ini::cfgs::system, "xxx", "ffff", "");
-	tutorial::AddressBook address_book;
+	int x =  ini::CINIHandler::InstancePtr()->GetValue(ini::cfgs::system, "xxx", "ffff", 1);
+	std::string x1 = ini::CINIHandler::InstancePtr()->GetValue(ini::cfgs::system, "xxx", "ffff", "");
+	ini::CINIHandler::InstancePtr()->SetValue(ini::cfgs::system, "xxx", "ffff", "111");
+	ini::CINIHandler::InstancePtr()->SetValue(ini::cfgs::system, "xxx", "ffff", 111);
+	//tutorial::AddressBook address_book;
 	net::EnvInitialize();
 	std::thread t(server);
 	t.detach();

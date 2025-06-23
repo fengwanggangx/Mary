@@ -2,8 +2,7 @@
 #define __JSON_H__
 
 #include "./common/ISingleton.h"
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
+
 #include <string>
 
 namespace json

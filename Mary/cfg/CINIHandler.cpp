@@ -1,6 +1,5 @@
 #include "CINIHandler.h"
 #include <fstream>
-#include "CIniFile.h"
 
 
 namespace ini
@@ -28,6 +27,7 @@ namespace ini
 		return true;
 	}
 
+	/*
 	template <class _Ty>
 	_Ty CINIHandler::GetValue(ini::cfgs cfg, const std::string& strSection, const std::string& strKey, _Ty&& def) const
 	{
@@ -40,7 +40,7 @@ namespace ini
 	}
 
 	template <class _Ty>
-	bool CINIHandler::SetValue(ini::cfgs cfg, const std::string& strSection, const std::string& strKey, _Ty&& val) const
+	bool CINIHandler::SetValue(ini::cfgs cfg, const std::string& strSection, const std::string& strKey, _Ty&& val)
 	{
 		const auto& mIter = m_ini.find(cfg);
 		if ((m_ini.end() == mIter) || (nullptr == mIter->second))
@@ -49,5 +49,5 @@ namespace ini
 		}
 		return mIter->second->SetValue(strSection, strKey, val);
 	}
-
+	*/
 }

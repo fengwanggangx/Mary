@@ -110,9 +110,6 @@
     <ClCompile Include="xml\XmlNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="protobuf\addressbook.pb.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cfg\CINIHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -239,9 +236,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="xml\XmlNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="protobuf\addressbook.pb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cfg\CINIHandler.h">

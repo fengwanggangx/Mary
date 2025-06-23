@@ -65,18 +65,20 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidxml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -136,7 +138,6 @@
     <ClCompile Include="network\CNetPool.cpp" />
     <ClCompile Include="network\CNetServer.cpp" />
     <ClCompile Include="network\common.cpp" />
-    <ClCompile Include="protobuf\addressbook.pb.cc" />
     <ClCompile Include="threadpool\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
     <ClCompile Include="xml\XmlAttribute.cpp" />
@@ -193,7 +194,6 @@
     <ClInclude Include="network\CNetRouter.h" />
     <ClInclude Include="network\CNetServer.h" />
     <ClInclude Include="network\common.h" />
-    <ClInclude Include="protobuf\addressbook.pb.h" />
     <ClInclude Include="threadpool\CThreadPool.h" />
     <ClInclude Include="threadpool\defines.h" />
     <ClInclude Include="xml\Xml.h" />

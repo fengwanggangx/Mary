@@ -1,18 +1,11 @@
 #ifndef __XMLDOCUMENT_H__
 #define __XMLDOCUMENT_H__
 
-#include <rapidxml.hpp>
-#include <rapidxml_print.hpp>
 #include <string>
-#include <vector>
-#include <memory>
-#include <stdexcept>
-#include <fstream>
+#include "XmlNode.h"
 
 namespace xml
 {
-	class XmlNode;
-	class XmlAttribute;
 
 	// XML文档类
 	class XmlDocument
