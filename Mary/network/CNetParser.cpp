@@ -24,16 +24,6 @@ namespace net
 		{
 			buffer[n] = '\0';
 		}
-
-		// 处理数据
-		std::cout << "Received: " << n << " bytes" << std::endl;
-
-		// 如果数据是文本，可以这样打印
-		std::cout << "Data: " << std::string(buffer.data(), n) << std::endl;
-
-		// 准备响应
-		const char* response = "Server has received your message";
-		bufferevent_write(pEvent, response, strlen(response));
 		return n;
 	}
 }
