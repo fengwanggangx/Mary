@@ -8,12 +8,6 @@
 #include <thread>
 #include "common.h"
 #include "CNetPool.h"
-// void ListenerErrorCallback(evconnlistener* pListener, void* arg)
-// {
-// }
-
-
-
 
 namespace net
 {

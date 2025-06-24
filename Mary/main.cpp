@@ -16,42 +16,51 @@
 
 
 net::CNetServer* pServer = nullptr;
-void server()
+net::CNetClient* pClient = nullptr;
+
+#define ThreadPoolPtr CThreadPool::InstancePtr(2, 3)
+
+bool bServer = false;
+
+void InitializeFramework()
 {
-	if (nullptr == pServer)
+	net::EnvInitialize();
+
+	if (bServer)
 	{
-		pServer = new net::CNetServer(9877);
-		//pServer->Initialize();
-		pServer->Start();
+		if (nullptr == pServer)
+		{
+			pServer = new net::CNetServer(9877);
+		}
+		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetServer* p) {
+			pServer->Initialize();
+			p->Start();
+			}, 
+			pServer);
 	}
+	else
+	{
+		if (nullptr == pClient)
+		{
+			pClient = new net::CNetClient("127.0.0.1", 9877);
+		}
+		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetClient* p) {
+			p->Initialize();
+			p->Start();
+			}, 
+			pClient);
+	}
+
 }
 
-void client()
-{
-	if (nullptr != pServer)
-	{
-		pServer->Initialize();
-	}
-}
 
-#define ThreadPoolPtr CThreadPool::InstancePtr(2, 3);
 int main(int argc, char *argv[])
 {
-	ThreadPoolPtr;
-	int x =  ini::CINIHandler::InstancePtr()->GetValue(ini::cfgs::system, "xxx", "ffff", 1);
-	std::string x1 = ini::CINIHandler::InstancePtr()->GetValue(ini::cfgs::system, "xxx", "ffff", "");
-	ini::CINIHandler::InstancePtr()->SetValue(ini::cfgs::system, "xxx", "ffff", "111");
-	ini::CINIHandler::InstancePtr()->SetValue(ini::cfgs::system, "xxx", "ffff", 111);
-	//tutorial::AddressBook address_book;
-	net::EnvInitialize();
-	std::thread t(server);
-	t.detach();
+	InitializeFramework();
     QApplication a(argc, argv);
     LoginWindow loginWnd;
     if (loginWnd.exec() == QDialog::Accepted)
     {
-		std::thread t1(client);
-		t1.detach();
 		CMainWindow w;
 		w.show();
 		int nRet = a.exec();

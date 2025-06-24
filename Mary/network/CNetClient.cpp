@@ -10,10 +10,6 @@ namespace net
 	{
 		m_buffer.reserve(4096);
 	}
-	void CNetClient::NetInitialize()
-	{
-		Initialize();
-	}
 
 	void CNetClient::OnRead(struct bufferevent* pEvent)
 	{
@@ -105,7 +101,7 @@ namespace net
 		// 连接服务器
 		struct sockaddr_in svr;
 		bool bRet = net::FmtAddress(svr, m_nPort, m_strAddr);
-		if (bRet)
+		if (!bRet)
 		{
 			bufferevent_free(pEvent);
 			return -1;
@@ -117,7 +113,7 @@ namespace net
 			return nRet;
 		}
 
-		bufferevent_setcb(pEvent, CNetClient::Read_Callback, nullptr, CNetClient::Event_Callback, nullptr);
+		bufferevent_setcb(pEvent, CNetClient::Read_Callback, nullptr, CNetClient::Event_Callback, this);
 		nRet = bufferevent_enable(pEvent, EV_READ | EV_WRITE);
 		if (nRet != 0)
 		{

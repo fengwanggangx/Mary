@@ -29,43 +29,13 @@ public:
 	friend class CThreadPool;
 
 public:
-	Task(task_priority level, size_t priority, std::function<void()>&& task) noexcept: m_level(level), m_priority(priority), m_task(std::move(task))
+	Task() = default;
+	template<typename _Fx>
+	Task(task_priority level, size_t priority, _Fx&& func) noexcept : m_level(level), m_priority(priority)
 	{
+		m_task = [func = std::forward<_Fx>(func)]() mutable { (*func)(); };
 	}
 
-	Task(task_priority level, size_t priority, std::function<void()>& task) noexcept : m_level(level), m_priority(priority), m_task(std::move(task))
-	{
-	}
-
-	Task(const Task& other) : m_level(other.m_level), m_priority(other.m_priority), m_task(other.m_task) 
-	{
-	}
-
-	// 拷贝赋值运算符（如果需要）
-	Task& operator=(const Task& other) {
-		if (this != &other) {
-			m_level = other.m_level;
-			m_priority = other.m_priority;
-			m_task = other.m_task;
-		}
-		return *this;
-	}
-	Task(Task&& t) noexcept
-	{
-		m_level = t.m_level;
-		m_priority = t.m_priority;
-		m_task = std::move(m_task);
-	}
-	Task& operator=(Task&& other) noexcept
-	{
-		if (this != &other)
-		{
-			m_level = other.m_level;
-			m_priority = other.m_priority;
-			m_task = std::move(other.m_task);
-		}
-		return *this;
-	}
 private:
 	task_priority	m_level{ task_priority::em_normal };
 	size_t	m_priority{ 0 };

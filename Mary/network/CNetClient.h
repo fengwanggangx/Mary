@@ -16,10 +16,8 @@ namespace net
 	public:
 		void Send(const char* pData);
 		void Recv(const char* pData);
-		void NetInitialize();
-	private:
 		int Initialize();
-
+	
 	public:
 		void OnRead(struct bufferevent* pEvent) override;
 		void OnEvent(struct bufferevent* pEvent, short events) override;

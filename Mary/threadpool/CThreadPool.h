@@ -13,7 +13,7 @@
 
 class CThreadPool final : public ISingleton<CThreadPool>
 {
-	DECLARE_SINGLE_DFAULT_DELETE(CThreadPool);
+	DECLARE_SINGLE_DFAULT_DELETE(CThreadPool)
 
 private:
 	explicit CThreadPool(std::size_t threads);//只有核心线程
@@ -35,28 +35,30 @@ public:
 			}
 		);
 		std::future<return_type> ret = task->get_future();
-		PushTask(level, priority, std::move(task));
+		RegisterTask(level, priority, std::move(task));
 		return ret;
 	}
 
-	template<class _Fx>
-	auto PushTask(task_priority level, std::size_t priority, _Fx&& f) ->
-		std::future<typename std::invoke_result_t<_Fx>>
-	{
-		using return_type = typename std::invoke_result_t<_Fx>;
-		auto task = std::make_shared< std::packaged_task<return_type()> >(
-			[f = std::forward<_Fx>(f)]() mutable {
-				return f();
-			}
-		);
-		std::future<return_type> ret = task->get_future();
-		PushTask(level, priority, std::move(task));
-		return ret;
-	}
+
+
+// 	template<class _Fx>
+// 	auto PushTask(task_priority level, std::size_t priority, _Fx&& f) ->
+// 		std::future<typename std::invoke_result_t<_Fx>>
+// 	{
+// 		using return_type = typename std::invoke_result_t<_Fx>;
+// 		auto task = std::make_shared< std::packaged_task<return_type()> >(
+// 			[f = std::forward<_Fx>(f)]() mutable {
+// 				return f();
+// 			}
+// 		);
+// 		std::future<return_type> ret = task->get_future();
+// 		RegisterTask(level, priority, std::move(task));
+// 		return ret;
+// 	}
 
 private:
- 	template<typename _Task = std::function<void()>>
-	bool PushTask(task_priority level, size_t priority, _Task&& task)
+ 	template<typename _Task>
+	bool RegisterTask(task_priority level, size_t priority, _Task&& task)
 	{
 		if (m_stop.load())
 		{
