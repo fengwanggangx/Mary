@@ -12,7 +12,7 @@ namespace net
 		virtual ~CNet();
 
 	public:
-		void Start();
+		void Start(bool bRealTime);
 		void ShutDown();
 		
 	protected:

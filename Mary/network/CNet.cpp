@@ -43,23 +43,35 @@ namespace net
 		}
 	}
 
-	void CNet::Start()
+	void CNet::Start(bool bRealTime)
 	{
 		if ((nullptr == m_pNet) || m_bRunning.load())
 		{
 			return;
 		}
 		m_bRunning.store(true);
-		while (m_bRunning)
+		if (bRealTime)
 		{
-			int nRet = event_base_loop(m_pNet, EVLOOP_NONBLOCK);
+			int nRet = event_base_dispatch(m_pNet);
 			if (-1 == nRet)
 			{
 				std::cerr << "事件循环错误" << std::endl;
-				break;
 			}
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
+		else
+		{
+			while (m_bRunning)
+			{
+				int nRet = event_base_loop(m_pNet, EVLOOP_NONBLOCK);
+				if (-1 == nRet)
+				{
+					std::cerr << "事件循环错误" << std::endl;
+					break;
+				}
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+			}
+		}
+
 		m_bRunning.store(false);
 	}
 }
