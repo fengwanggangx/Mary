@@ -1,0 +1,2 @@
+Mary/libs/debug/*.pdb filter=lfs diff=lfs merge=lfs -text
+Mary/libs/debug/*.lib filter=lfs diff=lfs merge=lfs -text
