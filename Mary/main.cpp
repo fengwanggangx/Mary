@@ -10,9 +10,9 @@
 #include "./network/CNetServer.h"
 #include "./network/common.h"
 #include "./cryption/Cryption.h"
-#include "./protobuf/addressbook.pb.h"
 #include "./cfg/CINIHandler.h"
 #include "./threadpool/CThreadPool.h"
+#include "./request/request.h"
 
 
 net::CNetServer* pServer = nullptr;
@@ -34,7 +34,7 @@ void InitializeFramework()
 		}
 		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetServer* p) {
 			pServer->Initialize();
-			p->Start();
+			p->Start(false);
 			}, 
 			pServer);
 	}
@@ -46,19 +46,37 @@ void InitializeFramework()
 		}
 		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetClient* p) {
 			p->Initialize();
-			p->Start();
+			p->Start(true);
 			}, 
 			pClient);
 	}
 
 }
 
+void test()
+{
+	CRequest* req = new CRequest;
+	req->SetType(CRequest::Type::QUERY_AUTH);
+	std::string s = "create_user";
+	req->SetCmd(s);
+
+	// 添加参数
+	req->SetExtraData("username", "john_doe");
+	req->SetExtraData("email", "john@example.com");
+
+	std::string data;
+	if (req->Serialize(&data))
+	{
+	}
+}
 
 int main(int argc, char *argv[])
 {
 	InitializeFramework();
     QApplication a(argc, argv);
     LoginWindow loginWnd;
+	//test();
+
     if (loginWnd.exec() == QDialog::Accepted)
     {
 		CMainWindow w;

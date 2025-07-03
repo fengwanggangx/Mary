@@ -65,26 +65,26 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include\debug\libevent;include\debug\libevent\event2;include\debug\sqlite;include\debug\spdlog;include\debug\botan-3;include\debug\rapidjson;include\debug\rapidxml;include\debug\protobuf;include\debug\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>libs\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lited.lib;libprotobufd.lib;libprotocd.lib;utf8_range.lib;utf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\libevent;include\libevent\event2;include\sqlite;include\spdlog;include\botan-3;include\rapidjson;include\rapidxml;include\protobuf;include\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include\release\libevent;include\release\libevent\event2;include\release\sqlite;include\release\spdlog;include\release\botan-3;include\release\rapidjson;include\release\rapidxml;include\release\protobuf;include\release\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>libs\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lite.lib;libprotobuf.lib;libprotoc.lib;utf8_range.lib;utf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -140,7 +140,8 @@
     <ClCompile Include="network\CNetPool.cpp" />
     <ClCompile Include="network\CNetServer.cpp" />
     <ClCompile Include="network\common.cpp" />
-    <ClCompile Include="protobuf\addressbook.pb.cc" />
+    <ClCompile Include="request\request.cpp" />
+    <ClCompile Include="request\request.pb.cc" />
     <ClCompile Include="threadpool\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
     <ClCompile Include="xml\XmlAttribute.cpp" />
@@ -197,7 +198,8 @@
     <ClInclude Include="network\CNetRouter.h" />
     <ClInclude Include="network\CNetServer.h" />
     <ClInclude Include="network\common.h" />
-    <ClInclude Include="protobuf\addressbook.pb.h" />
+    <ClInclude Include="request\request.h" />
+    <ClInclude Include="request\request.pb.h" />
     <ClInclude Include="threadpool\CThreadPool.h" />
     <ClInclude Include="threadpool\defines.h" />
     <ClInclude Include="xml\Xml.h" />

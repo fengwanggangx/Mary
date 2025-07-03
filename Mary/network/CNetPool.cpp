@@ -89,6 +89,8 @@ namespace net
 		bufferevent_setcb(pBuffer, readcb, writecb, eventcb, cbarg);
 		bufferevent_enable(pBuffer, EV_READ | EV_WRITE);
 		RegisterAConnection(fd, pBuffer, pAddr);
+		const char* response = "connected";
+		bufferevent_write(pBuffer, response, strlen(response));
 		return true;
 	}
 

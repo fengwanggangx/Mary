@@ -8,6 +8,7 @@
 #include <thread>
 #include "common.h"
 #include "CNetPool.h"
+#include "../request/request.h"
 
 namespace net
 {
@@ -37,16 +38,18 @@ namespace net
 		int n = CNetParser::BufferEventReader(pEvent, m_buffer);
 		if (n > 0)
 		{
-			// 处理数据
-						// 处理数据
-			std::cout << "Received: " << n << " bytes" << std::endl;
+// 			std::string str(m_buffer.data(), n);
+// 			const char* response = "Server has received your message";
+// 			bufferevent_write(pEvent, response, strlen(response));
 
-			// 如果数据是文本，可以这样打印
-			std::cout << "Data: " << std::string(m_buffer.data(), n) << std::endl;
-
-			// 准备响应
-			const char* response = "Server has received your message";
-			bufferevent_write(pEvent, response, strlen(response));
+			std::string strData(m_buffer.data(), n);
+			CRequest req;
+			if (req.Deserialize(strData))
+			{
+				std::string st1 = req.GetCmd();
+				std::unordered_map<std::string, std::string> x = req.GetExtraData();
+				int x1 = 1;
+			}
 		}
 	}
 

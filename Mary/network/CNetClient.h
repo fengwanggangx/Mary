@@ -24,6 +24,9 @@ namespace net
 		void OnConnected(bufferevent* pEvent) override;
 
 	private:
+		bool BufferCapacity(std::size_t nLength);
+
+	private:
 		std::string m_strAddr;
 		int	m_nPort{ -1 };
 
