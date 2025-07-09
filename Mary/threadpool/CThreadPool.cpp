@@ -77,18 +77,15 @@ void CThreadPool::SetWorkersCount(std::size_t nCores, std::size_t nAssistants)
 
 void CThreadPool::ShutDown()
 {
-	if (m_stop.exchange(true, std::memory_order_acquire))
 	{
-		return;
-	}
-	m_task_cond.notify_all();
-	for (std::thread& worker : m_thread_workers)
-	{
-		if (worker.joinable())
+		std::unique_lock<std::mutex> lck(m_task_mutex);
+		if (m_stop)
 		{
-			worker.join();
+			return;
 		}
+		m_stop = true;
 	}
+	m_cond.notify_all();
 }
 
 void CThreadPool::ThreadProc()
@@ -98,21 +95,21 @@ void CThreadPool::ThreadProc()
 		std::function<void()> task;
 		{
 			std::unique_lock<std::mutex> lck(m_task_mutex);
-			m_task_cond.wait(lck, [this] {
+			m_cond.wait(lck, [this] {
 				return m_stop || !m_task_queue.empty(); 
 				});
 
 			if (m_stop && m_task_queue.empty())
 			{
-				break;
+				return;
 			}
 
 			if (!m_task_queue.empty())
 			{
-				task = std::move(m_task_queue.top().m_task);
-				m_task_queue.pop();
 				++m_busy_workers;
-				--m_nTask;
+				task = std::move(const_cast<Task&>(m_task_queue.top()).m_task);
+				m_task_queue.pop();
+				--m_nTasks;
 			}
 		}
 		if (nullptr != task)
@@ -137,7 +134,7 @@ void CThreadPool::PrintTask()
 	{
 		std::cout << int(m_task_queue.top().m_level) << "  |   " << m_task_queue.top().m_priority << std::endl;
 		m_task_queue.pop();
-		--m_nTask;
+		--m_nTasks;
 	}
 }
 
@@ -155,26 +152,27 @@ bool CThreadPool::ShouldNewAssistantThread()
 	{
 		return false;
 	}
-	std::size_t nTasks = m_nTask.load();
+	std::size_t nTasks = m_nTasks.load();
 	std::size_t nWorkers = m_nWorkers.load();
 	return  (nTasks > (nWorkers * 2.5));
 }
 
 void CThreadPool::BuildNewThread(std::size_t threads)
 {
-	std::size_t nMax = m_nCores + m_nAssistants;
+	std::unique_lock<std::mutex> lck(m_worker_mutex);
 	if (m_nWorkers >= m_nMaxWorkers)
 	{
-		return; // 已达到最大线程数
+		return;
 	}
 
 	for (std::size_t i = 0; i < threads; ++i)
 	{
-		m_thread_workers.emplace_back(&CThreadPool::ThreadProc, this);
-		if (m_thread_workers.size() >= nMax)
+		m_workers.emplace_back(&CThreadPool::ThreadProc, this);
+		if (m_workers.size() >= m_nMaxWorkers)
 		{
 			break;
 		}
 	}
-	m_nWorkers.store(m_thread_workers.size());
+	std::size_t sz = m_workers.size();
+	m_nWorkers.store(sz);
 }

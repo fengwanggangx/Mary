@@ -25,7 +25,8 @@ namespace net
 		void OnEvent(struct bufferevent* pEvent, short events) override;
 	private:
 		int	m_nPort{ -1 };
-		std::vector<char> m_buffer;
+		std::vector<char> m_buffer_recv;
+		std::vector<char> m_buffer_send;
 	};
 }
 #endif

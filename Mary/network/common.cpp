@@ -96,6 +96,42 @@ namespace net
 		return "unkown sa_family";
 	}
 
+	std::string ParseSockAddr(std::string& strAddr, int& nPort, const struct sockaddr_storage& addr)
+	{
+		strAddr.clear();
+		nPort = -1;
+		// 根据地址族判断类型
+		if (AF_INET == addr.ss_family)
+		{
+			char buffer[INET_ADDRSTRLEN] = {0};
+			const auto* pAddr = reinterpret_cast<const struct sockaddr_in*>(&addr);
+			if (!inet_ntop(AF_INET, &pAddr->sin_addr, buffer, INET_ADDRSTRLEN))
+			{
+				return GetErrorString(errno);
+			}
+
+			nPort = ntohs(pAddr->sin_port);
+			strAddr = buffer;
+			return "";
+		}
+
+		if (AF_INET6 == addr.ss_family)
+		{
+			char buffer[INET6_ADDRSTRLEN] = { 0 };
+			const auto* pAddr = reinterpret_cast<const struct sockaddr_in6*>(&addr);
+			if (!inet_ntop(AF_INET6, &pAddr->sin6_addr, buffer, INET6_ADDRSTRLEN))
+			{
+				return GetErrorString(errno);
+			}
+
+			nPort = ntohs(pAddr->sin6_port);
+			strAddr = buffer;
+			return "";
+		}
+		return "unkown sa_family";
+	}
+
+
 	bool CheckSockAddress(struct sockaddr* pAddr, int nLength)
 	{
 		if (nullptr == pAddr)
@@ -119,6 +155,7 @@ namespace net
 
 	bool SockAddrSafeCopy(struct sockaddr& dst, const struct sockaddr& src)
 	{
+		memset(&dst, 0, sizeof(dst));
 		if (src.sa_family == AF_INET) 
 		{
 			memcpy(&dst, &src, sizeof(struct sockaddr_in));
@@ -126,6 +163,24 @@ namespace net
 		}
 		
 		if (src.sa_family == AF_INET6) 
+		{
+			memcpy(&dst, &src, sizeof(struct sockaddr_in6));
+			return true;
+		}
+
+		return false;
+	}
+
+	bool SockAddrSafeCopy(struct sockaddr_storage& dst, const struct sockaddr& src)
+	{
+		memset(&dst, 0, sizeof(dst));
+		if (src.sa_family == AF_INET)
+		{
+			memcpy(&dst, &src, sizeof(struct sockaddr_in));
+			return true;
+		}
+
+		if (src.sa_family == AF_INET6)
 		{
 			memcpy(&dst, &src, sizeof(struct sockaddr_in6));
 			return true;

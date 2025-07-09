@@ -1,67 +1,31 @@
 #include "CNetClient.h"
-#include "CNetParser.h"
+#include "CNetTools.h"
 #include <unordered_map>
 #include <event2/buffer.h>
 #include "common.h"
 #include <iostream>
 #include "../request/request.h"
 #include "../log/Defines.h"
+#include "CNetPool.h"
+#include "CNetDistributor.h"
+
+#define RequestDisptcher net::CNetDistributor<CRequest>::InstancePtr()
 
 namespace net
 {
 	CNetClient::CNetClient(const std::string& strAddr, int nPort) : m_strAddr(strAddr), m_nPort(nPort)
 	{
-		m_buffer.reserve(4096);
+		m_buffer_recv.reserve(4096);
+		m_buffer_send.reserve(4096);
 	}
 
 	void CNetClient::OnRead(struct bufferevent* pEvent)
 	{
-		int n = CNetParser::BufferEventReader(pEvent, m_buffer);
-		if (n > 0) 
+		std::vector<CRequest*> reqs;
+		std::size_t nCount = net::utility::RequestFromBuffer(reqs, pEvent, m_buffer_recv);
+		for (const auto& req : reqs)
 		{
-			while (n >= sizeof(uint32_t))
-			{
-				uint32_t messageLength = 0;
-				memcpy(&messageLength, m_buffer.data(), sizeof(messageLength));
-				messageLength = ntohl(messageLength);
-
-				if (n < (sizeof(messageLength) + messageLength))
-				{
-					break; // 数据不足，等待更多数据
-				}
-
-				const char* messageData = m_buffer.data() + sizeof(messageLength);
-				std::string strMsg(messageData, messageLength); // 使用正确的消息长度
-
-				CRequest req;
-				if (req.Deserialize(strMsg)) 
-				{
-					std::string cmd = req.GetCmd();
-					std::string retMsg = req.GetExtraData("retmsg");
-					GLOBAL_LOG_DEBUG("recv:{}, {}", cmd, retMsg);
-					int x = 1;
-				}
-				else 
-				{
-					std::cerr << "Failed to deserialize request" << std::endl;
-					GLOBAL_LOG_DEBUG("Failed to deserialize request");
-					break; // 防止无限循环
-				}
-
-				// 移除已处理的数据
-				size_t processedSize = sizeof(messageLength) + messageLength;
-				if (n > processedSize)
-				{
-					memmove(m_buffer.data(), m_buffer.data() + processedSize, n - processedSize);
-					m_buffer.resize(n - processedSize);
-					n = m_buffer.size();
-				}
-				else
-				{
-					m_buffer.clear();
-					break;
-				}
-			}
+			RequestDisptcher->AddRequest(req);
 		}
 	}
 
@@ -72,6 +36,7 @@ namespace net
 		// 记录连接信息
 		struct sockaddr_storage addr;
 		socklen_t addrlen = sizeof(addr);
+		memset(&addr, 0, addrlen);
 		if (getsockname(bufferevent_getfd(pEvent), (struct sockaddr*)&addr, &addrlen) == 0)
 		{
 			char host[NI_MAXHOST], port[NI_MAXSERV];
@@ -81,8 +46,10 @@ namespace net
 			}
 		}
 
+		evutil_socket_t fd = bufferevent_getfd(pEvent);
+		memset(&addr, 0, addrlen);
 		// 获取对端地址
-		if (getpeername(bufferevent_getfd(pEvent), (struct sockaddr*)&addr, &addrlen) == 0)
+		if (getpeername(fd, (struct sockaddr*)&addr, &addrlen) == 0)
 		{
 			char host[NI_MAXHOST], port[NI_MAXSERV];
 			if (getnameinfo((struct sockaddr*)&addr, addrlen, host, NI_MAXHOST, port, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV) == 0)
@@ -90,6 +57,9 @@ namespace net
 				printf("服务器地址: %s:%s\n", host, port);
 			}
 		}
+
+		
+		bufferevent* pBuffer = CNetPool::InstancePtr()->RegisterAConnection(fd, pEvent, &addr);
 	}
 
 	void CNetClient::OnEvent(struct bufferevent* pEvent, short events)
@@ -122,6 +92,8 @@ namespace net
 		// 释放bufferevent资源
 		if (pEvent)
 		{
+			evutil_socket_t fd = bufferevent_getfd(pEvent);
+			CNetPool::InstancePtr()->CloseAConnection(fd);
 			bufferevent_free(pEvent);
 			pEvent = nullptr;
 		}
@@ -169,41 +141,5 @@ namespace net
 	void CNetClient::Recv(const char* pData)
 	{
 
-	}
-
-
-	constexpr std::size_t maxBufferSize_ = 10 * 1024 * 1024; // 默认最大缓冲区大小为10MB
-
-	bool CNetClient::BufferCapacity(std::size_t nLength)
-	{
-		// 如果所需容量超过最大限制
-		if (nLength > maxBufferSize_) 
-		{
-			return false;
-		}
-
-		// 如果当前容量不足，则扩展
-		if (m_buffer.capacity() < nLength) 
-		{
-			size_t newCapacity = m_buffer.capacity();
-			if (newCapacity == 0) newCapacity = 1024; // 初始最小容量
-
-			while (newCapacity < nLength && newCapacity < maxBufferSize_)
-			{
-				newCapacity = min(newCapacity * 1.5, maxBufferSize_);
-			}
-
-			try
-			{
-				m_buffer.reserve(newCapacity);
-				std::cout << "缓冲区扩展到: " << newCapacity << " 字节" << std::endl;
-			}
-			catch (const std::bad_alloc& e) 
-			{
-				std::cerr << "内存分配失败: " << e.what() << std::endl;
-				return false;
-			}
-		}
-		return true;
 	}
 }

@@ -13,6 +13,7 @@
 #include "./cfg/CINIHandler.h"
 #include "./threadpool/CThreadPool.h"
 #include "./request/request.h"
+#include "./network/CNetDistributor.h"
 
 
 net::CNetServer* pServer = nullptr;
@@ -24,6 +25,7 @@ bool bServer = false;
 
 void InitializeFramework()
 {
+	net::CNetDistributor<CRequest>::InstancePtr();
 	net::EnvInitialize();
 
 	if (bServer)

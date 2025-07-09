@@ -60,17 +60,17 @@ private:
  	template<typename _Task>
 	bool RegisterTask(task_priority level, size_t priority, _Task&& task)
 	{
-		if (m_stop.load())
-		{
-			return false;
-		}
 		{
 			std::unique_lock<std::mutex> lck(m_task_mutex);
+			if (m_stop)
+			{
+				return false;
+			}
 			m_task_queue.emplace(level, priority, std::forward<_Task>(task));
-			++m_nTask;
+			++m_nTasks;
 		}
 
-		m_task_cond.notify_one();
+		m_cond.notify_one();
 		if ((m_nAssistants > 0) && ShouldNewAssistantThread())//增加辅助线程
 		{
 			BuildNewThread(1);
@@ -85,20 +85,23 @@ private:
 	void SetWorkersCount(std::size_t nCores, std::size_t nAssistants);
 
 private:
-	std::condition_variable	m_task_cond;
-	std::vector<std::thread>	m_thread_workers;
-	std::atomic_size_t		m_nWorkers{ 0 };
 	std::mutex	m_task_mutex;
+	std::condition_variable	m_cond;
 	std::priority_queue<Task, std::vector<Task>, TaskComparator>	m_task_queue;
-	std::atomic_size_t		m_nTask{ 0 };
-
+	
+	std::mutex	m_worker_mutex;
+	std::vector<std::jthread>	m_workers;
 
 private:
-	std::atomic_bool		m_stop{ false };		//线程退出
+	std::atomic_size_t		m_nWorkers{ 0 };		//当前线程数
+	std::atomic_size_t		m_nTasks{ 0 };			//当前任务数
 	std::atomic_size_t		m_busy_workers{ 0 };	//忙碌线程数
-	std::atomic_size_t		m_nCores{ 0 };			//核心线程数
-	std::atomic_size_t		m_nAssistants{ 0 };		//辅助线程数
-	std::atomic_size_t		m_nMaxWorkers{ 0 };		//最大线程数
+	bool					m_stop{ false };		//线程退出
+
+private:
+	std::size_t				m_nCores{ 0 };			//核心线程数
+	std::size_t				m_nAssistants{ 0 };		//辅助线程数
+	std::size_t				m_nMaxWorkers{ 0 };		//最大线程数
 };
 
 #endif

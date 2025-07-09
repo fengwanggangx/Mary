@@ -1,6 +1,6 @@
 #include "CNetServer.h"
 #include <event2/buffer.h>  // 主要头文件
-#include "CNetParser.h"
+#include "CNetTools.h"
 #include <iostream>
 #include <event2/thread.h>
 #include <event2/listener.h>
@@ -15,7 +15,8 @@ namespace net
 
 	CNetServer::CNetServer(int nPort) : m_nPort(nPort)
 	{
-		m_buffer.reserve(4096);
+		m_buffer_recv.reserve(4096);
+		m_buffer_send.reserve(4096);
 	}
 
 	void CNetServer::OnListenerError(struct evconnlistener* pListener)
@@ -30,27 +31,22 @@ namespace net
 			return;
 		}
 
-		CNetPool::InstancePtr()->RegisterConnect(fd, GetNet(), pAddr, nLength, CNetServer::Read_Callback, nullptr, CNetServer::Event_Callback, this);
+		struct bufferevent* pBuffer = CNetPool::InstancePtr()->RegisterConnect(fd, GetNet(), pAddr, nLength, CNetServer::Read_Callback, nullptr, CNetServer::Event_Callback, this);
+		if (nullptr != pBuffer)
+		{
+			CRequest* pReq = new CRequest;
+			pReq->SetType(CRequest::Type::QUERY_AUTH);
+			pReq->SetCmd("connet_build");
+			pReq->SetExtraData("retmsg", "connect_ok_hahhahahahhahaha");
+			net::utility::SendRequest(pReq, pBuffer, m_buffer_send);
+		}
 	}
 
 	void CNetServer::OnRead(struct bufferevent* pEvent)
 	{
-		int n = CNetParser::BufferEventReader(pEvent, m_buffer);
-		if (n > 0)
-		{
-// 			std::string str(m_buffer.data(), n);
-// 			const char* response = "Server has received your message";
-// 			bufferevent_write(pEvent, response, strlen(response));
-
-			std::string strData(m_buffer.data(), n);
-			CRequest req;
-			if (req.Deserialize(strData))
-			{
-				std::string st1 = req.GetCmd();
-				std::unordered_map<std::string, std::string> x = req.GetExtraData();
-				int x1 = 1;
-			}
-		}
+		std::vector<CRequest*> reqs;
+		std::size_t nCount = net::utility::RequestFromBuffer(reqs, pEvent, m_buffer_recv);
+		int nx = 1;
 	}
 
 	void CNetServer::OnEvent(struct bufferevent* pEvent, short events)

@@ -86,7 +86,7 @@
     <ClCompile Include="network\common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="network\CNetParser.cpp">
+    <ClCompile Include="network\CNetTools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="network\CNetPool.cpp">
@@ -220,7 +220,7 @@
     <ClInclude Include="network\CNetRouter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="network\CNetParser.h">
+    <ClInclude Include="network\CNetTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="network\CNetPool.h">

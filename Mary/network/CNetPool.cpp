@@ -8,7 +8,7 @@ namespace net
 	struct CNetInfo
 	{
 		evutil_socket_t m_fd{ -1 };
-		struct sockaddr	m_addr { 0 };
+		struct sockaddr_storage	m_addr { 0 };
 		struct bufferevent* m_pEvent{ nullptr };
 		std::string m_strAddress;
 		int m_nPort{ -1 };
@@ -64,12 +64,35 @@ namespace net
 		return true;
 	}
 
-	bool CNetPool::RegisterConnect(evutil_socket_t fd, struct event_base* pNet, struct sockaddr* pAddr, int nLength, bufferevent_data_cb readcb, bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void* cbarg)
+	struct bufferevent* CNetPool::RegisterAConnection(evutil_socket_t fd, struct bufferevent* pEvent, struct sockaddr_storage* pAddr)
+	{
+		if ((nullptr == pAddr) || (nullptr == pEvent))
+		{
+			return nullptr;
+		}
+
+		auto [mIter, bInserted] = m_pool.try_emplace(fd, nullptr);
+		CNetInfo* pInfo = mIter->second;
+		if (bInserted)
+		{
+			pInfo = new CNetInfo;
+			mIter->second = pInfo;
+		}
+		pInfo->Empty();
+		pInfo->m_fd = fd;
+		pInfo->m_pEvent = pEvent;
+		memset(&pInfo->m_addr, 0, sizeof(pInfo->m_addr));  // 初始化目标结构体（可选但安全）
+		memcpy(&pInfo->m_addr, pAddr, sizeof(*pAddr));
+		ParseSockAddr(pInfo->m_strAddress, pInfo->m_nPort, *pAddr);
+		return pEvent;
+	}
+
+	struct bufferevent* CNetPool::RegisterConnect(evutil_socket_t fd, struct event_base* pNet, struct sockaddr* pAddr, int nLength, bufferevent_data_cb readcb, bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void* cbarg)
 	{
 		if (!CheckSockAddress(pAddr, nLength))
 		{
 			evutil_closesocket(fd);
-			return false;
+			return nullptr;
 		}
 
 		int nOptions = (BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS | BEV_OPT_UNLOCK_CALLBACKS);
@@ -83,15 +106,13 @@ namespace net
 		{
 			std::cerr << "Failed to create bufferevent" << std::endl;
 			evutil_closesocket(fd);
-			return false;
+			return nullptr;
 		}
 
 		bufferevent_setcb(pBuffer, readcb, writecb, eventcb, cbarg);
 		bufferevent_enable(pBuffer, EV_READ | EV_WRITE);
 		RegisterAConnection(fd, pBuffer, pAddr);
-		const char* response = "connected";
-		bufferevent_write(pBuffer, response, strlen(response));
-		return true;
+		return pBuffer;
 	}
 
 	bool CNetPool::CloseAConnection(CNetInfo& info)

@@ -35,6 +35,10 @@ public:
 	{
 		m_task = [func = std::forward<_Fx>(func)]() mutable { (*func)(); };
 	}
+	~Task()
+	{
+		m_task = nullptr;
+	}
 
 private:
 	task_priority	m_level{ task_priority::em_normal };
