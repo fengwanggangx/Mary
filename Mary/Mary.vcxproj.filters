@@ -24,11 +24,38 @@
     <Filter Include="Form Files\components">
       <UniqueIdentifier>{c9d83bcd-903d-485e-825e-839ef52a53fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\components">
-      <UniqueIdentifier>{74c99d61-7d23-406b-8e63-7b28abd9b2b2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\components">
       <UniqueIdentifier>{c7a1910a-867a-431f-a14b-25e5da429e4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\network">
+      <UniqueIdentifier>{72d2eb68-7687-4781-8bae-2be0e0881a47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\request">
+      <UniqueIdentifier>{318eed43-4c62-44d8-897c-1f469e383ffa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\xml">
+      <UniqueIdentifier>{71ff636a-0f7a-4b6b-988b-a2b2080eaf7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\json">
+      <UniqueIdentifier>{c7cc9a1c-06ab-4c99-b451-e14bd1246b97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\database">
+      <UniqueIdentifier>{a13f61c2-a57d-49e6-bfa9-efdc1a942554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cryption">
+      <UniqueIdentifier>{36f58e9b-2d30-4bd2-9256-0b8f6a3cc0f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ini">
+      <UniqueIdentifier>{5a9e5d59-99a9-4cb8-9018-2c55ed5d6e98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\log">
+      <UniqueIdentifier>{2d0b5646-c3bf-4715-b0a0-80c4e3488e7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\thread">
+      <UniqueIdentifier>{f545d691-2f8c-4c7e-ad15-32dd889c74c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{d64c32a1-c064-46ca-abc7-9e1f3612b94a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -50,97 +77,100 @@
     <ClCompile Include="components\CViewProducts.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="database\CSQLite3.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="network\CNetClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="log\CLogger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="database\CODBC.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="database\CDBEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="database\CMySQL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="database\COracle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="common\datetime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="common\modules.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="network\CNetServer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="network\CNet.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="network\CNetDistributor.cpp">
+      <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\common.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\network</Filter>
     </ClCompile>
-    <ClCompile Include="network\CNetTools.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="network\CNet.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\CNetClient.cpp">
+      <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\CNetPool.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\network</Filter>
     </ClCompile>
-    <ClCompile Include="xml\Xml.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="network\CNetServer.cpp">
+      <Filter>Source Files\network</Filter>
     </ClCompile>
-    <ClCompile Include="json\Json.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cryption\Cryption.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="xml\XmlAttribute.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="xml\XmlDocument.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="xml\XmlNode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cfg\CINIHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cfg\CIniFile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="threadpool\CThreadPool.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="network\CNetTools.cpp">
+      <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="request\request.pb.cc">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\request</Filter>
     </ClCompile>
     <ClCompile Include="request\request.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\request</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\Xml.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\XmlAttribute.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\XmlDocument.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\XmlNode.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="json\Json.cpp">
+      <Filter>Source Files\json</Filter>
+    </ClCompile>
+    <ClCompile Include="database\CMySQL.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="database\CODBC.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="database\COracle.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="database\CDBEngine.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="database\CSQLite3.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="cryption\Cryption.cpp">
+      <Filter>Source Files\cryption</Filter>
+    </ClCompile>
+    <ClCompile Include="ini\CIniFile.cpp">
+      <Filter>Source Files\ini</Filter>
+    </ClCompile>
+    <ClCompile Include="ini\CINIHandler.cpp">
+      <Filter>Source Files\ini</Filter>
+    </ClCompile>
+    <ClCompile Include="log\CLogger.cpp">
+      <Filter>Source Files\log</Filter>
+    </ClCompile>
+    <ClCompile Include="thread\CThreadPool.cpp">
+      <Filter>Source Files\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="common\datetime.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\modules.cpp">
+      <Filter>Source Files\common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="components\CViewSettings.h">
-      <Filter>Header Files\components</Filter>
-    </QtMoc>
     <QtMoc Include="components\CLoginWindow.h">
-      <Filter>Header Files\components</Filter>
+      <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CMainWindow.h">
-      <Filter>Header Files\components</Filter>
+      <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CViewProductDateInfo.h">
-      <Filter>Header Files\components</Filter>
+      <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CViewProducts.h">
-      <Filter>Header Files\components</Filter>
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="components\CViewSettings.h">
+      <Filter>Source Files\components</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -169,98 +199,109 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\ISingleton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="common\datetime.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="common\utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\CSQLite3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="network\CNetClient.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="log\CLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\CODBC.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\IDataBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\CDBEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\CMySQL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="database\COracle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="common\modules.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="log\Defines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="network\CNetServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="network\CNet.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNetDistributor.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\common.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="network\CNetRouter.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNet.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="network\CNetTools.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNetClient.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\CNetPool.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="xml\Xml.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNetRouter.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="json\Json.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNetServer.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="cryption\Cryption.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xml\XmlAttribute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xml\XmlDocument.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xml\XmlNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cfg\CINIHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cfg\CIniFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="threadpool\CThreadPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="threadpool\defines.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="network\CNetTools.h">
+      <Filter>Source Files\network</Filter>
     </ClInclude>
     <ClInclude Include="request\request.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\request</Filter>
     </ClInclude>
     <ClInclude Include="request\request.pb.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\request</Filter>
     </ClInclude>
+    <ClInclude Include="xml\Xml.h">
+      <Filter>Source Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="xml\XmlAttribute.h">
+      <Filter>Source Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="xml\XmlDocument.h">
+      <Filter>Source Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="xml\XmlNode.h">
+      <Filter>Source Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="database\CDBEngine.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="database\CODBC.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="database\CMySQL.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="database\COracle.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="database\CSQLite3.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="database\IDataBase.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
+    <ClInclude Include="json\Json.h">
+      <Filter>Source Files\json</Filter>
+    </ClInclude>
+    <ClInclude Include="cryption\Cryption.h">
+      <Filter>Source Files\cryption</Filter>
+    </ClInclude>
+    <ClInclude Include="ini\CIniFile.h">
+      <Filter>Source Files\ini</Filter>
+    </ClInclude>
+    <ClInclude Include="ini\CINIHandler.h">
+      <Filter>Source Files\ini</Filter>
+    </ClInclude>
+    <ClInclude Include="log\CLogger.h">
+      <Filter>Source Files\log</Filter>
+    </ClInclude>
+    <ClInclude Include="log\defines.h">
+      <Filter>Source Files\log</Filter>
+    </ClInclude>
+    <ClInclude Include="thread\CThreadPool.h">
+      <Filter>Source Files\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="thread\defines.h">
+      <Filter>Source Files\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="common\datetime.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ISingleton.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\modules.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\utility.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\defines.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="request\request.proto">
+      <Filter>Source Files\request</Filter>
+    </None>
   </ItemGroup>
 </Project>

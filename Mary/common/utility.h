@@ -1,7 +1,6 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef __COMMON_UTILITY_H__
+#define __COMMON_UTILITY_H__
 #include <iostream>
-#include <string>
 #include <string>
 
 size_t stringsplit(const std::string& s, std::vector<std::string>& vc, char delim, bool bEmpty = false)

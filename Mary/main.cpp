@@ -10,10 +10,12 @@
 #include "./network/CNetServer.h"
 #include "./network/common.h"
 #include "./cryption/Cryption.h"
-#include "./cfg/CINIHandler.h"
-#include "./threadpool/CThreadPool.h"
+#include "./ini/CINIHandler.h"
+#include "./thread/CThreadPool.h"
 #include "./request/request.h"
 #include "./network/CNetDistributor.h"
+#include "./xml/XmlDocument.h"
+#include "./xml/XmlAttribute.h"
 
 
 net::CNetServer* pServer = nullptr;
@@ -44,7 +46,7 @@ void InitializeFramework()
 	{
 		if (nullptr == pClient)
 		{
-			pClient = new net::CNetClient("127.0.0.1", 9877);
+			pClient = new net::CNetClient("172.17.93.107", 9877);
 		}
 		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetClient* p) {
 			p->Initialize();
@@ -55,26 +57,36 @@ void InitializeFramework()
 
 }
 
-void test()
-{
-	CRequest* req = new CRequest;
-	req->SetType(CRequest::Type::QUERY_AUTH);
-	std::string s = "create_user";
-	req->SetCmd(s);
-
-	// 添加参数
-	req->SetExtraData("username", "john_doe");
-	req->SetExtraData("email", "john@example.com");
-
-	std::string data;
-	if (req->Serialize(&data))
-	{
-	}
-}
 
 int main(int argc, char *argv[])
 {
-	InitializeFramework();
+	xml::XmlDocument doc;
+	bool bRet = doc.LoadFromFile("E:/repos/Mary/x64/Debug/test.xml");
+	xml::XmlNode root = doc.GetRoot();
+	std::string xxx = root.GetName();
+	auto nods = root.GetChildren("MethodInfo");
+	for (auto& elem : nods) 
+	{
+		std::string xxx1 = elem.GetName();
+		auto zz = elem.GetAttributes();
+		for (auto& d : zz)
+		{
+			std::string x1 = d.GetName();
+			std::string x2 = d.GetValue();
+			int dd = 2;
+		}
+		int x = 1;
+	}
+
+	auto nods1 = root.GetChildren("MethodInfo3");
+	for (auto& elem : nods1)
+	{
+		std::string xxx1 = elem.GetName();
+		int x = 1;
+	}
+
+	int x = 1;
+	//InitializeFramework();
     QApplication a(argc, argv);
     LoginWindow loginWnd;
 	//test();

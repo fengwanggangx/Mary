@@ -1,31 +1,34 @@
 #include "XmlAttribute.h"
+#include "Xml.h"
+#include "../common/defines.h"
 
 namespace xml
 {
 
-	XmlAttribute::XmlAttribute(rapidxml::xml_attribute<>* attr) : m_attr(attr) {}
+	XmlAttribute::XmlAttribute(rapidxml::xml_attribute<>* pAttr) : m_pAttr(pAttr) {}
 
-	// 判断属性是否有效
-	bool XmlAttribute::isValid() const { return m_attr != nullptr; }
-
-	// 获取属性名称
-	std::string XmlAttribute::name() const {
-		if (!m_attr) return "";
-		return m_attr->name().data();
+	bool XmlAttribute::IsValid() const
+	{
+		return IS_NOT_NULLPTR(m_pAttr);
 	}
 
-	// 获取属性值
-	std::string XmlAttribute::value() const {
-		if (!m_attr) return "";
-		return m_attr->value().data();
+	std::string XmlAttribute::GetName() const
+	{
+		RETURN_EMTPTY_IFNULLPTR(m_pAttr);
+		return xml::ToString(m_pAttr->name());
 	}
 
-	// 设置属性值
-	void XmlAttribute::setValue(const std::string& value) {
-		if (m_attr) {
-			std::string_view newValue = m_attr->document()->allocate_string(value.c_str());
-			m_attr->value(newValue);
-		}
+	std::string XmlAttribute::GetValue() const
+	{
+		RETURN_EMTPTY_IFNULLPTR(m_pAttr);
+		return xml::ToString(m_pAttr->value());
+	}
+
+	void XmlAttribute::SetValue(const std::string& strValue)
+	{
+		RETURN_IFNULLPTR(m_pAttr);
+		std::string_view str = m_pAttr->document()->allocate_string(strValue.c_str());
+		m_pAttr->value(str);
 	}
 
 }

@@ -25,6 +25,7 @@ namespace net
 		std::size_t nCount = net::utility::RequestFromBuffer(reqs, pEvent, m_buffer_recv);
 		for (const auto& req : reqs)
 		{
+			std::string strex = req->GetExtraData("retmsg");
 			RequestDisptcher->AddRequest(req);
 		}
 	}

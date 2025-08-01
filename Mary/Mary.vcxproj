@@ -116,8 +116,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cfg\CIniFile.cpp" />
-    <ClCompile Include="cfg\CINIHandler.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
@@ -131,18 +129,21 @@
     <ClCompile Include="database\CODBC.cpp" />
     <ClCompile Include="database\COracle.cpp" />
     <ClCompile Include="database\CSQLite3.cpp" />
+    <ClCompile Include="ini\CIniFile.cpp" />
+    <ClCompile Include="ini\CINIHandler.cpp" />
     <ClCompile Include="json\Json.cpp" />
     <ClCompile Include="log\CLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
     <ClCompile Include="network\CNetClient.cpp" />
+    <ClCompile Include="network\CNetDistributor.cpp" />
     <ClCompile Include="network\CNetTools.cpp" />
     <ClCompile Include="network\CNetPool.cpp" />
     <ClCompile Include="network\CNetServer.cpp" />
     <ClCompile Include="network\common.cpp" />
     <ClCompile Include="request\request.cpp" />
     <ClCompile Include="request\request.pb.cc" />
-    <ClCompile Include="threadpool\CThreadPool.cpp" />
+    <ClCompile Include="thread\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
     <ClCompile Include="xml\XmlAttribute.cpp" />
     <ClCompile Include="xml\XmlDocument.cpp" />
@@ -175,8 +176,7 @@
     <QtMoc Include="components\CViewSettings.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cfg\CIniFile.h" />
-    <ClInclude Include="cfg\CINIHandler.h" />
+    <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\datetime.h" />
     <ClInclude Include="common\modules.h" />
@@ -188,11 +188,14 @@
     <ClInclude Include="database\COracle.h" />
     <ClInclude Include="database\CSQLite3.h" />
     <ClInclude Include="database\IDataBase.h" />
+    <ClInclude Include="ini\CIniFile.h" />
+    <ClInclude Include="ini\CINIHandler.h" />
     <ClInclude Include="json\Json.h" />
     <ClInclude Include="log\CLogger.h" />
-    <ClInclude Include="log\Defines.h" />
+    <ClInclude Include="log\defines.h" />
     <ClInclude Include="network\CNet.h" />
     <ClInclude Include="network\CNetClient.h" />
+    <ClInclude Include="network\CNetDistributor.h" />
     <ClInclude Include="network\CNetTools.h" />
     <ClInclude Include="network\CNetPool.h" />
     <ClInclude Include="network\CNetRouter.h" />
@@ -200,12 +203,15 @@
     <ClInclude Include="network\common.h" />
     <ClInclude Include="request\request.h" />
     <ClInclude Include="request\request.pb.h" />
-    <ClInclude Include="threadpool\CThreadPool.h" />
-    <ClInclude Include="threadpool\defines.h" />
+    <ClInclude Include="thread\CThreadPool.h" />
+    <ClInclude Include="thread\defines.h" />
     <ClInclude Include="xml\Xml.h" />
     <ClInclude Include="xml\XmlAttribute.h" />
     <ClInclude Include="xml\XmlDocument.h" />
     <ClInclude Include="xml\XmlNode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="request\request.proto" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

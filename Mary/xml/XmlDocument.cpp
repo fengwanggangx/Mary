@@ -8,7 +8,7 @@ namespace xml
 {
 	XmlDocument::XmlDocument() :m_document(std::make_unique<rapidxml::xml_document<>>()) {}
 
-	bool XmlDocument::parse(const std::string& xml)
+	bool XmlDocument::Parse(const std::string& xml)
 	{
 		try
 		{
@@ -23,7 +23,7 @@ namespace xml
 		}
 	}
 
-	bool XmlDocument::loadFromFile(const std::string& filename) 
+	bool XmlDocument::LoadFromFile(const std::string& filename) 
 	{
 		try {
 			std::ifstream file(filename.c_str());
@@ -33,7 +33,7 @@ namespace xml
 
 			std::stringstream buffer;
 			buffer << file.rdbuf();
-			return parse(buffer.str());
+			return Parse(buffer.str());
 		}
 		catch (const std::exception& e)
 		{
@@ -41,7 +41,7 @@ namespace xml
 		}
 	}
 
-	bool XmlDocument::saveToFile(const std::string& filename, bool formatted) const
+	bool XmlDocument::SaveToFile(const std::string& filename, bool formatted) const
 	{
 		try {
 			std::ofstream file(filename);
@@ -65,7 +65,7 @@ namespace xml
 	}
 
 	// 转换为字符串
-	std::string XmlDocument::toString(bool formatted) const
+	std::string XmlDocument::ToString(bool formatted) const
 	{
 		std::stringstream ss;
 		if (formatted) {
@@ -78,9 +78,9 @@ namespace xml
 	}
 
 	// 创建根节点
-	XmlNode XmlDocument::createRootNode(const std::string& name)
+	XmlNode XmlDocument::CreateRootNode(const std::string& name)
 	{
-		clear();
+		Clear();
 		std::string_view nodeName = m_document->allocate_string(name.c_str());
 		rapidxml::xml_node<>* root = m_document->allocate_node(rapidxml::node_element, nodeName);
 		m_document->append_node(root);
@@ -88,13 +88,13 @@ namespace xml
 	}
 
 	// 获取根节点
-	XmlNode XmlDocument::root() const
+	XmlNode XmlDocument::GetRoot() const
 	{
 		return XmlNode(m_document->first_node().get());
 	}
 
 	// 清除文档
-	void XmlDocument::clear()
+	void XmlDocument::Clear()
 	{
 		m_document->clear();
 		m_xmlData.reset();

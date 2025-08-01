@@ -23,21 +23,21 @@ namespace xml
 		XmlDocument& operator=(XmlDocument&& other) noexcept = default;
 
 		// 解析XML字符串
-		bool parse(const std::string& xml);
+		bool Parse(const std::string& xml);
 		// 从文件加载XML
-		bool loadFromFile(const std::string& filename);
+		bool LoadFromFile(const std::string& filename);
 		// 保存XML到文件
-		bool saveToFile(const std::string& filename, bool formatted = true) const;
+		bool SaveToFile(const std::string& filename, bool formatted = true) const;
 
 		// 转换为字符串
-		std::string toString(bool formatted = true) const;
+		std::string ToString(bool formatted = true) const;
 
 		// 创建根节点
-		XmlNode createRootNode(const std::string& name);
+		XmlNode CreateRootNode(const std::string& name);
 		// 获取根节点
-		XmlNode root() const;
+		XmlNode GetRoot() const;
 		// 清除文档
-		void clear();
+		void Clear();
 	private:
 		std::unique_ptr<rapidxml::xml_document<>> m_document;
 		std::unique_ptr<char[]> m_xmlData;
