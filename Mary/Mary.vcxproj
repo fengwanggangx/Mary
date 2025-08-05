@@ -132,6 +132,8 @@
     <ClCompile Include="ini\CIniFile.cpp" />
     <ClCompile Include="ini\CINIHandler.cpp" />
     <ClCompile Include="json\Json.cpp" />
+    <ClCompile Include="json\JsonDocument.cpp" />
+    <ClCompile Include="json\JsonValue.cpp" />
     <ClCompile Include="log\CLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
@@ -191,6 +193,8 @@
     <ClInclude Include="ini\CIniFile.h" />
     <ClInclude Include="ini\CINIHandler.h" />
     <ClInclude Include="json\Json.h" />
+    <ClInclude Include="json\JsonDocument.h" />
+    <ClInclude Include="json\JsonValue.h" />
     <ClInclude Include="log\CLogger.h" />
     <ClInclude Include="log\defines.h" />
     <ClInclude Include="network\CNet.h" />

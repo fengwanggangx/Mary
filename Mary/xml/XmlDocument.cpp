@@ -3,6 +3,8 @@
 #include "rapidxml_print.hpp"
 #include <fstream>
 #include <sstream>
+#include "Xml.h"
+#include "../common/defines.h"
 
 namespace xml
 {
@@ -25,9 +27,11 @@ namespace xml
 
 	bool XmlDocument::LoadFromFile(const std::string& filename) 
 	{
-		try {
+		try
+		{
 			std::ifstream file(filename.c_str());
-			if (!file.is_open()) {
+			if (!file.is_open()) 
+			{
 				return false;
 			}
 
@@ -43,16 +47,20 @@ namespace xml
 
 	bool XmlDocument::SaveToFile(const std::string& filename, bool formatted) const
 	{
-		try {
+		try 
+		{
 			std::ofstream file(filename);
-			if (!file.is_open()) {
+			if (!file.is_open()) 
+			{
 				return false;
 			}
 
-			if (formatted) {
+			if (formatted) 
+			{
 				//file << rapidxml::pretty_print(m_document.get());
 			}
-			else {
+			else 
+			{
 				file << *m_document;
 			}
 
@@ -64,22 +72,24 @@ namespace xml
 		}
 	}
 
-	// 转换为字符串
 	std::string XmlDocument::ToString(bool formatted) const
 	{
 		std::stringstream ss;
-		if (formatted) {
+		if (formatted) 
+		{
 			//ss << rapidxml::pretty_print(m_document.get());
 		}
-		else {
+		else
+		{
 			ss << *m_document;
 		}
 		return ss.str();
 	}
 
-	// 创建根节点
 	XmlNode XmlDocument::CreateRootNode(const std::string& name)
 	{
+		RETURN_EMTPTY_IFNULLPTR(m_document);
+
 		Clear();
 		std::string_view nodeName = m_document->allocate_string(name.c_str());
 		rapidxml::xml_node<>* root = m_document->allocate_node(rapidxml::node_element, nodeName);
@@ -87,15 +97,17 @@ namespace xml
 		return XmlNode(root);
 	}
 
-	// 获取根节点
 	XmlNode XmlDocument::GetRoot() const
 	{
-		return XmlNode(m_document->first_node().get());
+		RETURN_EMTPTY_IFNULLPTR(m_document);
+
+		return XmlNode(xml::GetPtr(m_document->first_node()));
 	}
 
-	// 清除文档
 	void XmlDocument::Clear()
 	{
+		RETURN_IFNULLPTR(m_document);
+
 		m_document->clear();
 		m_xmlData.reset();
 	}

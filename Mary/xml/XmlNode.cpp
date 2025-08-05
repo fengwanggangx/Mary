@@ -3,6 +3,7 @@
 #include "rapidxml_print.hpp"
 #include <sstream> 
 #include "XmlAttribute.h"
+#include "../common/defines.h"
 
 namespace xml
 {
@@ -37,113 +38,103 @@ namespace xml
 
 	XmlNode::XmlNode(rapidxml::xml_node<>* pNode) : m_pNode(pNode) {}
 
-	// 判断节点是否有效
 	bool XmlNode::IsValid() const 
 	{ 
-		return nullptr != m_pNode; 
+		return IS_NOT_NULLPTR(m_pNode);
 	}
 
-	// 获取节点名称
 	std::string XmlNode::GetName() const
 	{
-		if (!m_pNode)
-		{
-			return "";
-		}
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
 		return xml::ToString(m_pNode->name());
 	}
 
-	// 获取节点值
 	std::string XmlNode::GetValue() const
 	{
-		if (!m_pNode)
-		{
-			return "";
-		}
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
 		return xml::ToString(m_pNode->value());
 	}
 
-	// 设置节点值
 	void XmlNode::SetValue(const std::string& strVal)
 	{
-		if (m_pNode) 
-		{
-			std::string_view strNewVal = m_pNode->document()->allocate_string(strVal.c_str());
-			m_pNode->value(strNewVal);
-		}
+		RETURN_IFNULLPTR(m_pNode);
+
+		std::string_view str = m_pNode->document()->allocate_string(strVal.c_str());
+		m_pNode->value(str);
 	}
 
-	// 获取第一个子节点
 	XmlNode XmlNode::GetFirstChild(const std::string& strName) const 
 	{
-		if (!m_pNode)
-		{
-			return XmlNode();
-		}
-		return strName.empty() ? XmlNode(m_pNode->first_node().get()) : XmlNode(m_pNode->first_node(strName.c_str()).get());
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
+
+		return XmlNode(xml::GetPtr(m_pNode->first_node(strName.c_str())));
 	}
 
-	// 获取下一个兄弟节点
 	XmlNode XmlNode::GetNextSibling(const std::string& strName) const
 	{
-		if (!m_pNode)
-		{
-			return XmlNode();
-		}
-		return strName.empty() ? XmlNode(m_pNode->next_sibling().get()) : XmlNode(m_pNode->next_sibling(strName.c_str()).get());
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
+		return  XmlNode(xml::GetPtr(m_pNode->next_sibling(strName.c_str())));
 	}
 
-	// 获取父节点
 	XmlNode XmlNode::GetParent() const
 	{
-		if (!m_pNode || !m_pNode->parent()) return XmlNode();
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
+		RETURN_EMTPTY_IFNULLPTR(m_pNode->parent());
+
 		return XmlNode(m_pNode->parent().get());
 	}
 
-	// 获取所有子节点
 	std::vector<XmlNode> XmlNode::GetChildren(const std::string& strName) const
 	{
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
 		std::vector<XmlNode> ret;
-		if (nullptr == m_pNode)
-		{
-			return ret;
-		}
-		auto ptr = strName.empty() ? m_pNode->first_node() : m_pNode->first_node(strName.c_str());
-		rapidxml::xml_node<>* pChild = ptr.has_value() ? ptr.get() : nullptr;
+		rapidxml::xml_node<>* pChild = xml::GetPtr(m_pNode->first_node(strName.c_str()));
 		while (nullptr != pChild)
 		{
 			ret.emplace_back(pChild);
-			ptr = strName.empty() ? pChild->next_sibling() : pChild->next_sibling(strName.c_str());
-			pChild = ptr.has_value() ? ptr.get() : nullptr;
+			pChild = xml::GetPtr(pChild->next_sibling(strName.c_str()));
 		}
 
 		return ret;
 	}
 
-	// 创建子节点
-	XmlNode XmlNode::CreateChild(const std::string& strName, const std::string& value) 
+	int XmlNode::GetChildrenCount() const
 	{
-		if (!m_pNode) return XmlNode();
+		RETURN_VALUE_IFNULLPTR(m_pNode, -1);
+		int nCount = 0;
+		rapidxml::xml_node<>* pChild = xml::GetPtr(m_pNode->first_node());
+		while (nullptr != pChild)
+		{
+			++nCount;
+			pChild = xml::GetPtr(pChild->next_sibling());
+		}
+		return nCount;
+	}
 
-		std::string_view nodeName = m_pNode->document()->allocate_string(strName.c_str());
-		rapidxml::xml_node<>* newNode = m_pNode->document()->allocate_node(rapidxml::node_element, nodeName);
+	// 创建子节点
+	XmlNode XmlNode::CreateChild(const std::string& strName, const std::string& strValue) 
+	{
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
 
-		if (!value.empty()) {
-			std::string_view nodeValue = m_pNode->document()->allocate_string(value.c_str());
-			newNode->value(nodeValue);
+		std::string_view strNodeName = m_pNode->document()->allocate_string(strName.c_str());
+		rapidxml::xml_node<>* pNewNode = m_pNode->document()->allocate_node(rapidxml::node_element, strNodeName);
+
+		if (!strValue.empty())
+		{
+			std::string_view strNodeValue = m_pNode->document()->allocate_string(strValue.c_str());
+			pNewNode->value(strNodeValue);
 		}
 
-		m_pNode->append_node(newNode);
-		return XmlNode(newNode);
+		m_pNode->append_node(pNewNode);
+		return XmlNode(pNewNode);
 	}
 
 	// 删除子节点
 	void XmlNode::RemoveChild(XmlNode& node)
 	{
-		if ((nullptr == m_pNode) || (nullptr == node.m_pNode))
-		{
-			return;
-		}
+		RETURN_IFNULLPTR(m_pNode);
+		RETURN_IFNULLPTR(node.m_pNode);
+
 		if (node.m_pNode->parent() != m_pNode)
 		{
 			return;
@@ -153,23 +144,20 @@ namespace xml
 	}
 
 
-	inline void XmlNode::AddAttribute(const std::string& strName, const std::string& value) 
+	inline void XmlNode::AddAttribute(const std::string& strName, const std::string& strValue) 
 	{
-		if (!m_pNode) return;
+		RETURN_IFNULLPTR(m_pNode);
 
 		std::string_view attrName = m_pNode->document()->allocate_string(strName.c_str());
-		std::string_view attrValue = m_pNode->document()->allocate_string(value.c_str());
+		std::string_view attrValue = m_pNode->document()->allocate_string(strValue.c_str());
 
-		rapidxml::xml_attribute<>* attr = m_pNode->document()->allocate_attribute(attrName, attrValue);
-		m_pNode->append_attribute(attr);
+		rapidxml::xml_attribute<>* pAttr = m_pNode->document()->allocate_attribute(attrName, attrValue);
+		m_pNode->append_attribute(pAttr);
 	}
 
 	inline XmlAttribute XmlNode::FindAttribute(const std::string& strName) const 
 	{
-		if (!m_pNode)
-		{
-			return XmlAttribute();
-		}
+		RETURN_EMTPTY_IFNULLPTR(m_pNode);
 
 		rapidxml::xml_attribute<>* attr = m_pNode->first_attribute(strName.c_str()).get();
 		return XmlAttribute(attr);

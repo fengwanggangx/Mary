@@ -15,18 +15,21 @@ namespace xml
 	std::string XmlAttribute::GetName() const
 	{
 		RETURN_EMTPTY_IFNULLPTR(m_pAttr);
+
 		return xml::ToString(m_pAttr->name());
 	}
 
 	std::string XmlAttribute::GetValue() const
 	{
 		RETURN_EMTPTY_IFNULLPTR(m_pAttr);
+
 		return xml::ToString(m_pAttr->value());
 	}
 
 	void XmlAttribute::SetValue(const std::string& strValue)
 	{
 		RETURN_IFNULLPTR(m_pAttr);
+
 		std::string_view str = m_pAttr->document()->allocate_string(strValue.c_str());
 		m_pAttr->value(str);
 	}

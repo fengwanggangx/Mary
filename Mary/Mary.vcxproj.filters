@@ -155,6 +155,12 @@
     <ClCompile Include="common\modules.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="json\JsonDocument.cpp">
+      <Filter>Source Files\json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\JsonValue.cpp">
+      <Filter>Source Files\json</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h">
@@ -297,6 +303,12 @@
     </ClInclude>
     <ClInclude Include="common\defines.h">
       <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="json\JsonDocument.h">
+      <Filter>Source Files\json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\JsonValue.h">
+      <Filter>Source Files\json</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
