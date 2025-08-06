@@ -57,6 +57,9 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{d64c32a1-c064-46ca-abc7-9e1f3612b94a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\base">
+      <UniqueIdentifier>{f3cb2472-ec39-4a36-a2ea-a75137e98db2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="json\JsonValue.cpp">
       <Filter>Source Files\json</Filter>
+    </ClCompile>
+    <ClCompile Include="base\CDatable.cpp">
+      <Filter>Source Files\base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -306,6 +312,12 @@
     </ClInclude>
     <ClInclude Include="json\JsonValue.h">
       <Filter>Source Files\json</Filter>
+    </ClInclude>
+    <ClInclude Include="common\defines.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="base\CDatable.h">
+      <Filter>Source Files\base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
