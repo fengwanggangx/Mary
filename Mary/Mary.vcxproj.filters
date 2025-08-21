@@ -60,6 +60,12 @@
     <Filter Include="Source Files\base">
       <UniqueIdentifier>{f3cb2472-ec39-4a36-a2ea-a75137e98db2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lua">
+      <UniqueIdentifier>{d2bdc679-baa9-49a9-93a5-bdded37913ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\scripts">
+      <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -166,6 +172,21 @@
     </ClCompile>
     <ClCompile Include="base\CDatable.cpp">
       <Filter>Source Files\base</Filter>
+    </ClCompile>
+    <ClCompile Include="base\CDistributor.cpp">
+      <Filter>Source Files\base</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\CLuaVM.cpp">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\CLuaLoader.cpp">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\defines.cpp">
+      <Filter>lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\CLuaParam.cpp">
+      <Filter>lua</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -319,10 +340,28 @@
     <ClInclude Include="base\CDatable.h">
       <Filter>Source Files\base</Filter>
     </ClInclude>
+    <ClInclude Include="base\CDistributor.h">
+      <Filter>Source Files\base</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\CLuaVM.h">
+      <Filter>lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\CLuaLoader.h">
+      <Filter>lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\defines.h">
+      <Filter>lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\CLuaParam.h">
+      <Filter>lua</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="request\request.proto">
       <Filter>Source Files\request</Filter>
+    </None>
+    <None Include="scripts\main.lua">
+      <Filter>Source Files\scripts</Filter>
     </None>
   </ItemGroup>
 </Project>

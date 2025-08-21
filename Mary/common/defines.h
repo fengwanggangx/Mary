@@ -1,6 +1,16 @@
 #ifndef __COMMON_DEFINES_H__
 #define __COMMON_DEFINES_H__
 
+#include <stdexcept>
+
+#define BIND_DLL_FUNC(func, name, handle) do { \
+    func = reinterpret_cast<decltype(func)>(GetProcAddress(handle, #name)); \
+    if (!func) { \
+        throw std::runtime_error("Failed to bind function: " #name); \
+    } \
+} while(0)
+
+
 #define RETURN_EMTPTY_IFNULLPTR(...) \
 		if ((__VA_ARGS__) == nullptr) \
 		{	\

@@ -16,9 +16,11 @@
 #include "./network/CNetDistributor.h"
 #include "./xml/XmlDocument.h"
 #include "./xml/XmlAttribute.h"
+#include "base/CDatable.h"
+#include "./base/CDistributor.h"
+#include "./lua/CLuaVM.h"
+#include <memory>
 
-
-net::CNetServer* pServer = nullptr;
 net::CNetClient* pClient = nullptr;
 
 #define ThreadPoolPtr CThreadPool::InstancePtr(2, 3)
@@ -29,67 +31,29 @@ void InitializeFramework()
 {
 	net::CNetDistributor<CRequest>::InstancePtr();
 	net::EnvInitialize();
-
-	if (bServer)
+	if (nullptr == pClient)
 	{
-		if (nullptr == pServer)
-		{
-			pServer = new net::CNetServer(9877);
-		}
-		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetServer* p) {
-			pServer->Initialize();
-			p->Start(false);
-			}, 
-			pServer);
+		pClient = new net::CNetClient("172.17.93.107", 9877);
 	}
-	else
-	{
-		if (nullptr == pClient)
-		{
-			pClient = new net::CNetClient("172.17.93.107", 9877);
-		}
-		ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetClient* p) {
-			p->Initialize();
-			p->Start(true);
-			}, 
-			pClient);
-	}
-
+	ThreadPoolPtr->PushTask(task_priority::em_high, 0, [](net::CNetClient* p) {
+		p->Initialize();
+		p->Start(true);
+		},
+		pClient);
 }
 
-
+#include "./lua/CLuaParam.h"
 int main(int argc, char *argv[])
 {
-	xml::XmlDocument doc;
-	bool bRet = doc.LoadFromFile("E:/repos/Mary/x64/Debug/test.xml");
-	xml::XmlNode root = doc.GetRoot();
-	std::string xxx = root.GetName();
-	auto nods = root.GetChildren("MethodInfo");
-	for (auto& elem : nods) 
-	{
-		std::string xxx1 = elem.GetName();
-		auto zz = elem.GetAttributes();
-		for (auto& d : zz)
-		{
-			std::string x1 = d.GetName();
-			std::string x2 = d.GetValue();
-			int dd = 2;
-		}
-		int x = 1;
-	}
+	CLuaVM vm;
+	bool bRet = vm.LoadScript("C:/Users/X/Desktop/main.lua");
+	CLuaParam* p = new CLuaParam();
+	vm.Execute(1, p);
 
-	auto nods1 = root.GetChildren("MethodInfo3");
-	for (auto& elem : nods1)
-	{
-		std::string xxx1 = elem.GetName();
-		int x = 1;
-	}
-
-	int x = 1;
-	//InitializeFramework();
+	InitializeFramework();
+	std::unique_ptr<CDistributor<true, std::vector<std::unique_ptr<CRequest>>, std::function<int(const CRequest&)>>> m_dispatcher;
     QApplication a(argc, argv);
     LoginWindow loginWnd;
-	//test();
 
     if (loginWnd.exec() == QDialog::Accepted)
     {

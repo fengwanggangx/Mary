@@ -65,7 +65,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\debug\libevent;include\debug\libevent\event2;include\debug\sqlite;include\debug\spdlog;include\debug\botan-3;include\debug\rapidjson;include\debug\rapidxml;include\debug\protobuf;include\debug\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include\debug\libevent;include\debug\libevent\event2;include\debug\sqlite;include\debug\spdlog;include\debug\botan-3;include\debug\rapidjson;include\debug\rapidxml;include\debug\protobuf;include\debug\ini;include\debug\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -77,7 +77,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\release\libevent;include\release\libevent\event2;include\release\sqlite;include\release\spdlog;include\release\botan-3;include\release\rapidjson;include\release\rapidxml;include\release\protobuf;include\release\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include\release\libevent;include\release\libevent\event2;include\release\sqlite;include\release\spdlog;include\release\botan-3;include\release\rapidjson;include\release\rapidxml;include\release\protobuf;include\release\ini;include\release\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -117,6 +117,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="base\CDatable.cpp" />
+    <ClCompile Include="base\CDistributor.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
@@ -136,6 +137,10 @@
     <ClCompile Include="json\JsonDocument.cpp" />
     <ClCompile Include="json\JsonValue.cpp" />
     <ClCompile Include="log\CLogger.cpp" />
+    <ClCompile Include="lua\CLuaLoader.cpp" />
+    <ClCompile Include="lua\CLuaParam.cpp" />
+    <ClCompile Include="lua\CLuaVM.cpp" />
+    <ClCompile Include="lua\defines.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
     <ClCompile Include="network\CNetClient.cpp" />
@@ -180,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\CDatable.h" />
+    <ClInclude Include="base\CDistributor.h" />
     <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\datetime.h" />
@@ -199,6 +205,10 @@
     <ClInclude Include="json\JsonValue.h" />
     <ClInclude Include="log\CLogger.h" />
     <ClInclude Include="log\defines.h" />
+    <ClInclude Include="lua\CLuaLoader.h" />
+    <ClInclude Include="lua\CLuaParam.h" />
+    <ClInclude Include="lua\CLuaVM.h" />
+    <ClInclude Include="lua\defines.h" />
     <ClInclude Include="network\CNet.h" />
     <ClInclude Include="network\CNetClient.h" />
     <ClInclude Include="network\CNetDistributor.h" />
@@ -218,6 +228,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="request\request.proto" />
+    <None Include="scripts\main.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

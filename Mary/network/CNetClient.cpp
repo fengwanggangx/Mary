@@ -21,13 +21,11 @@ namespace net
 
 	void CNetClient::OnRead(struct bufferevent* pEvent)
 	{
-		std::vector<CRequest*> reqs;
-		std::size_t nCount = net::utility::RequestFromBuffer(reqs, pEvent, m_buffer_recv);
-		for (const auto& req : reqs)
-		{
-			std::string strex = req->GetExtraData("retmsg");
-			RequestDisptcher->AddRequest(req);
-		}
+		CRequest* pReq = new CRequest;
+		pReq->SetType(CRequest::Type::QUERY_AUTH);
+		pReq->SetCmd("client_build");
+		pReq->SetExtraData("retmsg", "client_ok_hahhahahahhahaha");
+		net::utility::SendRequest(pReq, pEvent, m_buffer_send);
 	}
 
 	void CNetClient::OnConnected(bufferevent* pEvent)

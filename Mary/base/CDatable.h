@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 #include <stdexcept>
+#include <algorithm>
 
 
 using _TyCellData = std::variant<std::int32_t, std::int64_t, double, bool, char, std::string>;
@@ -14,18 +15,15 @@ using _TyColumnData = std::variant<std::vector<std::int32_t>, std::vector<std::i
 
 struct CColumnInfo
 {
-	unsigned int m_id{ 0 };
-	std::string m_strName;
-	_TyColumnData m_data;
-
-	std::size_t m_tHash{ 0 };
-
-	CColumnInfo(unsigned int nID, const std::string& strColName,  _TyColumnData&& data) : m_id(nID), m_strName(strColName), m_data(std::move(data)), m_tHash(std::hash<std::string>{}(get_type_name()))
+	CColumnInfo(unsigned int nID, const std::string& strColName) : m_id(nID), m_strName(strColName), m_tHash(std::hash<std::string>{}(GetColumnDataType()))
 	{
 	}
 
-	// 获取类型名称
-	std::string get_type_name() const
+	CColumnInfo(unsigned int nID, const std::string& strColName,  _TyColumnData&& data) : m_id(nID), m_strName(strColName), m_data(std::move(data)), m_tHash(std::hash<std::string>{}(GetColumnDataType()))
+	{
+	}
+
+	std::string GetColumnDataType() const
 	{
 		return std::visit([](const auto& vec) {
 			using _Ty = typename std::decay_t<decltype(vec)>::value_type;
@@ -39,19 +37,22 @@ struct CColumnInfo
 			}, m_data);
 	}
 
-	// 获取列大小
-	std::size_t size() const 
+	std::size_t GetDataCount() const 
 	{
 		return std::visit([](const auto& vec) { return vec.size(); }, m_data);
 	}
 
-	// 检查是否可以安全地转换为指定类型
 	template<typename _Ty>
 	bool IsType() const
 	{
 		using _TyVec = std::vector<_Ty>;
-		return std::holds_alternative<_TyVec>(data);
+		return std::holds_alternative<_TyVec>(m_data);
 	}
+
+	unsigned int m_id{ 0 };
+	std::string m_strName;
+	_TyColumnData m_data;
+	std::size_t m_tHash{ 0 };
 };
 
 class CDataTable
@@ -63,37 +64,96 @@ public:
 	CDataTable(CDataTable&&) = default;
 	CDataTable& operator=(CDataTable&&) = default;
 
-	// 添加列
 	template<typename _Ty>
-	bool add_column(const std::string& strColName, std::vector<_Ty>&& data)
+	bool AddColumn(unsigned int nId, const std::string& strColName, std::vector<_Ty>&& data)
 	{
-		if (m_name_idx.count(strColName))
+		if ((m_name_idx.count(strColName) > 0) || (m_id_idx.count(nId) > 0))
 		{
 			return false;
 		}
 
-		// 检查数据大小是否与现有行计数一致
-		if (!m_columns.empty() && data.size() != m_nRowCount)
+		if (!CheckColDataSize(data.size()))
 		{
 			return false;
 		}
 
 		m_columns.emplace_back(std::make_unique<CColumnInfo>(strColName, _TyColumnData(std::move(data))));
 		m_name_idx[strColName] = m_columns.size() - 1;
-
-		if (m_columns.size() == 1)
-		{
-			m_nRowCount = m_columns[0]->size();
-		}
+		m_id_idx[nId] = m_columns.size() - 1;
+		return true;
 	}
 
-	// 获取列数
+	bool CheckColDataSize(std::size_t sz)
+	{
+		if (m_nRowCount <= 0)
+		{
+			m_nRowCount = sz;
+		}
+		else
+		{
+			if (m_nRowCount != sz)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool AddColumn(unsigned int nId, const std::string& strColName)
+	{
+		if ((m_name_idx.count(strColName) > 0) || (m_id_idx.count(nId) > 0))
+		{
+			return false;
+		}
+
+		m_columns.emplace_back(std::make_unique<CColumnInfo>(nId, strColName));
+		m_name_idx[strColName] = m_columns.size() - 1;
+		m_id_idx[nId] = m_columns.size() - 1;
+		return true;
+	}
+
+	template<typename _Ty>
+	bool SetIdxColumnData(std::size_t nIdx, std::vector<_Ty>&& data)
+	{
+		if ((nIdx >= m_columns.size()) || (nullptr == m_columns[nIdx]))
+		{
+			return false;
+		}
+
+		if (!CheckColDataSize(data.size()))
+		{
+			return false;
+		}
+
+		m_columns[nIdx]->m_data = std::forward<std::vector<_Ty>>(data);
+		return true;
+	}
+
+	template<typename _Ty>
+	bool SetColumnData(std::size_t nId, std::vector<_Ty>&& data)
+	{
+		if (m_id_idx.count(nId) <= 0)
+		{
+			return false;
+		}
+		return SetIdxColumnData(m_id_idx.at(nId), std::forward<std::vector<_Ty>>(data));
+	}
+
+	template<typename _Ty>
+	bool SetColumnData(const std::string& strColName , std::vector<_Ty>&& data)
+	{
+		if (m_name_idx.count(strColName) <= 0)
+		{
+			return false;
+		}
+		return SetIdxColumnData(m_name_idx.at(strColName), std::forward<std::vector<_Ty>>(data));
+	}
+
 	std::size_t GetColumnCount() const
 	{
 		return m_columns.size();
 	}
 
-	// 获取行数
 	std::size_t GetRowCount() const
 	{
 		return m_nRowCount;
@@ -131,20 +191,20 @@ public:
 		return ids;
 	}
 
-	// 获取列数据（类型安全）
 	template<typename _Ty>
 	std::vector<_Ty>& GetColumnData(const std::string& strName)
 	{
+		static std::vector<_Ty> data;
 		const auto& it = m_name_idx.find(strName);
 		if (it == m_name_idx.end()) 
 		{
-			return {};
+			return data;
 		}
 
 		auto& column = m_columns[it->second];
 		if (!column->IsType<_Ty>())
 		{
-			return {};
+			return data;
 		}
 
 		return std::get<std::vector<_Ty>>(column->m_data);
@@ -156,7 +216,6 @@ public:
 		return const_cast<CDataTable*>(this)->GetColumnData<_Ty>(strName);
 	}
 
-	// 获取行数据（以变体向量形式）
 	std::vector<_TyCellData> GetRowData(std::size_t nIdx) const
 	{
 		if (nIdx >= m_nRowCount)
@@ -168,69 +227,71 @@ public:
 		row.reserve(m_columns.size());
 		for (const auto& col : m_columns)
 		{
-			std::visit([&](const auto& vec){
+			std::visit([&](const auto& vec) {
 				row.emplace_back(vec[nIdx]);
 				}, 
 				col->m_data);
 		}
-
 		return row;
 	}
 
-	// 添加一行数据
-	bool AddRow(const std::vector<_TyCellData>& row_data)
+	bool AddRow(const std::vector<_TyCellData>& row)
 	{
-		if (row_data.size() != m_columns.size())
+		std::size_t nColCount = m_columns.size();
+		if (row.size() != nColCount)
 		{
 			return false;
 		}
 
-		for (std::size_t i = 0; i < m_columns.size(); ++i)
+		for (std::size_t i = 0; i < nColCount; ++i)
 		{
 			const auto& col = m_columns[i];
-			const auto& data = row_data[i];
+			const auto& data = row[i];
 
 			std::visit([&](auto&& arg) {
 				using _Ty = std::decay_t<decltype(arg)>;
 				if (col->IsType<_Ty>()) 
 				{
 					std::get<std::vector<_Ty>>(col->m_data).emplace_back(arg);
-				}			
+				}		
 				}, 
 				data);
 		}
 
-		m_nRowCount++;
+		++m_nRowCount;
+		return true;
 	}
 
-	// 按列排序（高性能实现）
 	template<typename _Ty>
-	void SortByColumn(const std::string& strName, bool ascending = true)
+	void SortByColumn(const std::string& strColName, bool bAsc)
 	{
-		auto& col_data = GetColumnData<_Ty>(strName);
+		auto& col_data = GetColumnData<_Ty>(strColName);
 		std::vector<std::size_t> indices(m_nRowCount);
 
-		// 创建索引序列
 		for (std::size_t i = 0; i < m_nRowCount; ++i)
 		{
 			indices[i] = i;
 		}
 
-		// 根据列数据排序索引
-		if (ascending)
+		if (bAsc)
 		{
-			std::sort(indices.begin(), indices.end(), [&](std::size_t a, std::size_t b) {
+			std::sort(
+				indices.begin(), 
+				indices.end(), 
+				[&](std::size_t a, std::size_t b) {
 				return col_data[a] < col_data[b];
 				});
 		}
 		else {
-			std::sort(indices.begin(), indices.end(), [&](std::size_t a, std::size_t b) {
+			std::sort(
+				indices.begin(),
+				indices.end(),
+				[&](std::size_t a, std::size_t b) {
 				return col_data[a] > col_data[b];
 				});
 		}
 
-		// 重排所有列
-		reorder_rows(indices);
+		ReorderRows(indices);
 	}
 
 	void Clear()
@@ -241,15 +302,13 @@ public:
 	}
 
 private:
-	// 根据索引重排行
-	void reorder_rows(const std::vector<std::size_t>& new_order) 
+	void ReorderRows(const std::vector<std::size_t>& order) 
 	{
-		if (new_order.size() != m_nRowCount)
+		if (order.size() != m_nRowCount)
 		{
-			throw std::invalid_argument("New order size does not match row count");
+			return;
 		}
 
-		// 为每列创建新数据
 		for (auto& col : m_columns)
 		{
 			std::visit([&](auto&& vec) {
@@ -258,7 +317,7 @@ private:
 
 				for (std::size_t i = 0; i < m_nRowCount; ++i)
 				{
-					new_data[i] = vec[new_order[i]];
+					new_data[i] = vec[order[i]];
 				}
 
 				vec = std::move(new_data);
