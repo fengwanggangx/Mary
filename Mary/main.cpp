@@ -13,7 +13,6 @@
 #include "./ini/CINIHandler.h"
 #include "./thread/CThreadPool.h"
 #include "./request/request.h"
-#include "./network/CNetDistributor.h"
 #include "./xml/XmlDocument.h"
 #include "./xml/XmlAttribute.h"
 #include "base/CDatable.h"
@@ -29,7 +28,6 @@ bool bServer = false;
 
 void InitializeFramework()
 {
-	net::CNetDistributor<CRequest>::InstancePtr();
 	net::EnvInitialize();
 	if (nullptr == pClient)
 	{

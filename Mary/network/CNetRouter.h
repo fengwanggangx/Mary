@@ -25,7 +25,7 @@ namespace net
 		virtual void OnConnAccept(struct evconnlistener* pListener, evutil_socket_t fd, struct sockaddr* pAddr, int nLength) {}
 		virtual void OnConnected(struct bufferevent* pEvent) {}
 		virtual void OnEvent(struct bufferevent* pEvent, short events) {}
-		virtual void OnRead(struct bufferevent* pEvent) {}
+		virtual std::size_t OnRead(struct bufferevent* pEvent) { return 0; }
 		virtual void OnWrite(struct bufferevent* pEvent) {}
 	};
 

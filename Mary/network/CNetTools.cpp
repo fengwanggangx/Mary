@@ -24,7 +24,7 @@ namespace net
 			return n;
 		}
 
-		std::size_t RequestFromBuffer(std::vector<CRequest*>& reqs, struct bufferevent* pEvent, std::vector<char>& buffer)
+		std::size_t RequestFromBuffer(std::vector<std::unique_ptr<CRequest>>& reqs, struct bufferevent* pEvent, std::vector<char>& buffer)
 		{
 			std::size_t nReqCount = 0;
 			std::size_t nBufferLength = net::utility::BufferEventReader(pEvent, buffer);
@@ -32,6 +32,7 @@ namespace net
 			{
 				return 0;
 			}
+			evutil_socket_t fd = bufferevent_getfd(pEvent);
 			while (nBufferLength >= sizeof(uint32_t))
 			{
 				constexpr std::size_t nHeaderLength = sizeof(uint32_t);
@@ -47,10 +48,11 @@ namespace net
 				const char* pszData = buffer.data() + nHeaderLength;
 				std::string strData(pszData, nDataLength);
 
-				CRequest* pRequest = new CRequest;
-				if (pRequest->Deserialize(strData))
+				std::unique_ptr<CRequest> req = std::make_unique<CRequest>();
+				if (req->Deserialize(strData))
 				{
-					reqs.emplace_back(pRequest);
+					req->SetFd(fd);
+					reqs.emplace_back(std::move(req));
 					++nReqCount;
 				}
 				else
@@ -74,6 +76,7 @@ namespace net
 			}
 			return nReqCount;
 		}
+
 
 		bool SendRequest(CRequest* pRequest, struct bufferevent* pEvent, std::vector<char>& buffer)
 		{
@@ -102,7 +105,13 @@ namespace net
 				memcpy(buffer.data() + nHeadLength, data.data(), data.size());
 				return (0 == bufferevent_write(pEvent, buffer.data(), nLength));
 			}
-			return false;
+			return true;
+		}
+
+		bool SendRequest(CRequest* pRequest, struct bufferevent* pEvent)
+		{
+			thread_local std::vector<char> s_buffer_send(4096);
+			return SendRequest(pRequest, pEvent, s_buffer_send);
 		}
 	}
 }

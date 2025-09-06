@@ -118,8 +118,10 @@
   <ItemGroup>
     <ClCompile Include="base\CDatable.cpp" />
     <ClCompile Include="base\CDistributor.cpp" />
+    <ClCompile Include="business\RequestCenter.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
+    <ClCompile Include="common\utility.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
     <ClCompile Include="components\CMainWindow.cpp" />
     <ClCompile Include="components\CViewProductDateInfo.cpp" />
@@ -144,7 +146,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
     <ClCompile Include="network\CNetClient.cpp" />
-    <ClCompile Include="network\CNetDistributor.cpp" />
     <ClCompile Include="network\CNetTools.cpp" />
     <ClCompile Include="network\CNetPool.cpp" />
     <ClCompile Include="network\CNetServer.cpp" />
@@ -186,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="base\CDatable.h" />
     <ClInclude Include="base\CDistributor.h" />
+    <ClInclude Include="business\RequestCenter.h" />
     <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\datetime.h" />
@@ -211,7 +213,6 @@
     <ClInclude Include="lua\defines.h" />
     <ClInclude Include="network\CNet.h" />
     <ClInclude Include="network\CNetClient.h" />
-    <ClInclude Include="network\CNetDistributor.h" />
     <ClInclude Include="network\CNetTools.h" />
     <ClInclude Include="network\CNetPool.h" />
     <ClInclude Include="network\CNetRouter.h" />

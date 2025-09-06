@@ -66,6 +66,9 @@
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
     </Filter>
+    <Filter Include="business">
+      <UniqueIdentifier>{a3820762-49b4-4323-8b51-8aa425aec09c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -85,9 +88,6 @@
     </ClCompile>
     <ClCompile Include="components\CViewProducts.cpp">
       <Filter>Source Files\components</Filter>
-    </ClCompile>
-    <ClCompile Include="network\CNetDistributor.cpp">
-      <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\common.cpp">
       <Filter>Source Files\network</Filter>
@@ -188,6 +188,12 @@
     <ClCompile Include="lua\CLuaParam.cpp">
       <Filter>lua</Filter>
     </ClCompile>
+    <ClCompile Include="common\utility.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="business\RequestCenter.cpp">
+      <Filter>business</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h">
@@ -232,9 +238,6 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="network\CNetDistributor.h">
-      <Filter>Source Files\network</Filter>
-    </ClInclude>
     <ClInclude Include="network\common.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
@@ -354,6 +357,9 @@
     </ClInclude>
     <ClInclude Include="lua\CLuaParam.h">
       <Filter>lua</Filter>
+    </ClInclude>
+    <ClInclude Include="business\RequestCenter.h">
+      <Filter>business</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

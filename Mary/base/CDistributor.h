@@ -5,32 +5,13 @@
 #include <memory>
 #include <mutex>
 #include "../common/defines.h"
-
-template <typename _Ty>
-concept IsContainer = requires(_Ty c) {
-	typename _Ty::value_type; 
-	{ c.begin() } -> std::input_or_output_iterator;
-	{ c.end() } -> std::input_or_output_iterator; 
-	{ c.size() } -> std::convertible_to<size_t>;
-};
-
-template <typename _Ty, typename = void>
-struct ValueType 
-{
-	using type = _Ty;
-};
-
-template <typename _Ty>
-struct ValueType<_Ty, std::enable_if_t<IsContainer<_Ty>>>
-{
-	using type = typename _Ty::value_type;
-};
+#include "../common/utility.h"
 
 template<bool bAsyn, class _Ty, class _TyHandler>
-class CDistributor final
+class CDistributor
 {
-	using _TyDataContainer = std::vector<_Ty>;
-	using _TyData = ValueType<_Ty>::type;
+	using _TyData = Typer<_Ty>::type;
+	using _TyDataContainer = std::vector<_TyData>;
 
 public:
 	CDistributor() = default;
@@ -59,7 +40,7 @@ public:
 				std::unique_lock<std::shared_mutex> lock(m_mtx_data);
 				m_cache.emplace_back(std::move(data));
 			}
-			//ThreadPoolPtr->PushTask(task_priority::em_normal, 0, [this]() { AsyncExecute(); });
+			ThreadPoolPtr->PushTask(task_priority::em_normal, 0, [this]() { AsyncExecute(); });
 		}
 		else
 		{
@@ -97,7 +78,7 @@ private:
 			ret = ((1 << sz) - 1);
 			for (std::size_t i = 0; i < sz; ++i)
 			{
-				if (ExecuteA(*data.at(i)) != nOK)
+				if (ExecuteA(data.at(i)) != nOK)
 				{
 					ret &= ~(1 << i);
 				}
@@ -134,4 +115,5 @@ private:
 	std::shared_mutex m_mtx_handler;
 	std::vector<_TyHandler> m_handler;
 };
+
 #endif

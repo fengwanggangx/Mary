@@ -19,7 +19,7 @@ static request::RequestType ToProtoType(CRequest::Type type)
 
 std::shared_ptr<google::protobuf::Arena> CRequest::m_arena = std::make_shared<google::protobuf::Arena>();
 
-CRequest::CRequest() 
+CRequest::CRequest() : m_id(++s_id)
 {
 	google::protobuf::Arena* px = new google::protobuf::Arena();
 	m_data = google::protobuf::Arena::CreateMessage<request::RequestData>(px);
@@ -132,4 +132,14 @@ std::unordered_map<std::string, std::string> CRequest::GetReturnData() const
 		return {};
 	}
 	return { m_data->ret().begin(), m_data->ret().end() };
+}
+
+void CRequest::SetFd(int64_t fd)
+{
+	m_fd = fd;
+}
+
+int64_t CRequest::GetFd() const
+{
+	return m_fd;
 }

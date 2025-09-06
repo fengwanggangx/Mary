@@ -7,25 +7,25 @@
 #include "../request/request.h"
 #include "../log/Defines.h"
 #include "CNetPool.h"
-#include "CNetDistributor.h"
-
-#define RequestDisptcher net::CNetDistributor<CRequest>::InstancePtr()
+#include "../base/CDistributor.h"
 
 namespace net
 {
-	CNetClient::CNetClient(const std::string& strAddr, int nPort) : m_strAddr(strAddr), m_nPort(nPort)
+	CNetClient::CNetClient(const std::string& strAddr, int nPort) : m_strAddr(strAddr), m_nPort(nPort), m_dispatcher(std::make_unique<_TyDistributor>())
 	{
 		m_buffer_recv.reserve(4096);
 		m_buffer_send.reserve(4096);
 	}
 
-	void CNetClient::OnRead(struct bufferevent* pEvent)
+	std::size_t CNetClient::OnRead(struct bufferevent* pEvent)
 	{
-		CRequest* pReq = new CRequest;
-		pReq->SetType(CRequest::Type::QUERY_AUTH);
-		pReq->SetCmd("client_build");
-		pReq->SetExtraData("retmsg", "client_ok_hahhahahahhahaha");
-		net::utility::SendRequest(pReq, pEvent, m_buffer_send);
+		std::vector<std::unique_ptr<CRequest>> reqs;
+		std::size_t sz = net::utility::RequestFromBuffer(reqs, pEvent, m_buffer_recv);
+		if (m_dispatcher)
+		{
+			m_dispatcher->Dispatch(std::move(reqs));
+		}
+		return sz;
 	}
 
 	void CNetClient::OnConnected(bufferevent* pEvent)
@@ -133,12 +133,8 @@ namespace net
 		return 0;
 	}
 
-	void CNetClient::Send(const char* pData)
+	void CNetClient::RegisterHandler(_TyHandler&& func)
 	{
-
-	}
-	void CNetClient::Recv(const char* pData)
-	{
-
+		m_dispatcher->RegisterHandler(std::move(func));
 	}
 }

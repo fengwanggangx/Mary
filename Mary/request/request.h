@@ -43,6 +43,9 @@ public:
 	std::unordered_map<std::string, std::string> GetExtraData() const;
 	std::unordered_map<std::string, std::string> GetReturnData() const;
 
+	void SetFd(int64_t fd);
+	int64_t GetFd() const;
+
 public:
 	bool Serialize(std::string* output) const;
 	bool Deserialize(const std::string& data);
@@ -50,6 +53,10 @@ public:
 private:
 	request::RequestData* m_data{ nullptr };
 	static std::shared_ptr<google::protobuf::Arena> m_arena;
+	static inline std::atomic<uint64_t> s_id = 1;
+
+	int64_t m_fd{ -1 };
+	const uint64_t m_id;
 };
 
 #endif

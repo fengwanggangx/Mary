@@ -3,11 +3,12 @@
 #include "common.h"
 #include "event2/event.h"
 #include <event2/buffer.h>
+#include "CNetTools.h"
 namespace net
 {
 	struct CNetInfo
 	{
-		evutil_socket_t m_fd{ -1 };
+		_TyFd m_fd{ -1 };
 		struct sockaddr_storage	m_addr { 0 };
 		struct bufferevent* m_pEvent{ nullptr };
 		std::string m_strAddress;
@@ -42,7 +43,7 @@ namespace net
 
 	}
 
-	bool CNetPool::RegisterAConnection(evutil_socket_t fd, struct bufferevent* pEvent, struct sockaddr* pAddr)
+	bool CNetPool::RegisterAConnection(_TyFd fd, struct bufferevent* pEvent, struct sockaddr* pAddr)
 	{
 		if ((nullptr == pAddr) || (nullptr == pEvent))
 		{
@@ -64,7 +65,7 @@ namespace net
 		return true;
 	}
 
-	struct bufferevent* CNetPool::RegisterAConnection(evutil_socket_t fd, struct bufferevent* pEvent, struct sockaddr_storage* pAddr)
+	struct bufferevent* CNetPool::RegisterAConnection(_TyFd fd, struct bufferevent* pEvent, struct sockaddr_storage* pAddr)
 	{
 		if ((nullptr == pAddr) || (nullptr == pEvent))
 		{
@@ -87,7 +88,7 @@ namespace net
 		return pEvent;
 	}
 
-	struct bufferevent* CNetPool::RegisterConnect(evutil_socket_t fd, struct event_base* pNet, struct sockaddr* pAddr, int nLength, bufferevent_data_cb readcb, bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void* cbarg)
+	struct bufferevent* CNetPool::RegisterConnect(_TyFd fd, struct event_base* pNet, struct sockaddr* pAddr, int nLength, bufferevent_data_cb readcb, bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void* cbarg)
 	{
 		if (!CheckSockAddress(pAddr, nLength))
 		{
@@ -133,7 +134,7 @@ namespace net
 		return true;
 	}
 
-	bool CNetPool::CloseAConnection(evutil_socket_t fd)
+	bool CNetPool::CloseAConnection(_TyFd fd)
 	{
 		auto mIter = m_pool.find(fd);
 		if (mIter == m_pool.end())
@@ -150,8 +151,7 @@ namespace net
 		return true;
 	}
 
-
-	bool CNetPool::SendData2Client(evutil_socket_t fd, const char* data, size_t nLength)
+	bool CNetPool::SendData2Client(_TyFd fd, const char* data, size_t nLength)
 	{
 		if ((nullptr == data) || (0 == nLength))
 		{
@@ -174,6 +174,27 @@ namespace net
 			return false;
 		}
 
-		return evbuffer_add(pBuffer, data, nLength);
+		return 0 == evbuffer_add(pBuffer, data, nLength);
+	}
+
+	bool CNetPool::SendReq2Client(_TyFd fd, const std::unique_ptr<CRequest>& req)
+	{
+		if (nullptr == req)
+		{
+			return false;
+		}
+
+		auto mIter = m_pool.find(fd);
+		if (mIter == m_pool.end())
+		{
+			return false;
+		}
+		struct bufferevent* pEvent = mIter->second->m_pEvent;
+		if (nullptr == pEvent)
+		{
+			return false;
+		}
+		net::utility::SendRequest(req.get(), pEvent);
+		return true;
 	}
 }

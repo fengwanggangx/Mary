@@ -2,6 +2,9 @@
 #define __COMMON_DEFINES_H__
 
 #include <stdexcept>
+#include "../thread/CThreadPool.h"
+
+#define ThreadPoolPtr CThreadPool::InstancePtr(2, 3)
 
 #define BIND_DLL_FUNC(func, name, handle) do { \
     func = reinterpret_cast<decltype(func)>(GetProcAddress(handle, #name)); \
