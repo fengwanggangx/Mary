@@ -1,5 +1,6 @@
 #ifndef __ISINGLETON_H__
 #define __ISINGLETON_H__
+#include "defines.h"
 
 #define DECLARE_SINGLE_DFAULT_DELETE(ClassName) \
      friend class ISingleton<ClassName>; \
@@ -44,10 +45,7 @@ protected:
 	ISingleton() = default;
 	~ISingleton() = default;
 
-private:
-	ISingleton(const ISingleton&) = delete;
-	ISingleton(ISingleton&&) = delete;
-	ISingleton& operator=(const ISingleton&) = delete;
-	ISingleton& operator=(ISingleton&&) = delete;
+public:
+	DECLARE_DELETE_COPY_CONSTRUCT(ISingleton);
 };
 #endif

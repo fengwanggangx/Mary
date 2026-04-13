@@ -1,6 +1,6 @@
 #include "JsonValue.h"
 #include <stdexcept>
-#include "common/defines.h"
+#include "../defines.h"
 
 namespace json
 {

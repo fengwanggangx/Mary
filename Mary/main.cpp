@@ -22,8 +22,6 @@
 
 net::CNetClient* pClient = nullptr;
 
-#define ThreadPoolPtr CThreadPool::InstancePtr(2, 3)
-
 bool bServer = false;
 
 void InitializeFramework()

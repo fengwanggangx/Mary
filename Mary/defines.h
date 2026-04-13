@@ -1,0 +1,54 @@
+#ifndef __COMMON_DEFINES_H__
+#define __COMMON_DEFINES_H__
+
+#include <stdexcept>
+//#include "./thread/CThreadPool.h"
+
+#define BIND_DLL_FUNC(func, name, handle) do { \
+    func = reinterpret_cast<decltype(func)>(GetProcAddress(handle, #name)); \
+    if (!func) { \
+        throw std::runtime_error("Failed to bind function: " #name); \
+    } \
+} while(0)
+
+
+#define RETURN_EMTPTY_IFNULLPTR(...) \
+		if ((__VA_ARGS__) == nullptr) \
+		{	\
+			return {};	\
+		}\
+
+#define RETURN_VALUE_IFNULLPTR(ptr, val) \
+		if (nullptr == ptr) \
+		{	\
+			return val;	\
+		}\
+
+
+#define RETURN_IFNULLPTR(...) \
+		if ((__VA_ARGS__) == nullptr) \
+		{	\
+			return;	\
+		}\
+
+#define IS_NOT_NULLPTR(...)  ((__VA_ARGS__) != nullptr)
+
+#define IS_NULLPTR(...)  ((__VA_ARGS__) == nullptr)
+
+
+#define DECLARE_DELETE_COPY_CONSTRUCT(ClassName) \
+		ClassName(const ClassName&) = delete;\
+		ClassName(ClassName&&) = delete;\
+		ClassName& operator=(const ClassName&) = delete;\
+		ClassName& operator=(ClassName&&) = delete;
+
+
+#define DECLARE_DEFAULT_COPY_CONSTRUCT(ClassName) \
+		ClassName(const ClassName&) = default;\
+		ClassName(ClassName&&) = default;\
+		ClassName& operator=(const ClassName&) = default;\
+		ClassName& operator=(ClassName&&) = default;
+
+//#define ThreadPoolPtr ISingleton<CThreadPool>::InstancePtr(2, 3)
+
+#endif

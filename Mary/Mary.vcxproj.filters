@@ -337,9 +337,6 @@
     <ClInclude Include="json\JsonValue.h">
       <Filter>Source Files\json</Filter>
     </ClInclude>
-    <ClInclude Include="common\defines.h">
-      <Filter>Source Files\common</Filter>
-    </ClInclude>
     <ClInclude Include="base\CDatable.h">
       <Filter>Source Files\base</Filter>
     </ClInclude>
@@ -360,6 +357,9 @@
     </ClInclude>
     <ClInclude Include="business\RequestCenter.h">
       <Filter>business</Filter>
+    </ClInclude>
+    <ClInclude Include="defines.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

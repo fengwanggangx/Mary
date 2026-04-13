@@ -3,7 +3,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/prettywriter.h>
-#include "../common/defines.h"
+#include "../defines.h"
 namespace json
 {
 	JsonDocument::JsonDocument() : m_bError(false)

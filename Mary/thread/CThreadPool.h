@@ -8,18 +8,18 @@
 #include <future>
 #include <mutex>
 #include "defines.h"
-#include "./common/ISingleton.h"
+#include "../defines.h"
 
 
-class CThreadPool final : public ISingleton<CThreadPool>
+class CThreadPool
 {
-	DECLARE_SINGLE_DFAULT_DELETE(CThreadPool)
-
-private:
+public:
+	CThreadPool() = default;
 	explicit CThreadPool(std::size_t threads);//只有核心线程
 	explicit CThreadPool(pool_type ty);//指定线程池类型
 	explicit CThreadPool(std::size_t threads, std::size_t assistants);//任务量过多有辅助线程
-
+	~CThreadPool();
+	DECLARE_DELETE_COPY_CONSTRUCT(CThreadPool);
 public:
 	void ShutDown();
 	void PrintTask();

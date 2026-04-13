@@ -4,7 +4,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include "../common/defines.h"
+#include "../defines.h"
 #include "../common/utility.h"
 
 template<bool bAsyn, class _Ty, class _TyHandler>
