@@ -4,7 +4,7 @@
 #include <event2/event.h>
 #include <sqlite3.h>
 #include "./database/CDBEngine.h"
-#include "./log/Defines.h"
+#include "./log/defines_log.h"
 #include "./common/datetime.h"
 #include "./network/CNetClient.h"
 #include "./network/CNetServer.h"

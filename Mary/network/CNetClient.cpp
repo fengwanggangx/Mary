@@ -5,7 +5,7 @@
 #include "common.h"
 #include <iostream>
 #include "../request/request.h"
-#include "../log/Defines.h"
+#include "../log/defines_log.h"
 #include "CNetPool.h"
 #include "../base/CDistributor.h"
 

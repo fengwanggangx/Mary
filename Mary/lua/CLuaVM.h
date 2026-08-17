@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-struct CLuaParam;
+class CLuaParam;
 class CLuaLoader;
 struct lua_State;
 class CLuaVM final
