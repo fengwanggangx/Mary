@@ -182,7 +182,7 @@
     <ClCompile Include="lua\CLuaLoader.cpp">
       <Filter>lua</Filter>
     </ClCompile>
-    <ClCompile Include="lua\defines.cpp">
+    <ClCompile Include="lua\defines_lua.cpp">
       <Filter>lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\CLuaParam.cpp">
@@ -193,6 +193,9 @@
     </ClCompile>
     <ClCompile Include="business\RequestCenter.cpp">
       <Filter>business</Filter>
+    </ClCompile>
+    <ClCompile Include="defines.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -310,13 +313,10 @@
     <ClInclude Include="log\CLogger.h">
       <Filter>Source Files\log</Filter>
     </ClInclude>
-    <ClInclude Include="log\defines.h">
+    <ClInclude Include="log\defines_log.h">
       <Filter>Source Files\log</Filter>
     </ClInclude>
     <ClInclude Include="thread\CThreadPool.h">
-      <Filter>Source Files\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="thread\defines.h">
       <Filter>Source Files\thread</Filter>
     </ClInclude>
     <ClInclude Include="common\datetime.h">
@@ -349,7 +349,7 @@
     <ClInclude Include="lua\CLuaLoader.h">
       <Filter>lua</Filter>
     </ClInclude>
-    <ClInclude Include="lua\defines.h">
+    <ClInclude Include="lua\defines_lua.h">
       <Filter>lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\CLuaParam.h">

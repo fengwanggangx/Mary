@@ -20,13 +20,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
@@ -133,6 +133,7 @@
     <ClCompile Include="database\CODBC.cpp" />
     <ClCompile Include="database\COracle.cpp" />
     <ClCompile Include="database\CSQLite3.cpp" />
+    <ClCompile Include="defines.cpp" />
     <ClCompile Include="ini\CIniFile.cpp" />
     <ClCompile Include="ini\CINIHandler.cpp" />
     <ClCompile Include="json\Json.cpp" />
@@ -142,7 +143,7 @@
     <ClCompile Include="lua\CLuaLoader.cpp" />
     <ClCompile Include="lua\CLuaParam.cpp" />
     <ClCompile Include="lua\CLuaVM.cpp" />
-    <ClCompile Include="lua\defines.cpp" />
+    <ClCompile Include="lua\defines_lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
     <ClCompile Include="network\CNetClient.cpp" />
@@ -206,11 +207,11 @@
     <ClInclude Include="json\JsonDocument.h" />
     <ClInclude Include="json\JsonValue.h" />
     <ClInclude Include="log\CLogger.h" />
-    <ClInclude Include="log\defines.h" />
+    <ClInclude Include="log\defines_log.h" />
     <ClInclude Include="lua\CLuaLoader.h" />
     <ClInclude Include="lua\CLuaParam.h" />
     <ClInclude Include="lua\CLuaVM.h" />
-    <ClInclude Include="lua\defines.h" />
+    <ClInclude Include="lua\defines_lua.h" />
     <ClInclude Include="network\CNet.h" />
     <ClInclude Include="network\CNetClient.h" />
     <ClInclude Include="network\CNetTools.h" />
@@ -221,7 +222,6 @@
     <ClInclude Include="request\request.h" />
     <ClInclude Include="request\request.pb.h" />
     <ClInclude Include="thread\CThreadPool.h" />
-    <ClInclude Include="thread\defines.h" />
     <ClInclude Include="xml\Xml.h" />
     <ClInclude Include="xml\XmlAttribute.h" />
     <ClInclude Include="xml\XmlDocument.h" />

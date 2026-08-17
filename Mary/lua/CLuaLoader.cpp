@@ -1,6 +1,6 @@
 #include "CLuaLoader.h"
 
-#include "defines.h"
+#include "defines_lua.h"
 #include "../defines.h"
 
 std::shared_ptr<CLuaLoader> CLuaLoader::Instance()

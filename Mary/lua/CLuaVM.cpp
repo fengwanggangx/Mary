@@ -1,6 +1,6 @@
 #include "CLuaVM.h"
 #include "CLuaLoader.h"
-#include "defines.h"
+#include "defines_lua.h"
 #include <stdexcept>
 #include "CLuaParam.h"
 

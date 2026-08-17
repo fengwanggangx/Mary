@@ -1,6 +1,6 @@
 #ifndef __ISINGLETON_H__
 #define __ISINGLETON_H__
-#include "defines.h"
+#include <utility>
 
 #define DECLARE_SINGLE_DFAULT_DELETE(ClassName) \
      friend class ISingleton<ClassName>; \
@@ -30,14 +30,14 @@ public:
 	template<typename... _TyArg>
 	static _Ty* InstancePtr(_TyArg&&... args)
 	{
-		static _Ty* pInstance = new _Ty(args...);
+		static _Ty* pInstance = new _Ty(std::forward<_TyArg>(args)...);
 		return pInstance;
 	}
 
 	template<typename... _TyArg>
 	static _Ty& InstanceRef(_TyArg&&... args)
 	{
-		return *InstancePtr(args...);
+		return *InstancePtr(std::forward<_TyArg>(args)...);
 	}
 
 	//禁止拷贝继承
@@ -45,7 +45,10 @@ protected:
 	ISingleton() = default;
 	~ISingleton() = default;
 
-public:
-	DECLARE_DELETE_COPY_CONSTRUCT(ISingleton);
+private:
+	ISingleton(const ISingleton&) = delete;
+	ISingleton(ISingleton&&) = delete;
+	ISingleton& operator=(const ISingleton&) = delete;
+	ISingleton& operator=(ISingleton&&) = delete;
 };
 #endif

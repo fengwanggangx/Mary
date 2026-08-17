@@ -1,6 +1,6 @@
 #include "XmlAttribute.h"
 #include "Xml.h"
-#include "../common/defines.h"
+#include "../defines.h"
 
 namespace xml
 {

@@ -45,15 +45,15 @@ std::size_t CalcBestPerformanceThreads(pool_type mode)
 }
 
 
-CThreadPool::CThreadPool(std::size_t threads)
+CThreadPool::CThreadPool(std::size_t cores)
 {
-	SetWorkersCount(threads, 0);
+	SetWorkersCount(cores, 0);
 	BuildNewThread(m_nCores);
 }
 
-CThreadPool::CThreadPool(std::size_t threads, std::size_t assistants)
+CThreadPool::CThreadPool(std::size_t cores, std::size_t assistants)
 {
-	SetWorkersCount(threads, assistants);
+	SetWorkersCount(cores, assistants);
 	BuildNewThread(m_nCores);
 }
 
@@ -75,48 +75,76 @@ void CThreadPool::SetWorkersCount(std::size_t nCores, std::size_t nAssistants)
 	m_nMaxWorkers = m_nCores + m_nAssistants;
 }
 
+std::mutex g_mtx;
+
 void CThreadPool::ShutDown()
 {
 	{
-		std::unique_lock<std::mutex> lck(m_task_mutex);
+		std::unique_lock<std::mutex> lck(m_task_mtx);
 		if (m_stop)
 		{
 			return;
 		}
 		m_stop = true;
+		m_thread_task_queues.clear();
 	}
 	m_cond.notify_all();
+
+	{
+		std::unique_lock<std::mutex> lck(m_worker_mtx);
+		for (auto& w : m_workers)
+		{
+			if (w.joinable())
+			{
+				w.join();
+			}
+		}
+		m_workers.clear();
+
+	}
+	m_nWorkers.store(0);
+	m_nTasks.store(0);
+	m_busy_workers.store(0);
 }
 
 void CThreadPool::ThreadProc()
 {
+	thread_local size_t tid = m_thread_id.fetch_add(1, std::memory_order_relaxed);
 	while (true)
 	{
-		std::function<void()> task;
+		std::function<void()> task{ nullptr };
 		{
-			std::unique_lock<std::mutex> lck(m_task_mutex);
+			std::unique_lock<std::mutex> lck(m_task_mtx);
 			m_cond.wait(lck, [this] {
-				return m_stop || !m_task_queue.empty(); 
+				return m_stop || !m_task_queue.empty() || ((tid < m_thread_task_queues.size()) && !m_thread_task_queues.at(tid).empty());
 				});
 
-			if (m_stop && m_task_queue.empty())
+			if (m_stop && (m_task_queue.empty() && ((tid >= m_thread_task_queues.size()) || m_thread_task_queues.at(tid).empty())))
 			{
 				return;
 			}
 
-			if (!m_task_queue.empty())
+			if (tid < m_thread_task_queues.size() && !m_thread_task_queues.at(tid).empty())
 			{
-				++m_busy_workers;
-				task = std::move(const_cast<Task&>(m_task_queue.top()).m_task);
+				auto& queue = m_thread_task_queues.at(tid);
+				task = std::move(queue.top().m_task);
+				queue.pop();
+				--m_nTasks;
+			}
+			else if (!m_task_queue.empty())
+			{
+				task = std::move(m_task_queue.top().m_task);
 				m_task_queue.pop();
 				--m_nTasks;
 			}
 		}
 		if (nullptr != task)
 		{
+			++m_busy_workers;
 			try
 			{
 				task();
+
 			}
 			catch (const std::exception&)
 			{
@@ -127,18 +155,7 @@ void CThreadPool::ThreadProc()
 	}
 }
 
-void CThreadPool::PrintTask()
-{
-	std::unique_lock<std::mutex> lck(m_task_mutex);
-	while (!m_task_queue.empty())
-	{
-		std::cout << int(m_task_queue.top().m_level) << "  |   " << m_task_queue.top().m_priority << std::endl;
-		m_task_queue.pop();
-		--m_nTasks;
-	}
-}
-
-bool CThreadPool::ShouldNewAssistantThread()
+bool CThreadPool::IsNeedAssistant()
 {
 	if (m_nAssistants <= 0)
 	{
@@ -154,17 +171,16 @@ bool CThreadPool::ShouldNewAssistantThread()
 	}
 	std::size_t nTasks = m_nTasks.load();
 	std::size_t nWorkers = m_nWorkers.load();
-	return  (nTasks > (nWorkers * 2.5));
+	return  (nTasks > (nWorkers * 2.5)) && (nTasks >= 20);
 }
 
 void CThreadPool::BuildNewThread(std::size_t threads)
 {
-	std::unique_lock<std::mutex> lck(m_worker_mutex);
+	std::unique_lock<std::mutex> lck(m_worker_mtx);
 	if (m_nWorkers >= m_nMaxWorkers)
 	{
 		return;
 	}
-
 	for (std::size_t i = 0; i < threads; ++i)
 	{
 		m_workers.emplace_back(&CThreadPool::ThreadProc, this);

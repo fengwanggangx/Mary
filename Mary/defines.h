@@ -2,7 +2,6 @@
 #define __COMMON_DEFINES_H__
 
 #include <stdexcept>
-//#include "./thread/CThreadPool.h"
 
 #define BIND_DLL_FUNC(func, name, handle) do { \
     func = reinterpret_cast<decltype(func)>(GetProcAddress(handle, #name)); \
@@ -49,6 +48,10 @@
 		ClassName& operator=(const ClassName&) = default;\
 		ClassName& operator=(ClassName&&) = default;
 
-//#define ThreadPoolPtr ISingleton<CThreadPool>::InstancePtr(2, 3)
+
+#include "./thread/CThreadPool.h"
+CThreadPool* GetThreadPool();
+
+#define ThreadPoolPtr GetThreadPool()
 
 #endif

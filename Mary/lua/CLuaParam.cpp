@@ -1,5 +1,5 @@
 #include "CLuaParam.h"
-#include "defines.h"
+#include "defines_lua.h"
 
 void CLuaParam::SetString(const std::string& strValue)
 {

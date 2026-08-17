@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include "Xml.h"
-#include "../common/defines.h"
+#include "../defines.h"
 
 namespace xml
 {

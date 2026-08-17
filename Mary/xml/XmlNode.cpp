@@ -3,7 +3,7 @@
 #include "rapidxml_print.hpp"
 #include <sstream> 
 #include "XmlAttribute.h"
-#include "../common/defines.h"
+#include "../defines.h"
 
 namespace xml
 {

@@ -1,4 +1,4 @@
-#include "defines.h"
+#include "defines_lua.h"
 
 lua_getglobal_t func_lua_getglobal = nullptr;
 lua_gettable_t func_lua_gettable = nullptr;

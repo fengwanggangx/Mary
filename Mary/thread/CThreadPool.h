@@ -1,32 +1,77 @@
-#ifndef __CThreadPool_H__
-#define __CThreadPool_H__
-
+#pragma once
 #include <iostream>
 #include <queue>
 #include <thread>
 #include <functional>
 #include <future>
 #include <mutex>
-#include "defines.h"
-#include "../defines.h"
 
+enum class task_priority
+{
+	em_normal = 0,	//一般任务
+	em_middle,		//居中
+	em_high			//高优先级任务
+};
 
-class CThreadPool
+enum class pool_type
+{
+	em_more_calc = 0,		//CPU密集型，大量数据处理计算
+	em_more_io,				//IO密集型，IO等待
+	em_more_complex			//混合任务
+};
+
+enum class abort_policy
+{
+	em_callerrunspolicy = 0,	//调用者线程执行任务
+	em_discardoldestpolicy,		//丢弃原队列中队尾任务，换成新的
+	em_discardpolicy			//丢弃任务
+};
+
+class Task
 {
 public:
-	CThreadPool() = default;
-	explicit CThreadPool(std::size_t threads);//只有核心线程
-	explicit CThreadPool(pool_type ty);//指定线程池类型
-	explicit CThreadPool(std::size_t threads, std::size_t assistants);//任务量过多有辅助线程
-	~CThreadPool();
-	DECLARE_DELETE_COPY_CONSTRUCT(CThreadPool);
-public:
-	void ShutDown();
-	void PrintTask();
+	friend struct TaskComparator;
+	friend class CThreadPool;
 
+public:
+	Task() = default;
+	template<typename _Fx>
+	Task(task_priority level, size_t priority, _Fx&& func) noexcept : m_level(level), m_priority(priority)
+	{
+		m_task = [f = std::forward<_Fx>(func)]() mutable { (*f)(); };
+	}
+	~Task()
+	{
+		m_task = nullptr;
+	}
+
+private:
+	task_priority	m_level{ task_priority::em_normal };
+	size_t	m_priority{ 0 };
+	std::function<void()> m_task{ nullptr };
+};
+
+struct TaskComparator
+{
+	//优先级高，先出栈
+	bool operator()(const Task& p1, const Task& p2)
+	{
+		return (int(p1.m_level) == int(p2.m_level)) ? (p1.m_priority < p2.m_priority) : (int(p1.m_level) < int(p2.m_level));
+	}
+};
+
+
+class CThreadPool final
+{
+public:
+	explicit CThreadPool(std::size_t cores);
+	explicit CThreadPool(pool_type ty);
+	explicit CThreadPool(std::size_t cores, std::size_t assistants);
+	~CThreadPool();
+
+public:
 	template<class _Fx, class... _Args>
-	auto PushTask(task_priority level, std::size_t priority, _Fx&& f, _Args&&... args) -> 
-		std::future<typename std::invoke_result_t<_Fx, _Args...>>
+	auto PushTask(task_priority level, std::size_t priority, _Fx&& f, _Args&&... args)// ->  std::future<typename std::result_of<_Fx(_Args...)>::type>
 	{
 		using return_type = typename std::invoke_result_t<_Fx, _Args...>;
 		auto task = std::make_shared<std::packaged_task<return_type()>>(
@@ -39,29 +84,27 @@ public:
 		return ret;
 	}
 
+	template<class _Fx, class... _Args>
+	auto PushTask(std::size_t idx, task_priority level, std::size_t priority, _Fx&& f, _Args&&... args)
+	{
+		using return_type = typename std::invoke_result_t<_Fx, _Args...>;
+		auto task = std::make_shared<std::packaged_task<return_type()>>(
+			[f = std::forward<_Fx>(f), args = std::make_tuple(std::forward<_Args>(args)...)]() mutable {
+				return std::apply(std::move(f), std::move(args));
+			}
+		);
+		std::future<return_type> ret = task->get_future();
+		RegisterTask(idx, level, priority, std::move(task));
+		return ret;
+	}
 
-
-// 	template<class _Fx>
-// 	auto PushTask(task_priority level, std::size_t priority, _Fx&& f) ->
-// 		std::future<typename std::invoke_result_t<_Fx>>
-// 	{
-// 		using return_type = typename std::invoke_result_t<_Fx>;
-// 		auto task = std::make_shared< std::packaged_task<return_type()> >(
-// 			[f = std::forward<_Fx>(f)]() mutable {
-// 				return f();
-// 			}
-// 		);
-// 		std::future<return_type> ret = task->get_future();
-// 		RegisterTask(level, priority, std::move(task));
-// 		return ret;
-// 	}
-
+	void ShutDown();
 private:
- 	template<typename _Task>
+	template<typename _Task>
 	bool RegisterTask(task_priority level, size_t priority, _Task&& task)
 	{
 		{
-			std::unique_lock<std::mutex> lck(m_task_mutex);
+			std::unique_lock<std::mutex> lck(m_task_mtx);
 			if (m_stop)
 			{
 				return false;
@@ -71,26 +114,59 @@ private:
 		}
 
 		m_cond.notify_one();
-		if ((m_nAssistants > 0) && ShouldNewAssistantThread())//增加辅助线程
+		if ((m_nAssistants > 0) && IsNeedAssistant())//增加辅助线程
 		{
 			BuildNewThread(1);
 		}
 		return true;
 	}
 
-private:
-	void ThreadProc();
-	bool ShouldNewAssistantThread();
-	void BuildNewThread(std::size_t threads);
-	void SetWorkersCount(std::size_t nCores, std::size_t nAssistants);
+	template<typename _Task>
+	bool RegisterTask(std::size_t idx, task_priority level, size_t priority, _Task&& task)
+	{
+		if (idx >= m_nWorkers)
+		{
+			return RegisterTask(level, priority, std::forward<_Task>(task));
+		}
+		{
+			std::unique_lock<std::mutex> lck(m_task_mtx);
+			if (m_stop)
+			{
+				return false;
+			}
+			while (idx >= m_thread_task_queues.size())
+			{
+				m_thread_task_queues.emplace_back();
+			}
+			m_thread_task_queues.at(idx).emplace(level, priority, std::forward<_Task>(task));
+			++m_nTasks;
+		}
+
+		m_cond.notify_all();//会有小规模惊群唤醒问题，线程数不多影响不大
+		return true;
+	}
 
 private:
-	std::mutex	m_task_mutex;
+	void ThreadProc();
+	bool IsNeedAssistant();
+	void BuildNewThread(std::size_t threads);
+	void SetWorkersCount(std::size_t nCores, std::size_t nAssistants);
+private:
+	using _TyTaskQueue = std::priority_queue<Task, std::vector<Task>, TaskComparator>;
+
+	//公共任务队列
+	_TyTaskQueue	m_task_queue;
+
+	//指定线程任务队列,主要用于时序任务
+	std::vector<_TyTaskQueue>	m_thread_task_queues;
+
+	std::mutex	m_task_mtx;
 	std::condition_variable	m_cond;
-	std::priority_queue<Task, std::vector<Task>, TaskComparator>	m_task_queue;
-	
-	std::mutex	m_worker_mutex;
-	std::vector<std::jthread>	m_workers;
+
+	std::atomic_size_t m_thread_id{ 0 };
+
+	std::mutex	m_worker_mtx;
+	std::vector<std::thread>	m_workers;
 
 private:
 	std::atomic_size_t		m_nWorkers{ 0 };		//当前线程数
@@ -103,5 +179,3 @@ private:
 	std::size_t				m_nAssistants{ 0 };		//辅助线程数
 	std::size_t				m_nMaxWorkers{ 0 };		//最大线程数
 };
-
-#endif
