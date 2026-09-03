@@ -1,53 +1,38 @@
 #include "CINIHandler.h"
-#include <fstream>
 
+#include <array>
+#include <filesystem>
+#include <utility>
 
 namespace ini
 {
+	namespace
+	{
+		using ConfigFile = std::pair<Config, std::filesystem::path>;
+
+		const std::array<ConfigFile, 1> configFiles{
+			ConfigFile{ Config::System, std::filesystem::path("ini") / "system.ini" }
+		};
+	}
+
 	CINIHandler::CINIHandler()
 	{
 		Load();
 	}
 
-	CINIHandler::~CINIHandler()
-	{
-	}
+	CINIHandler::~CINIHandler() = default;
 
-	std::unordered_map<ini::cfgs, std::string> s_files;
 	bool CINIHandler::Load()
 	{
-		if (!s_files.empty())
+		if (!m_iniFiles.empty())
 		{
-			return false;
+			return true;
 		}
-		for (const auto& f : s_files)
+
+		for (const ConfigFile& configFile : configFiles)
 		{
-			m_ini[f.first] = new CIniFile(f.second);
+			m_iniFiles.emplace(configFile.first, std::make_unique<CIniFile>(configFile.second.string()));
 		}
 		return true;
 	}
-
-	/*
-	template <class _Ty>
-	_Ty CINIHandler::GetValue(ini::cfgs cfg, const std::string& strSection, const std::string& strKey, _Ty&& def) const
-	{
-		const auto& mIter = m_ini.find(cfg);
-		if ((m_ini.end() == mIter) || (nullptr == mIter->second))
-		{
-			return def;
-		}
-		return mIter->second->GetValue(strSection, strKey, def);
-	}
-
-	template <class _Ty>
-	bool CINIHandler::SetValue(ini::cfgs cfg, const std::string& strSection, const std::string& strKey, _Ty&& val)
-	{
-		const auto& mIter = m_ini.find(cfg);
-		if ((m_ini.end() == mIter) || (nullptr == mIter->second))
-		{
-			return false;
-		}
-		return mIter->second->SetValue(strSection, strKey, val);
-	}
-	*/
 }

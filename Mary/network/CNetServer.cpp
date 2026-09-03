@@ -9,7 +9,7 @@
 #include "common.h"
 #include "CNetPool.h"
 #include "../request/request.h"
-#include "../base/CDistributor.h"
+#include "../basic/CDistributor.h"
 
 
 namespace net

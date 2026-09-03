@@ -57,8 +57,11 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{d64c32a1-c064-46ca-abc7-9e1f3612b94a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\base">
+    <Filter Include="Source Files\basic">
       <UniqueIdentifier>{f3cb2472-ec39-4a36-a2ea-a75137e98db2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\system">
+      <UniqueIdentifier>{93a51169-bdf8-41c7-a2ce-dbb3cc807a34}</UniqueIdentifier>
     </Filter>
     <Filter Include="lua">
       <UniqueIdentifier>{d2bdc679-baa9-49a9-93a5-bdded37913ea}</UniqueIdentifier>
@@ -93,6 +96,15 @@
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\CNet.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\CFrameBuffer.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\CTcpClient.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\common_net.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\CNetClient.cpp">
@@ -143,6 +155,18 @@
     <ClCompile Include="database\CSQLite3.cpp">
       <Filter>Source Files\database</Filter>
     </ClCompile>
+    <ClCompile Include="database\common_db.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="database\IDataBase.cpp">
+      <Filter>Source Files\database</Filter>
+    </ClCompile>
+    <ClCompile Include="system\CBootLoader.cpp">
+      <Filter>Source Files\system</Filter>
+    </ClCompile>
+    <ClCompile Include="business\CWindSession.cpp">
+      <Filter>business</Filter>
+    </ClCompile>
     <ClCompile Include="cryption\Cryption.cpp">
       <Filter>Source Files\cryption</Filter>
     </ClCompile>
@@ -170,11 +194,11 @@
     <ClCompile Include="json\JsonValue.cpp">
       <Filter>Source Files\json</Filter>
     </ClCompile>
-    <ClCompile Include="base\CDatable.cpp">
-      <Filter>Source Files\base</Filter>
+    <ClCompile Include="basic\CDatable.cpp">
+      <Filter>Source Files\basic</Filter>
     </ClCompile>
-    <ClCompile Include="base\CDistributor.cpp">
-      <Filter>Source Files\base</Filter>
+    <ClCompile Include="basic\CDistributor.cpp">
+      <Filter>Source Files\basic</Filter>
     </ClCompile>
     <ClCompile Include="lua\CLuaVM.cpp">
       <Filter>lua</Filter>
@@ -247,6 +271,15 @@
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
+    <ClInclude Include="network\CFrameBuffer.h">
+      <Filter>Source Files\network</Filter>
+    </ClInclude>
+    <ClInclude Include="network\CTcpClient.h">
+      <Filter>Source Files\network</Filter>
+    </ClInclude>
+    <ClInclude Include="network\common_net.h">
+      <Filter>Source Files\network</Filter>
+    </ClInclude>
     <ClInclude Include="network\CNetClient.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
@@ -298,6 +331,9 @@
     <ClInclude Include="database\IDataBase.h">
       <Filter>Source Files\database</Filter>
     </ClInclude>
+    <ClInclude Include="database\common_db.h">
+      <Filter>Source Files\database</Filter>
+    </ClInclude>
     <ClInclude Include="json\Json.h">
       <Filter>Source Files\json</Filter>
     </ClInclude>
@@ -337,11 +373,11 @@
     <ClInclude Include="json\JsonValue.h">
       <Filter>Source Files\json</Filter>
     </ClInclude>
-    <ClInclude Include="base\CDatable.h">
-      <Filter>Source Files\base</Filter>
+    <ClInclude Include="basic\CDatable.h">
+      <Filter>Source Files\basic</Filter>
     </ClInclude>
-    <ClInclude Include="base\CDistributor.h">
-      <Filter>Source Files\base</Filter>
+    <ClInclude Include="basic\CDistributor.h">
+      <Filter>Source Files\basic</Filter>
     </ClInclude>
     <ClInclude Include="lua\CLuaVM.h">
       <Filter>lua</Filter>
@@ -363,6 +399,18 @@
     </ClInclude>
     <ClInclude Include="common\TQueue.h">
       <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\container.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\container_traits.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\traits.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="system\CBootLoader.h">
+      <Filter>Source Files\system</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

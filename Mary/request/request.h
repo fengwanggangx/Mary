@@ -1,62 +1,59 @@
-#ifndef __REQUEST_H__
-#define __REQUEST_H__
+#ifndef MARY_REQUEST_REQUEST_H
+#define MARY_REQUEST_REQUEST_H
 
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
-namespace request {
+namespace request
+{
 	class RequestData;
 }
 
-namespace google {
-	namespace protobuf {
-		class Arena;
-	}
-}
-
-
-class CRequest
+class CRequest final
 {
 public:
-	CRequest();
-	~CRequest();
-
-	enum class Type {
+	enum class Type
+	{
 		UNKNOWN = 0,
 		QUERY_AUTH = 1,
 		QUERY_USERINFO = 2,
 		UPDATE_AUTH = 3,
-		UPDAT_PRODUCT = 4
+		UPDAT_PRODUCT = 4,
+		HQMARKET = 5
 	};
 
+	CRequest();
+	~CRequest();
+	CRequest(const CRequest& arg);
+	CRequest& operator=(const CRequest& arg);
+	CRequest(CRequest&&) noexcept;
+	CRequest& operator=(CRequest&&) noexcept;
 
-public:
-	void SetType(CRequest::Type type);
-	void SetCmd(const std::string& strCmd);
-	void SetExtraData(const std::string& strKey, const std::string& strVal);
-	void SetReturnData(const std::string& strKey, const std::string& strVal);
-
-	CRequest::Type GetType() const;
+	std::uint64_t GetId() const;
+	void SetId(std::uint64_t id);
+	Type GetType() const;
+	void SetType(Type type);
 	std::string GetCmd() const;
+	void SetCmd(const std::string& strCmd);
 	std::string GetExtraData(const std::string& strKey) const;
-	std::string GetReturnData(const std::string& strKey) const;
 	std::unordered_map<std::string, std::string> GetExtraData() const;
+	void SetExtraData(const std::string& strKey, const std::string& strValue);
+	std::string GetReturnData(const std::string& strKey) const;
 	std::unordered_map<std::string, std::string> GetReturnData() const;
+	void SetReturnData(const std::string& strKey, const std::string& strValue);
 
-	void SetFd(int64_t fd);
-	int64_t GetFd() const;
-
-public:
-	bool Serialize(std::string* output) const;
-	bool Deserialize(const std::string& data);
+	void SetConnectionId(std::int64_t id);
+	std::int64_t GetConnectionId() const;
+	void SetFd(std::int64_t id);
+	std::int64_t GetFd() const;
+	bool Serialize(std::string* pOutput) const;
+	bool Deserialize(const std::string& strData);
 
 private:
-	request::RequestData* m_data{ nullptr };
-	static std::shared_ptr<google::protobuf::Arena> m_arena;
-	static inline std::atomic<uint64_t> s_id = 1;
-
-	int64_t m_fd{ -1 };
-	const uint64_t m_id;
+	std::unique_ptr<request::RequestData> m_data;
+	std::int64_t m_connectionId{ -1 };
 };
 
 #endif

@@ -1,35 +1,40 @@
 #ifndef __CODBC_H__
 #define __CODBC_H__
 
+#include <string>
 #include <unordered_map>
-#include <mutex>
-#include "./common/ISingleton.h"
+#include <memory>
+#include <vector>
+#include <functional>
+#include <shared_mutex>
+#include "common_db.h"
+#include "../common/defines.h"
 
 namespace db
 {
-	enum class database
-	{
-		sqlite = 0,
-		mysql,
-		oracle
-	};
-
-
-
 	class IDataBase;
-	class CODBC final : public ISingleton<CODBC>
-	{
-		DECLARE_SINGLE_DFAULT(CODBC)
-	public:
-		IDataBase* Connect(db::database ty, const std::string& strParam);
-		int Release();
-		int Release(db::database ty);
-		int Release(db::database ty, const std::string& strParam);
-	private:
-		std::mutex m_mtx;
-		std::unordered_map<db::database, std::unordered_map<std::size_t, IDataBase*>> m_database;
+	struct CConnectParam;
 
+	using _TyDBReleasor = std::function<void(IDataBase*)>;
+	using _TyDBPtr = std::unique_ptr<IDataBase, _TyDBReleasor>;
+
+	struct CPoolState;
+
+	class CODBC final
+	{
+			DECLARE_ONLY_CUSTOM_CONSTRUCT(CODBC)
+		public:
+			int Connect(db::em_database t, const CConnectParam& param, std::size_t nCount);
+			int Close();
+			int Close(db::em_database t);
+
+			_TyDBPtr GetADataBase(db::em_database t);
+			std::size_t Count(db::em_database t) const;
+
+		private:
+			mutable std::shared_mutex m_mtx_pool;
+			std::unordered_map<em_database, std::vector<std::unique_ptr<IDataBase>>> m_pool;
 	};
 
-}
+} // namespace db
 #endif

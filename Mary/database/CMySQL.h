@@ -1,40 +1,34 @@
 #ifndef __CMySQL_H__
 #define __CMySQL_H__
-
-#include <sqlite3.h>
 #include "IDataBase.h"
-
+#include <mutex>
+struct MYSQL;
 namespace db
 {
 	class CMySQL : public IDataBase
 	{
-	public:
-		CMySQL();
-		~CMySQL();
+		public:
+			CMySQL();
+			~CMySQL();
 
-	public:
-		int Connect(const std::string& strFile) override;
-		int Close() override;
+		public:
+			int Connect(const db::CConnectParam& param) override;
+			int Close() override;
 
-		const std::vector<std::vector<std::string>>& ExecQuery(const std::string& strSQL) override;
-		int ExecUpdate(const std::string& strSQL) override;
+			int ExecUpdate(const std::string& strSQL) override;
+			const _TyTableInfo& ExecQuery(const std::string& strSQL) override;
 
-		static int GetLastErrCode();
-		static std::string GetLastErrMsg();
-	public:
-		static std::string GetRetCodeText(int nCode);
+			bool BeginTransaction() override;
+			bool EndTransaction() override;
+			bool RollBackTransaction() override;
 
-	private:
-		static void ClearLastErr();
+		private:
+			void DisConnect();
+			bool IsValid();
 
-		static void SetLastErrCode(int nErr);
-		static void SetLastErrMsg(const std::string& strErr);
-		static void SetLastErr(int nErr, const std::string& strErr);
-
-		static int& GetErrCodeRef();
-		static std::string& GetErrMsgRef();
-	private:
-		void* m_pDB{ nullptr };
+		private:
+			std::mutex m_mtx;
+			MYSQL* m_pDB{nullptr};
 	};
-}
+} // namespace db
 #endif

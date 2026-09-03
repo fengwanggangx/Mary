@@ -116,9 +116,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="base\CDatable.cpp" />
-    <ClCompile Include="base\CDistributor.cpp" />
-    <ClCompile Include="business\RequestCenter.cpp" />
+    <ClCompile Include="basic\CDatable.cpp" />
+    <ClCompile Include="basic\CDistributor.cpp" />
+    <ClCompile Include="business\CWindSession.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
@@ -129,10 +129,12 @@
     <ClCompile Include="components\CViewSettings.cpp" />
     <ClCompile Include="cryption\Cryption.cpp" />
     <ClCompile Include="database\CDBEngine.cpp" />
+    <ClCompile Include="database\common_db.cpp" />
     <ClCompile Include="database\CMySQL.cpp" />
     <ClCompile Include="database\CODBC.cpp" />
     <ClCompile Include="database\COracle.cpp" />
     <ClCompile Include="database\CSQLite3.cpp" />
+    <ClCompile Include="database\IDataBase.cpp" />
     <ClCompile Include="defines.cpp" />
     <ClCompile Include="ini\CIniFile.cpp" />
     <ClCompile Include="ini\CINIHandler.cpp" />
@@ -146,13 +148,14 @@
     <ClCompile Include="lua\defines_lua.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="network\CNet.cpp" />
-    <ClCompile Include="network\CNetClient.cpp" />
-    <ClCompile Include="network\CNetTools.cpp" />
+    <ClCompile Include="network\CFrameBuffer.cpp" />
+    <ClCompile Include="network\CTcpClient.cpp" />
     <ClCompile Include="network\CNetPool.cpp" />
-    <ClCompile Include="network\CNetServer.cpp" />
-    <ClCompile Include="network\common.cpp" />
+    <ClCompile Include="network\CNetTools.cpp" />
+    <ClCompile Include="network\common_net.cpp" />
     <ClCompile Include="request\request.cpp" />
     <ClCompile Include="request\request.pb.cc" />
+    <ClCompile Include="system\CBootLoader.cpp" />
     <ClCompile Include="thread\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
     <ClCompile Include="xml\XmlAttribute.cpp" />
@@ -161,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CMainWindow.h" />
+    <QtMoc Include="business\CWindSession.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc" />
@@ -186,16 +190,19 @@
     <QtMoc Include="components\CViewSettings.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="base\CDatable.h" />
-    <ClInclude Include="base\CDistributor.h" />
-    <ClInclude Include="business\RequestCenter.h" />
+    <ClInclude Include="basic\CDatable.h" />
+    <ClInclude Include="basic\CDistributor.h" />
     <ClInclude Include="common\ISingleton.h" />
+    <ClInclude Include="common\container.h" />
+    <ClInclude Include="common\container_traits.h" />
     <ClInclude Include="common\datetime.h" />
     <ClInclude Include="common\modules.h" />
     <ClInclude Include="common\TQueue.h" />
+    <ClInclude Include="common\traits.h" />
     <ClInclude Include="common\utility.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />
+    <ClInclude Include="database\common_db.h" />
     <ClInclude Include="database\CMySQL.h" />
     <ClInclude Include="database\CODBC.h" />
     <ClInclude Include="database\COracle.h" />
@@ -214,14 +221,15 @@
     <ClInclude Include="lua\CLuaVM.h" />
     <ClInclude Include="lua\defines_lua.h" />
     <ClInclude Include="network\CNet.h" />
-    <ClInclude Include="network\CNetClient.h" />
-    <ClInclude Include="network\CNetTools.h" />
-    <ClInclude Include="network\CNetPool.h" />
+    <ClInclude Include="network\CFrameBuffer.h" />
     <ClInclude Include="network\CNetRouter.h" />
-    <ClInclude Include="network\CNetServer.h" />
-    <ClInclude Include="network\common.h" />
+    <ClInclude Include="network\CNetPool.h" />
+    <ClInclude Include="network\CNetTools.h" />
+    <ClInclude Include="network\CTcpClient.h" />
+    <ClInclude Include="network\common_net.h" />
     <ClInclude Include="request\request.h" />
     <ClInclude Include="request\request.pb.h" />
+    <ClInclude Include="system\CBootLoader.h" />
     <ClInclude Include="thread\CThreadPool.h" />
     <ClInclude Include="xml\Xml.h" />
     <ClInclude Include="xml\XmlAttribute.h" />
@@ -230,6 +238,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="request\request.proto" />
+    <None Include="NETWORK_MIGRATION.md" />
+    <None Include="mary.ini.example" />
     <None Include="scripts\main.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

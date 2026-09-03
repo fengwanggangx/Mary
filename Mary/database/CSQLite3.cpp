@@ -1,11 +1,12 @@
 #include "CSQLite3.h"
-#include <unordered_map>
+#include <memory>
+#include <sqlite3.h>
+#include <utility>
 
 namespace db
 {
 	CSQLite3::CSQLite3()
 	{
-
 	}
 
 	CSQLite3::~CSQLite3()
@@ -13,16 +14,26 @@ namespace db
 		Close();
 	}
 
-	int CSQLite3::Connect(const std::string& strFile)
+	int CSQLite3::Connect(const CConnectParam& param)
 	{
-		int nRet = sqlite3_open(strFile.c_str(), &m_pDB);
-
-		if (nRet != SQLITE_OK)
+		if (nullptr != m_pDB)
 		{
-			const char* szError = sqlite3_errmsg(m_pDB);
-			m_pDB = nullptr;
+			return SQLITE_OK;
 		}
-		return nRet;
+
+		sqlite3* pDB = nullptr;
+		int nRet = sqlite3_open_v2(param.m_strDataBase.c_str(), &pDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+		if (SQLITE_OK != nRet)
+		{
+			if (nullptr != pDB)
+			{
+				sqlite3_close(pDB);
+			}
+			return nRet;
+		}
+
+		m_pDB = pDB;
+		return SQLITE_OK;
 	}
 
 	int CSQLite3::Close()
@@ -31,159 +42,77 @@ namespace db
 		{
 			return SQLITE_OK;
 		}
-		int nRet = sqlite3_close(m_pDB);
-		if (nRet != SQLITE_OK)
+
+		int nRet = sqlite3_close(static_cast<sqlite3*>(m_pDB));
+		if (SQLITE_OK == nRet)
 		{
-			const char* szError = sqlite3_errmsg(m_pDB);
 			m_pDB = nullptr;
-			return nRet;
 		}
-		m_pDB = nullptr;
 		return nRet;
-	}
-
-	const std::vector<std::vector<std::string>>& CSQLite3::ExecQuery(const std::string& strSQL)
-	{
-		ClearLastErr();
-		thread_local std::vector<std::vector<std::string>> s_data;
-		s_data.clear();
-		if (nullptr == m_pDB)
-		{
-			return s_data;
-		}
-		const char* szTail = 0;
-		sqlite3_stmt* pStmt = nullptr;
-
-		int nRet = sqlite3_prepare_v2(m_pDB, strSQL.c_str(), -1, &pStmt, &szTail);
-		if (nRet != SQLITE_OK)
-		{
-			SetLastErr(nRet, sqlite3_errmsg(m_pDB));
-			return s_data;
-		}
-		int nColumns = sqlite3_column_count(pStmt);
-		while (sqlite3_step(pStmt) == SQLITE_ROW)
-		{
-			std::vector<std::string> row(nColumns);
-			for (int i = 0; i < nColumns; ++i)
-			{
-				row.emplace_back(reinterpret_cast<const char*>(sqlite3_column_text(pStmt, i)));
-			}
-			s_data.emplace_back(std::move(row));
-		}
-		nRet = sqlite3_finalize(pStmt);
-		if (nRet != SQLITE_OK)
-		{
-			SetLastErr(nRet, sqlite3_errmsg(m_pDB));
-			return s_data;
-		}
-		return s_data;
 	}
 
 	int CSQLite3::ExecUpdate(const std::string& strSQL)
 	{
-		ClearLastErr();
 		if (nullptr == m_pDB)
 		{
-			return 0;
+			return SQLITE_MISUSE;
 		}
-		char* szError = 0;
-		int nRet = sqlite3_exec(m_pDB, strSQL.c_str(), 0, 0, &szError);
-		if (nRet != SQLITE_OK)
+		return sqlite3_exec(static_cast<sqlite3*>(m_pDB), strSQL.c_str(), nullptr, nullptr, nullptr);
+	}
+
+	const _TyTableInfo& CSQLite3::ExecQuery(const std::string& strSQL)
+	{
+		static _TyTableInfo table;
+		table = {};
+		if (nullptr == m_pDB)
 		{
-			SetLastErr(nRet, sqlite3_errmsg(m_pDB));
-			return 0;
+			return table;
 		}
-		return sqlite3_changes(m_pDB);
-	}
 
-	void CSQLite3::SetLastErrCode(int nErr)
-	{
-		GetErrCodeRef() = nErr;
-	}
-
-	void CSQLite3::SetLastErrMsg(const std::string& strErr)
-	{
-		GetErrMsgRef() = strErr;
-	}
-
-	void CSQLite3::SetLastErr(int nErr, const std::string& strErr)
-	{
-		GetErrCodeRef() = nErr;
-		GetErrMsgRef() = strErr;
-	}
-
-	void CSQLite3::ClearLastErr()
-	{
-		GetErrCodeRef() = SQLITE_OK;
-		GetErrMsgRef().clear();
-	}
-
-	int& CSQLite3::GetErrCodeRef()
-	{
-		thread_local int s_nErrCode{ 0 };
-		return s_nErrCode;
-	}
-
-	std::string& CSQLite3::GetErrMsgRef()
-	{
-		thread_local std::string s_nErrCode{ 0 };
-		return s_nErrCode;
-	}
-
-	int CSQLite3::GetLastErrCode()
-	{
-		int nErr = GetErrCodeRef();
-		GetErrCodeRef() = 0;
-		return nErr;
-	}
-
-	std::string CSQLite3::GetLastErrMsg()
-	{
-		std::string strErr = GetErrMsgRef();;
-		GetErrMsgRef().clear();
-		return strErr;
-	}
-
-	std::string CSQLite3::GetRetCodeText(int nCode)
-	{
-		static std::unordered_map<int, std::string> s_code
+		sqlite3_stmt* pStatement = nullptr;
+		int nRet = sqlite3_prepare_v2(static_cast<sqlite3*>(m_pDB), strSQL.c_str(), -1, &pStatement, nullptr);
+		auto statement = std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>(pStatement, sqlite3_finalize);
+		if (SQLITE_OK != nRet)
 		{
-			{SQLITE_OK, "SQLITE_OK"},
-			{SQLITE_ERROR, "SQLITE_ERROR"},
-			{SQLITE_INTERNAL, "SQLITE_INTERNAL"},
-			{SQLITE_PERM, "SQLITE_PERM"},
-			{SQLITE_ABORT, "SQLITE_ABORT"},
-			{SQLITE_BUSY, "SQLITE_BUSY"},
-			{SQLITE_LOCKED, "SQLITE_LOCKED"},
-			{SQLITE_NOMEM, "SQLITE_NOMEM"},
-			{SQLITE_READONLY, "SQLITE_READONLY"},
-			{SQLITE_INTERRUPT, "SQLITE_INTERRUPT"},
-			{SQLITE_IOERR, "SQLITE_IOERR"},
-			{SQLITE_CORRUPT, "SQLITE_CORRUPT"},
-			{SQLITE_NOTFOUND, "SQLITE_NOTFOUND"},
-			{SQLITE_FULL, "SQLITE_FULL"},
-			{SQLITE_CANTOPEN, "SQLITE_CANTOPEN"},
-			{SQLITE_PROTOCOL, "SQLITE_PROTOCOL"},
-			{SQLITE_EMPTY, "SQLITE_EMPTY"},
-			{SQLITE_SCHEMA, "SQLITE_SCHEMA"},
-			{SQLITE_TOOBIG, "SQLITE_TOOBIG"},
-			{SQLITE_CONSTRAINT, "SQLITE_CONSTRAINT"},
-			{SQLITE_MISMATCH, "SQLITE_MISMATCH"},
-			{SQLITE_MISUSE, "SQLITE_MISUSE"},
-			{SQLITE_NOLFS, "SQLITE_NOLFS"},
-			{SQLITE_AUTH, "SQLITE_AUTH"},
-			{SQLITE_FORMAT, "SQLITE_FORMAT"},
-			{SQLITE_RANGE, "SQLITE_RANGE"},
-			{SQLITE_ROW, "SQLITE_ROW"},
-			{SQLITE_DONE, "SQLITE_DONE"}
-		};
-
-		static std::string s_default = "UNKNOWN_CODE";
-		const auto& mIter = s_code.find(nCode);
-		if (mIter == s_code.end())
-		{
-			return s_default;
+			return table;
 		}
-		return mIter->second;
+
+		std::size_t nCols = static_cast<std::size_t>(sqlite3_column_count(statement.get()));
+		table.first.reserve(nCols);
+		for (std::size_t i = 0; i < nCols; ++i)
+		{
+			table.first.emplace_back();
+			CColumnInfo& column = table.first.back();
+			column.m_uId = i;
+			column.m_strName = sqlite3_column_name(statement.get(), i);
+		}
+
+		while (SQLITE_ROW == sqlite3_step(statement.get()))
+		{
+			table.second.emplace_back();
+			auto& row = table.second.back();
+			row.reserve(nCols);
+			for (std::size_t i = 0; i < nCols; ++i)
+			{
+				const unsigned char* pszValue = sqlite3_column_text(statement.get(), i);
+				row.emplace_back(nullptr == pszValue ? "" : reinterpret_cast<const char*>(pszValue));
+			}
+		}
+		return table;
 	}
-}
+
+	bool CSQLite3::BeginTransaction()
+	{
+		return SQLITE_OK == ExecUpdate("BEGIN IMMEDIATE");
+	}
+
+	bool CSQLite3::EndTransaction()
+	{
+		return SQLITE_OK == ExecUpdate("COMMIT");
+	}
+
+	bool CSQLite3::RollBackTransaction()
+	{
+		return SQLITE_OK == ExecUpdate("ROLLBACK");
+	}
+} // namespace db

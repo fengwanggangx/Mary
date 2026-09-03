@@ -1,56 +1,21 @@
-#ifndef __CDBENGINEx_H__
-#define __CDBENGINEx_H__
+#ifndef __CDBENGINE_H__
+#define __CDBENGINE_H__
 
-#include <string>
-#include <unordered_map>
-#include "./common/ISingleton.h"
-#include "CSQLite3.h"
-#include "CMySQL.h"
-#include "COracle.h"
+#include "../common/ISingleton.h"
 #include "CODBC.h"
-
-enum class sqlite
-{
-	system = 0,
-	userdata
-};
-
-enum class mysql
-{
-	system = 0,
-	userdata
-};
-
-enum class oracle
-{
-	system = 0,
-	userdata
-};
 
 class CDBEngine final : public ISingleton<CDBEngine>
 {
-	DECLARE_SINGLE_DFAULT(CDBEngine)
-public:
-	db::CSQLite3* Connect(sqlite ty);
-	db::CMySQL* Connect(mysql ty);
-	db::COracle* Connect(oracle ty);
+		DECLARE_SINGLE_DFAULT(CDBEngine)
+	public:
+		int Initialize(db::em_database ty, const db::CConnectParam& param, int nCount = 1);
+		int Close();
+		int Close(db::em_database t);
+		db::_TyDBPtr GetDBPtr(db::em_database t);
+		db::_TyDBPtr GetDBPtr(const std::string& strType);
+		std::size_t Count(db::em_database t) const;
 
-	int Close(sqlite ty);
-	int Close(mysql ty);
-	int Close(oracle ty);
-
-	int Close(db::database ty);
-
-	void InitConnectParam();
-
-private:
-	std::string GetConnectParam(sqlite ty);
-	std::string GetConnectParam(mysql ty);
-	std::string GetConnectParam(oracle ty);
-
-private:
-	std::unordered_map<sqlite, std::string> m_sqlite;
-	std::unordered_map<mysql, std::string> m_mysql;
-	std::unordered_map<oracle, std::string> m_oracle;
+	private:
+		std::unique_ptr<db::CODBC> m_pODBC{ nullptr };
 };
 #endif

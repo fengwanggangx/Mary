@@ -1,36 +1,20 @@
-#ifndef __UTILITY_H__
-#define __UTILITY_H__
-#include <string>
-#include <vector>
-#include <string.h>
-#include <charconv>
+#include "utility.h"
 
-template <typename _Ty>
-concept IsNumber = std::is_arithmetic_v<_Ty>;
-
-template <typename _Ty>
-concept IsContainer = requires(_Ty v) {
-	typename _Ty::value_type;
-	{ v.begin() } -> std::input_or_output_iterator;
-	{ v.end() } -> std::input_or_output_iterator;
-	{ v.size() } -> std::convertible_to<size_t>;
-};
-
-template <typename _Ty, typename = void>
-struct Typer
-{
-	using type = _Ty;
-};
-
-template <typename _Ty>
-struct Typer<_Ty, std::enable_if_t<IsContainer<_Ty>>>
-{
-	using type = typename _Ty::value_type;
-};
+#include <algorithm>
+#include <cctype>
 
 namespace utility
 {
-	size_t stringsplit(const std::string& s, std::vector<std::string>& vc, char delim, bool bEmpty = false)
+	std::string lower(std::string strVal)
+	{
+		std::transform(strVal.begin(), strVal.end(), strVal.begin(), [](unsigned char ch)
+			{
+				return static_cast<char>(std::tolower(ch));
+			});
+		return strVal;
+	}
+
+	size_t SplitString(const std::string& s, std::vector<std::string>& vc, char delim, bool bEmpty)
 	{
 		vc.clear();
 		const char* p = s.c_str();
@@ -66,23 +50,52 @@ namespace utility
 		return vc.size();
 	}
 
-	bool s2n(const std::string& str, IsNumber auto& val)
+	std::size_t SplitStringView(const std::string& str, std::vector<stringview>& views, char delim, bool bEmpty)
 	{
-		using _Ty = decltype(val);
-		using _Tyx = std::remove_reference_t<_Ty>;
-		_Tyx temp = 0;
-		const char* first = str.data();
-		const char* last = str.data() + str.size();
-		auto [p, ex] = std::from_chars(first, last, temp);
-
-		if ((ex == std::errc{}) && (p == last))
+		std::size_t nLength = str.length();
+		if (nLength <= 0)
 		{
-			val = temp;
-			return true;
+			views.clear();
+			return 0;
 		}
-		return false;
+		std::size_t sz = views.size();
+		std::size_t n = 0;
+		std::size_t nStart = 0;
+		for (std::size_t i = 0; i < nLength; ++i)
+		{
+			if (str[i] == delim)
+			{
+				if ((!bEmpty) && (nStart == i))
+				{
+					nStart = i + 1;
+					continue;
+				}
+				if (n < sz)
+				{
+					views.at(n).SetView(nStart, i);
+				}
+				else
+				{
+					views.emplace_back(nStart, i);
+				}
+				++n;
+				nStart = i + 1;
+			}
+		}
+		if (n < sz)
+		{
+			views.at(n).SetView(nStart, nLength);
+		}
+		else
+		{
+			views.emplace_back(nStart, nLength);
+		}
+		++n;
+		if (n < sz)
+		{
+			views.resize(n);
+		}
+		return n;
 	}
 
-}
-
-#endif
+} // namespace utility

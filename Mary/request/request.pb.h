@@ -78,6 +78,7 @@ enum RequestType : int {
   QUERY_USERINFO = 2,
   UPDATE_AUTH = 3,
   UPDAT_PRODUCT = 4,
+  HQMARKET = 5,
   RequestType_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   RequestType_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -87,8 +88,8 @@ enum RequestType : int {
 bool RequestType_IsValid(int value);
 extern const uint32_t RequestType_internal_data_[];
 constexpr RequestType RequestType_MIN = static_cast<RequestType>(0);
-constexpr RequestType RequestType_MAX = static_cast<RequestType>(4);
-constexpr int RequestType_ARRAYSIZE = 4 + 1;
+constexpr RequestType RequestType_MAX = static_cast<RequestType>(5);
+constexpr int RequestType_ARRAYSIZE = 5 + 1;
 const ::google::protobuf::EnumDescriptor*
 RequestType_descriptor();
 template <typename T>
@@ -101,7 +102,7 @@ const std::string& RequestType_Name(T value) {
 template <>
 inline const std::string& RequestType_Name(RequestType value) {
   return ::google::protobuf::internal::NameOfDenseEnum<RequestType_descriptor,
-                                                 0, 4>(
+                                                 0, 5>(
       static_cast<int>(value));
 }
 inline bool RequestType_Parse(absl::string_view name, RequestType* value) {
@@ -341,6 +342,7 @@ class RequestData final : public ::google::protobuf::Message
     kExtraFieldNumber = 3,
     kRetFieldNumber = 4,
     kCmdFieldNumber = 2,
+    kIdFieldNumber = 5,
     kTypeFieldNumber = 1,
   };
   // map<string, string> extra = 3;
@@ -389,6 +391,15 @@ class RequestData final : public ::google::protobuf::Message
   std::string* _internal_mutable_cmd();
 
   public:
+  void clear_id() ;
+  ::uint64_t id() const;
+  void set_id(::uint64_t value);
+
+  private:
+  ::uint64_t _internal_id() const;
+  void _internal_set_id(::uint64_t value);
+
+  public:
   // .request.RequestType type = 1;
   void clear_type() ;
   ::request::RequestType type() const;
@@ -404,7 +415,7 @@ class RequestData final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 4, 2,
+      3, 5, 2,
       39, 2>
       _table_;
 
@@ -431,6 +442,7 @@ class RequestData final : public ::google::protobuf::Message
                       ::google::protobuf::internal::WireFormatLite::TYPE_STRING>
         ret_;
     ::google::protobuf::internal::ArenaStringPtr cmd_;
+    ::uint64_t id_;
     int type_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -446,6 +458,26 @@ class RequestData final : public ::google::protobuf::Message
 
 // ===================================================================
 
+
+// uint64 id = 5;
+inline void RequestData::clear_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_ = ::uint64_t{0u};
+}
+inline ::uint64_t RequestData::id() const {
+  return _internal_id();
+}
+inline void RequestData::set_id(::uint64_t value) {
+  _internal_set_id(value);
+}
+inline ::uint64_t RequestData::_internal_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_;
+}
+inline void RequestData::_internal_set_id(::uint64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_ = value;
+}
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push

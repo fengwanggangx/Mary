@@ -34,6 +34,6 @@ namespace datetime
 		}
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 		auto now_seconds = std::chrono::floor<std::chrono::seconds>(now);
-		return std::vformat(strFmt, std::make_format_args(now_seconds));
+		return  std::vformat(strFmt, std::make_format_args(now_seconds));
 	}
 }

@@ -1,117 +1,113 @@
-#include "CNetTools.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 #include "../request/request.h"
+#include <string.h>
+#include <mutex>
+#include <unordered_map>
+#include "CNetPool.h"
+#include "CNetTools.h"
+#include "CFrameBuffer.h"
 
 namespace net
 {
-	namespace utility
+	namespace
 	{
+		constexpr std::size_t ReadChunkSize = 64 * 1024;
+	}
 
-		std::size_t BufferEventReader(struct bufferevent* pEvent, std::vector<char>& buffer)
+	net::_TyConnectionId GetConnectionId(struct bufferevent* pEvent)
+	{
+		if (nullptr == pEvent)
 		{
-			buffer.clear();
-			struct evbuffer* input = bufferevent_get_input(pEvent);
-			std::size_t nLength = evbuffer_get_length(input);
-			if (nLength > buffer.capacity())
-			{
-				buffer.resize(std::ceil(nLength * 1.5)); // 增加50%的余量
-			}
-			std::size_t n = evbuffer_remove(input, buffer.data(), nLength);
-			return n;
+			return -1;
 		}
+		return bufferevent_getfd(pEvent);
+	}
 
-		std::size_t RequestFromBuffer(std::vector<std::unique_ptr<CRequest>>& reqs, struct bufferevent* pEvent, std::vector<char>& buffer)
+	std::size_t BufferEventReader(struct bufferevent* pEvent, std::vector<char>& buffer)
+	{
+		buffer.clear();
+		struct evbuffer* input = bufferevent_get_input(pEvent);
+		std::size_t nLength = (std::min)(evbuffer_get_length(input), ReadChunkSize);
+		buffer.resize(nLength);
+		std::size_t n = evbuffer_remove(input, buffer.data(), nLength);
+		buffer.resize(n);
+		return n;
+	}
+
+	std::size_t RequestFromBuffer(std::vector<std::unique_ptr<CRequest>>& reqs, struct bufferevent* pEvent)
+	{
+		if (nullptr == pEvent)
 		{
-			std::size_t nReqCount = 0;
-			std::size_t nBufferLength = net::utility::BufferEventReader(pEvent, buffer);
-			if (nBufferLength <= 0)
+			return 0;
+		}
+		_TyConnectionId id = GetConnectionId(pEvent);
+		std::size_t nReqCount = 0;
+		for (;;)
+		{
+			std::vector<char> received;
+			if (net::BufferEventReader(pEvent, received) == 0)
 			{
-				return 0;
+				break;
 			}
-			evutil_socket_t fd = bufferevent_getfd(pEvent);
-			while (nBufferLength >= sizeof(uint32_t))
+
+			auto [result, frames] = CNetPool::InstancePtr()->GetRecvFrames(id, pEvent, received.data(), received.size());
+			if (result != RecvFrameResult::Ok)
 			{
-				constexpr std::size_t nHeaderLength = sizeof(uint32_t);
-				uint32_t nDataLength = 0;
-				memcpy(&nDataLength, buffer.data(), nHeaderLength);
-				nDataLength = ntohl(nDataLength);
-
-				if (nBufferLength < (nHeaderLength + nDataLength))
+				if (result == RecvFrameResult::ProtocolError)
 				{
-					break;
+					bufferevent_trigger_event(pEvent, BEV_EVENT_ERROR, BEV_TRIG_DEFER_CALLBACKS);
 				}
+				return nReqCount;
+			}
 
-				const char* pszData = buffer.data() + nHeaderLength;
-				std::string strData(pszData, nDataLength);
-
+			for (const auto& frame : frames)
+			{
 				std::unique_ptr<CRequest> req = std::make_unique<CRequest>();
-				if (req->Deserialize(strData))
+				if (!req->Deserialize(frame))
 				{
-					req->SetFd(fd);
-					reqs.emplace_back(std::move(req));
-					++nReqCount;
+					bufferevent_trigger_event(pEvent, BEV_EVENT_ERROR, BEV_TRIG_DEFER_CALLBACKS);
+					return nReqCount;
 				}
-				else
-				{
-					break;
-				}
-
-				// 移除已处理的数据
-				std::size_t nDone = nHeaderLength + nDataLength;
-				if (nBufferLength > nDone)
-				{
-					memmove(buffer.data(), buffer.data() + nDone, nBufferLength - nDone);
-					buffer.resize(nBufferLength - nDone);
-					nBufferLength = buffer.size();
-				}
-				else
-				{
-					buffer.clear();
-					break;
-				}
+				req->SetConnectionId(id);
+				reqs.emplace_back(std::move(req));
+				++nReqCount;
 			}
-			return nReqCount;
 		}
+		return nReqCount;
+	}
 
+	bool SendRequest(net::_TyConnectionId id, const CRequest& request)
+	{
+		bool bRet = net::CNetPool::InstancePtr()->SendRequest(id, request);
+		return bRet;
+	}
 
-		bool SendRequest(CRequest* pRequest, struct bufferevent* pEvent, std::vector<char>& buffer)
-		{
-			if (nullptr == pEvent)
-			{
-				return false;
-			}
-			
-			if (nullptr == pRequest)
-			{
-				return false;
-			}
+	bool SendRequest(struct bufferevent* pEvent, const CRequest& request)
+	{
+		_TyConnectionId id = bufferevent_getfd(pEvent);
+		return SendRequest(id, request);
+	}
 
-			std::string data;
-			if (pRequest->Serialize(&data))
-			{
-				constexpr std::size_t nHeadLength = sizeof(uint32_t);
-				std::size_t nLength = nHeadLength + data.size();
-				if (nLength > buffer.capacity())
-				{
-					buffer.resize(std::ceil(nLength * 1.5)); // 增加50%的余量
-				}
-				buffer.resize(nLength);
-				uint32_t nDataLength = htonl(data.size());
-				memcpy(buffer.data(), &nDataLength, nHeadLength);
-				memcpy(buffer.data() + nHeadLength, data.data(), data.size());
-				return (0 == bufferevent_write(pEvent, buffer.data(), nLength));
-			}
-			return true;
-		}
+	void SetError(CRequest& request, int code, const std::string& message)
+	{
+		request.SetReturnData("error_code", std::to_string(code));
+		request.SetReturnData("error_message", message);
+	}
 
-		bool SendRequest(CRequest* pRequest, struct bufferevent* pEvent)
-		{
-			thread_local std::vector<char> s_buffer_send(4096);
-			return SendRequest(pRequest, pEvent, s_buffer_send);
-		}
+	void SetError(CRequest& response, const CRequest& request, int code, const std::string& message)
+	{
+		response = request;
+		SetError(response, code, message);
+	}
+
+	void SendError(net::_TyConnectionId id, const CRequest& request, int code, const std::string& message)
+	{
+		CRequest response = request;
+		SetError(response, code, message);
+		SendRequest(id, response);
 	}
 }

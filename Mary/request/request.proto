@@ -8,6 +8,7 @@ enum RequestType {
     QUERY_USERINFO = 2;
     UPDATE_AUTH = 3;
     UPDAT_PRODUCT = 4;
+	HQMARKET = 5;
 }
 
 message RequestData {
@@ -15,5 +16,5 @@ message RequestData {
     string cmd = 2;
     map<string, string> extra = 3;
     map<string, string> ret = 4;
+	uint64 id = 5;
 }
-    

@@ -7,7 +7,7 @@
 #include "../request/request.h"
 #include "../log/defines_log.h"
 #include "CNetPool.h"
-#include "../base/CDistributor.h"
+#include "../basic/CDistributor.h"
 
 namespace net
 {

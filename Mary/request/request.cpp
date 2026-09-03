@@ -1,145 +1,126 @@
-#include "request.pb.h"
 #include "request.h"
 
+#include "request.pb.h"
 
-static request::RequestType ToProtoType(CRequest::Type type) 
+#include <atomic>
+
+namespace
 {
-	static std::unordered_map<CRequest::Type, request::RequestType> s_map
+	std::atomic_uint64_t NextRequestId{ 1 };
+}
+
+CRequest::CRequest() : m_data(std::make_unique<request::RequestData>())
+{
+	SetId(NextRequestId.fetch_add(1, std::memory_order_relaxed));
+}
+
+CRequest::~CRequest() = default;
+
+CRequest::CRequest(const CRequest& arg) : m_data(std::make_unique<request::RequestData>(*arg.m_data)), m_connectionId(arg.m_connectionId)
+{
+}
+
+CRequest& CRequest::operator=(const CRequest& arg)
+{
+	if (this != &arg)
 	{
-		{CRequest::Type::UNKNOWN, request::RequestType::UNKNOWN},
-		{CRequest::Type::QUERY_AUTH, request::RequestType::QUERY_AUTH},
-		{CRequest::Type::QUERY_USERINFO, request::RequestType::QUERY_USERINFO},
-		{CRequest::Type::UPDATE_AUTH, request::RequestType::UPDATE_AUTH},
-		{CRequest::Type::UPDAT_PRODUCT, request::RequestType::UPDAT_PRODUCT}
-	};
-	const auto& mIter = s_map.find(type);
-	return s_map.end() == mIter ? request::RequestType::UNKNOWN : mIter->second;
-}
-
-
-std::shared_ptr<google::protobuf::Arena> CRequest::m_arena = std::make_shared<google::protobuf::Arena>();
-
-CRequest::CRequest() : m_id(++s_id)
-{
-	google::protobuf::Arena* px = new google::protobuf::Arena();
-	m_data = google::protobuf::Arena::CreateMessage<request::RequestData>(px);
-}
-
-CRequest::~CRequest()
-{
-	m_data = nullptr;
-}
-
-bool CRequest::Serialize(std::string* output) const
-{
-	if (nullptr == m_data)
-	{
-		return false;
+		*m_data = *arg.m_data;
+		m_connectionId = arg.m_connectionId;
 	}
-	return m_data->SerializeToString(output);
+	return *this;
 }
 
-bool CRequest::Deserialize(const std::string& data)
+CRequest::CRequest(CRequest&&) noexcept = default;
+CRequest& CRequest::operator=(CRequest&&) noexcept = default;
+
+std::uint64_t CRequest::GetId() const
 {
-	if (nullptr == m_data)
-	{
-		return false;
-	}
-	return m_data->ParseFromString(data);
+	return m_data->id();
 }
 
-void CRequest::SetType(CRequest::Type type)
+void CRequest::SetId(std::uint64_t id)
 {
-	if (nullptr == m_data)
-	{
-		return;
-	}
-	m_data->set_type(static_cast<request::RequestType>(ToProtoType(type)));
-}
-
-void CRequest::SetCmd(const std::string& strCmd)
-{
-	if (nullptr == m_data)
-	{
-		return;
-	}
-	m_data->set_cmd(strCmd);
-}
-
-void CRequest::SetExtraData(const std::string& strKey, const std::string& strVal)
-{
-	if (nullptr == m_data)
-	{
-		return;
-	}
-	(*m_data->mutable_extra())[strKey] = strVal;
-}
-
-void CRequest::SetReturnData(const std::string& strKey, const std::string& strVal)
-{
-	if (nullptr == m_data)
-	{
-		return;
-	}
-	(*(m_data->mutable_ret()))[strKey] = strVal;
+	m_data->set_id(id);
 }
 
 CRequest::Type CRequest::GetType() const
 {
-	if (nullptr == m_data)
-	{
-		return CRequest::Type::UNKNOWN;
-	}
-	return static_cast<CRequest::Type>(m_data->type());
+	return static_cast<Type>(m_data->type());
+}
+
+void CRequest::SetType(Type type)
+{
+	m_data->set_type(static_cast<request::RequestType>(type));
 }
 
 std::string CRequest::GetCmd() const
 {
-	if (nullptr == m_data)
-	{
-		return "";
-	}
 	return m_data->cmd();
+}
+
+void CRequest::SetCmd(const std::string& strCmd)
+{
+	m_data->set_cmd(strCmd);
 }
 
 std::unordered_map<std::string, std::string> CRequest::GetExtraData() const
 {
-	if (nullptr == m_data)
-	{
-		return {};
-	}
 	return { m_data->extra().begin(), m_data->extra().end() };
 }
 
 std::string CRequest::GetExtraData(const std::string& strKey) const
 {
-	const auto& data = GetExtraData();
-	const auto& mIter = data.find(strKey);
-	return data.end() == mIter ? "" : mIter->second;
+	google::protobuf::Map<std::string, std::string>::const_iterator iter = m_data->extra().find(strKey);
+	return m_data->extra().end() == iter ? std::string() : iter->second;
 }
 
-std::string CRequest::GetReturnData(const std::string& strKey) const
+void CRequest::SetExtraData(const std::string& strKey, const std::string& strValue)
 {
-	const auto& data = GetReturnData();
-	const auto& mIter = data.find(strKey);
-	return data.end() == mIter ? "" : mIter->second;
+	(*m_data->mutable_extra())[strKey] = strValue;
 }
 
 std::unordered_map<std::string, std::string> CRequest::GetReturnData() const
 {
-	if (nullptr == m_data)
-	{
-		return {};
-	}
 	return { m_data->ret().begin(), m_data->ret().end() };
 }
 
-void CRequest::SetFd(int64_t fd)
+std::string CRequest::GetReturnData(const std::string& strKey) const
 {
-	m_fd = fd;
+	google::protobuf::Map<std::string, std::string>::const_iterator iter = m_data->ret().find(strKey);
+	return m_data->ret().end() == iter ? std::string() : iter->second;
 }
 
-int64_t CRequest::GetFd() const
+void CRequest::SetReturnData(const std::string& strKey, const std::string& strValue)
 {
-	return m_fd;
+	(*m_data->mutable_ret())[strKey] = strValue;
+}
+
+void CRequest::SetConnectionId(std::int64_t id)
+{
+	m_connectionId = id;
+}
+
+std::int64_t CRequest::GetConnectionId() const
+{
+	return m_connectionId;
+}
+
+void CRequest::SetFd(std::int64_t id)
+{
+	SetConnectionId(id);
+}
+
+std::int64_t CRequest::GetFd() const
+{
+	return GetConnectionId();
+}
+
+bool CRequest::Serialize(std::string* pOutput) const
+{
+	return (nullptr != pOutput) && m_data->SerializeToString(pOutput);
+}
+
+bool CRequest::Deserialize(const std::string& strData)
+{
+	return m_data->ParseFromString(strData);
 }
