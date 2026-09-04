@@ -1,7 +1,12 @@
 #ifndef __COMMON_NET_H__
 #define __COMMON_NET_H__
+
 #include <event2/util.h>
+
+#if !defined(_WIN32)
 #include <netinet/in.h>
+#endif
+
 #include <string>
 #include <memory>
 
@@ -38,7 +43,8 @@ namespace net
 
 
 	bool IsThreadEnable();
-	void EnvInitialize();
+	bool EnvInitialize();
+	void EnvCleanup();
 	bool FmtAddress(struct ::sockaddr_in& addr, int nPort, const std::string& strAddr = "");
 
 	std::string ParseSockAddr(std::string& strAddr, int& nPort, const struct sockaddr& addr);

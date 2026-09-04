@@ -49,7 +49,7 @@ private:
 
 	void ConnectionLoop();
 	void MaintenanceLoop();
-	void OnNetworkEvent(net::CNetEvent&& event);
+	void OnNetworkEvent(const net::CNetEvent& event);
 	void SendAuthentication();
 	void FailPending(const QString& strReason);
 	void PostState(const QString& strState);

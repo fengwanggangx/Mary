@@ -2,10 +2,15 @@
 #include "common_net.h"
 #include <iostream>
 #include <event2/thread.h>
+
+#if !defined(_WIN32)
 #include <arpa/inet.h>
+#endif
+
 #include <string.h>
 #include <event2/util.h>
 #include "../request/request.h"
+#include <mutex>
 
 namespace net
 {
@@ -54,14 +59,55 @@ namespace net
 	}
 
 	std::atomic_bool bThreadEnable{false};
+	std::mutex mtxEnvironment;
+	std::size_t environmentReferenceCount{0};
 
-	void EnvInitialize()
+	bool EnvInitialize()
 	{
+		std::lock_guard<std::mutex> lock(mtxEnvironment);
+		if (0 != environmentReferenceCount)
+		{
+			++environmentReferenceCount;
+			return bThreadEnable.load();
+		}
+
 #if defined(_WIN32)
 		WSADATA wver;
-		WSAStartup(MAKEWORD(2, 2), &wver);
+		if (0 != WSAStartup(MAKEWORD(2, 2), &wver))
+		{
+			return false;
+		}
 #endif
-		bThreadEnable.store(EnableLibeventThread());
+		if (!EnableLibeventThread())
+		{
+#if defined(_WIN32)
+			WSACleanup();
+#endif
+			return false;
+		}
+
+		bThreadEnable.store(true);
+		environmentReferenceCount = 1;
+		return true;
+	}
+
+	void EnvCleanup()
+	{
+		std::lock_guard<std::mutex> lock(mtxEnvironment);
+		if (0 == environmentReferenceCount)
+		{
+			return;
+		}
+
+		--environmentReferenceCount;
+		if (0 != environmentReferenceCount)
+		{
+			return;
+		}
+
+#if defined(_WIN32)
+		WSACleanup();
+#endif
 	}
 
 	bool IsThreadEnable()
@@ -90,7 +136,7 @@ namespace net
 		{
 			char buffer[INET_ADDRSTRLEN];
 			const struct ::sockaddr_in* pAddr = reinterpret_cast<const struct ::sockaddr_in*>(&addr);
-			if (!inet_ntop(AF_INET, &pAddr->sin_addr, buffer, INET_ADDRSTRLEN))
+			if (nullptr == evutil_inet_ntop(AF_INET, &pAddr->sin_addr, buffer, INET_ADDRSTRLEN))
 			{
 				return GetErrorStringx(errno);
 			}
@@ -104,7 +150,7 @@ namespace net
 		{
 			char buffer[INET6_ADDRSTRLEN];
 			const auto* pAddr = reinterpret_cast<const struct sockaddr_in6*>(&addr);
-			if (!inet_ntop(AF_INET6, &pAddr->sin6_addr, buffer, INET6_ADDRSTRLEN))
+			if (nullptr == evutil_inet_ntop(AF_INET6, &pAddr->sin6_addr, buffer, INET6_ADDRSTRLEN))
 			{
 				return GetErrorStringx(errno);
 			}
@@ -125,7 +171,7 @@ namespace net
 		{
 			char buffer[INET_ADDRSTRLEN] = {0};
 			const auto* pAddr = reinterpret_cast<const struct sockaddr_in*>(&addr);
-			if (!inet_ntop(AF_INET, &pAddr->sin_addr, buffer, INET_ADDRSTRLEN))
+			if (nullptr == evutil_inet_ntop(AF_INET, &pAddr->sin_addr, buffer, INET_ADDRSTRLEN))
 			{
 				return GetErrorStringx(errno);
 			}
@@ -139,7 +185,7 @@ namespace net
 		{
 			char buffer[INET6_ADDRSTRLEN] = {0};
 			const auto* pAddr = reinterpret_cast<const struct sockaddr_in6*>(&addr);
-			if (!inet_ntop(AF_INET6, &pAddr->sin6_addr, buffer, INET6_ADDRSTRLEN))
+			if (nullptr == evutil_inet_ntop(AF_INET6, &pAddr->sin6_addr, buffer, INET6_ADDRSTRLEN))
 			{
 				return GetErrorStringx(errno);
 			}

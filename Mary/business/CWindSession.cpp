@@ -116,9 +116,10 @@ void CWindSession::ConnectionLoop()
 	{
 		PostState(1 == reconnectSeconds ? "正在连接" : QString("%1 秒后重连").arg(reconnectSeconds));
 		std::unique_ptr<net::CTcpClient> client = std::make_unique<net::CTcpClient>(m_host.toStdString(), m_port);
-		client->SetEventHandler([this](net::CNetEvent&& event)
+		client->RegisterHandler([this](const net::CNetEvent& event)
 		{
-			OnNetworkEvent(std::move(event));
+			OnNetworkEvent(event);
+			return 1;
 		});
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_client);
@@ -205,7 +206,7 @@ void CWindSession::MaintenanceLoop()
 	}
 }
 
-void CWindSession::OnNetworkEvent(net::CNetEvent&& event)
+void CWindSession::OnNetworkEvent(const net::CNetEvent& event)
 {
 	if (net::em_event::connected == event.m_event)
 	{

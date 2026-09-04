@@ -33,6 +33,7 @@ bool CBootLoader::Initialize()
 	{
 		m_nErrorCode = 2;
 		m_strLastError = "HQMarket token is required in ini/system.ini";
+		net::EnvCleanup();
 		return false;
 	}
 
@@ -42,6 +43,7 @@ bool CBootLoader::Initialize()
 	{
 		m_nErrorCode = 3;
 		m_strLastError = "HQMarket hqmarket_server && hqmarket_port is required in ini/system.ini";
+		net::EnvCleanup();
 		return false;
 	}
 
@@ -73,6 +75,11 @@ bool CBootLoader::Run()
 
 void CBootLoader::Finalize()
 {
+	if (!m_bInitialized)
+	{
+		return;
+	}
+
 	if (nullptr != m_pTcpClient)
 	{
 		m_pTcpClient->ShutDown();
@@ -80,6 +87,7 @@ void CBootLoader::Finalize()
 
 	m_pTcpClient.reset();
 	m_bInitialized = false;
+	net::EnvCleanup();
 }
 
 net::CTcpClient& CBootLoader::GetTcpClient()

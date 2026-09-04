@@ -92,9 +92,6 @@
     <ClCompile Include="components\CViewProducts.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="network\common.cpp">
-      <Filter>Source Files\network</Filter>
-    </ClCompile>
     <ClCompile Include="network\CNet.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
@@ -107,13 +104,7 @@
     <ClCompile Include="network\common_net.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
-    <ClCompile Include="network\CNetClient.cpp">
-      <Filter>Source Files\network</Filter>
-    </ClCompile>
     <ClCompile Include="network\CNetPool.cpp">
-      <Filter>Source Files\network</Filter>
-    </ClCompile>
-    <ClCompile Include="network\CNetServer.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\CNetTools.cpp">
@@ -215,9 +206,6 @@
     <ClCompile Include="common\utility.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="business\RequestCenter.cpp">
-      <Filter>business</Filter>
-    </ClCompile>
     <ClCompile Include="defines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -237,6 +225,9 @@
     </QtMoc>
     <QtMoc Include="components\CViewSettings.h">
       <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="business\CWindSession.h">
+      <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -265,9 +256,6 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="network\common.h">
-      <Filter>Source Files\network</Filter>
-    </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
@@ -280,16 +268,10 @@
     <ClInclude Include="network\common_net.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
-    <ClInclude Include="network\CNetClient.h">
-      <Filter>Source Files\network</Filter>
-    </ClInclude>
     <ClInclude Include="network\CNetPool.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\CNetRouter.h">
-      <Filter>Source Files\network</Filter>
-    </ClInclude>
-    <ClInclude Include="network\CNetServer.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\CNetTools.h">
@@ -391,9 +373,6 @@
     <ClInclude Include="lua\CLuaParam.h">
       <Filter>lua</Filter>
     </ClInclude>
-    <ClInclude Include="business\RequestCenter.h">
-      <Filter>business</Filter>
-    </ClInclude>
     <ClInclude Include="defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -420,5 +399,7 @@
     <None Include="scripts\main.lua">
       <Filter>Source Files\scripts</Filter>
     </None>
+    <None Include="NETWORK_MIGRATION.md" />
+    <None Include="mary.ini.example" />
   </ItemGroup>
 </Project>
