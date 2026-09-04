@@ -77,10 +77,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="components\CViewSettings.cpp">
+    <ClCompile Include="components\CLoginWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="components\CLoginWindow.cpp">
+    <ClCompile Include="components\CServerSiteDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
     <ClCompile Include="components\CServerSettingsDialog.cpp">
@@ -92,10 +92,16 @@
     <ClCompile Include="components\CMainWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="components\CViewProductDateInfo.cpp">
+    <ClCompile Include="components\CRiskSettings.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="components\CViewProducts.cpp">
+    <ClCompile Include="components\CSystemSettings.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewHQMarket.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewStrategySettings.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
     <ClCompile Include="network\CNet.cpp">
@@ -223,15 +229,6 @@
     <QtMoc Include="components\CMainWindow.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
-    <QtMoc Include="components\CViewProductDateInfo.h">
-      <Filter>Source Files\components</Filter>
-    </QtMoc>
-    <QtMoc Include="components\CViewProducts.h">
-      <Filter>Source Files\components</Filter>
-    </QtMoc>
-    <QtMoc Include="components\CViewSettings.h">
-      <Filter>Source Files\components</Filter>
-    </QtMoc>
     <QtMoc Include="business\CWindSession.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -245,10 +242,10 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="components\CViewSettings.ui">
+    <QtUic Include="components\CLoginWindow.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
-    <QtUic Include="components\CLoginWindow.ui">
+    <QtUic Include="components\CServerSiteDialog.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
     <QtUic Include="components\CServerSettingsDialog.ui">
@@ -257,10 +254,16 @@
     <QtUic Include="components\CMainWindow.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
-    <QtUic Include="components\CViewProductDateInfo.ui">
+    <QtUic Include="components\CRiskSettings.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
-    <QtUic Include="components\CViewProducts.ui">
+    <QtUic Include="components\CSystemSettings.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CViewHQMarket.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CViewStrategySettings.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
   </ItemGroup>
@@ -401,6 +404,21 @@
       <Filter>Source Files\system</Filter>
     </ClInclude>
     <ClInclude Include="components\CServerSettingsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CServerSiteDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CRiskSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CSystemSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewHQMarket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewStrategySettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="configuration\CServerSettings.h">

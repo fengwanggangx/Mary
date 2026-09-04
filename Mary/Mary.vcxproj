@@ -37,12 +37,12 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>Qt 6.11.2 MSVC 2022 64-bit</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;network</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>Qt 6.11.2 MSVC 2022 64-bit</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;network</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -127,11 +127,13 @@
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
+    <ClCompile Include="components\CServerSiteDialog.cpp" />
     <ClCompile Include="components\CServerSettingsDialog.cpp" />
     <ClCompile Include="components\CMainWindow.cpp" />
-    <ClCompile Include="components\CViewProductDateInfo.cpp" />
-    <ClCompile Include="components\CViewProducts.cpp" />
-    <ClCompile Include="components\CViewSettings.cpp" />
+    <ClCompile Include="components\CRiskSettings.cpp" />
+    <ClCompile Include="components\CSystemSettings.cpp" />
+    <ClCompile Include="components\CViewHQMarket.cpp" />
+    <ClCompile Include="components\CViewStrategySettings.cpp" />
     <ClCompile Include="configuration\CServerSettings.cpp" />
     <ClCompile Include="cryption\Cryption.cpp" />
     <ClCompile Include="database\CDBEngine.cpp" />
@@ -178,23 +180,16 @@
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="components\CLoginWindow.ui" />
+    <QtUic Include="components\CServerSiteDialog.ui" />
     <QtUic Include="components\CServerSettingsDialog.ui" />
     <QtUic Include="components\CMainWindow.ui" />
-    <QtUic Include="components\CViewProductDateInfo.ui" />
-    <QtUic Include="components\CViewProducts.ui" />
-    <QtUic Include="components\CViewSettings.ui" />
+    <QtUic Include="components\CRiskSettings.ui" />
+    <QtUic Include="components\CSystemSettings.ui" />
+    <QtUic Include="components\CViewHQMarket.ui" />
+    <QtUic Include="components\CViewStrategySettings.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="components\CViewProductDateInfo.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="components\CViewProducts.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="components\CViewSettings.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basic\CDatable.h" />
@@ -208,6 +203,11 @@
     <ClInclude Include="common\traits.h" />
     <ClInclude Include="common\utility.h" />
     <ClInclude Include="components\CServerSettingsDialog.h" />
+    <ClInclude Include="components\CServerSiteDialog.h" />
+    <ClInclude Include="components\CRiskSettings.h" />
+    <ClInclude Include="components\CSystemSettings.h" />
+    <ClInclude Include="components\CViewHQMarket.h" />
+    <ClInclude Include="components\CViewStrategySettings.h" />
     <ClInclude Include="configuration\CServerSettings.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />
@@ -258,9 +258,6 @@
   <Target Name="CopyRuntimeDependencies" AfterTargets="Build">
     <ItemGroup>
       <RuntimeDependency Include="$(SolutionDir)x64\$(Configuration)\*.dll" />
-      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libmysql.dll" Condition="'$(Configuration)'=='Debug'" />
-      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libcrypto-3-x64.dll" Condition="'$(Configuration)'=='Debug'" />
-      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libssl-3-x64.dll" Condition="'$(Configuration)'=='Debug'" />
     </ItemGroup>
     <Copy SourceFiles="@(RuntimeDependency)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>

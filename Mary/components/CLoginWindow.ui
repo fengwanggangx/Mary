@@ -35,7 +35,7 @@
    <string>LoginWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QDialog
+   <string notr="true">QDialog#LoginWindowClass
 {
     background-image: url(:/images/login.jpg); 
  	background-repeat: no-repeat;

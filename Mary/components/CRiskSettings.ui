@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CRiskSettingsClass</class>
+ <widget class="QWidget" name="CRiskSettingsClass">
+  <property name="windowTitle"><string>风控设置</string></property>
+  <layout class="QVBoxLayout" name="rootLayout">
+   <item><widget class="QLabel" name="titleLabel"><property name="font"><font><pointsize>14</pointsize><bold>true</bold></font></property><property name="text"><string>风控设置</string></property></widget></item>
+   <item><spacer name="contentSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -17,11 +17,12 @@ public:
 
 private:
 	void LoadSites();
-	void ShowSite(int index);
+	void UpdateButtons();
+	void ViewSite();
+	void SelectFastestSite();
 	void AddSite();
 	void RemoveSite();
-	void SaveSite();
-	configuration::CServerSite ReadSite() const;
+	void AcceptSelection();
 
 	Ui::CServerSettingsDialogClass* ui{nullptr};
 };
