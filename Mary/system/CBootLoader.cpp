@@ -73,6 +73,14 @@ bool CBootLoader::Run()
 	return true;
 }
 
+void CBootLoader::Stop()
+{
+	if (nullptr != m_pTcpClient)
+	{
+		m_pTcpClient->ShutDown();
+	}
+}
+
 void CBootLoader::Finalize()
 {
 	if (!m_bInitialized)
@@ -80,11 +88,7 @@ void CBootLoader::Finalize()
 		return;
 	}
 
-	if (nullptr != m_pTcpClient)
-	{
-		m_pTcpClient->ShutDown();
-	}
-
+	Stop();
 	m_pTcpClient.reset();
 	m_bInitialized = false;
 	net::EnvCleanup();

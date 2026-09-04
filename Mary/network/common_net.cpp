@@ -10,7 +10,6 @@
 #include <string.h>
 #include <event2/util.h>
 #include "../request/request.h"
-#include <mutex>
 
 namespace net
 {
@@ -59,18 +58,9 @@ namespace net
 	}
 
 	std::atomic_bool bThreadEnable{false};
-	std::mutex mtxEnvironment;
-	std::size_t environmentReferenceCount{0};
 
 	bool EnvInitialize()
 	{
-		std::lock_guard<std::mutex> lock(mtxEnvironment);
-		if (0 != environmentReferenceCount)
-		{
-			++environmentReferenceCount;
-			return bThreadEnable.load();
-		}
-
 #if defined(_WIN32)
 		WSADATA wver;
 		if (0 != WSAStartup(MAKEWORD(2, 2), &wver))
@@ -87,27 +77,15 @@ namespace net
 		}
 
 		bThreadEnable.store(true);
-		environmentReferenceCount = 1;
 		return true;
 	}
 
 	void EnvCleanup()
 	{
-		std::lock_guard<std::mutex> lock(mtxEnvironment);
-		if (0 == environmentReferenceCount)
-		{
-			return;
-		}
-
-		--environmentReferenceCount;
-		if (0 != environmentReferenceCount)
-		{
-			return;
-		}
-
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+		bThreadEnable.store(false);
 	}
 
 	bool IsThreadEnable()

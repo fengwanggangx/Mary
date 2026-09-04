@@ -36,11 +36,6 @@ void CWindSession::Start()
 		return;
 	}
 	m_stopping.store(false);
-	if (!net::EnvInitialize())
-	{
-		PostError("WinSock/libevent 线程环境初始化失败");
-		return;
-	}
 	m_connectionThread = std::thread(&CWindSession::ConnectionLoop, this);
 	m_maintenanceThread = std::thread(&CWindSession::MaintenanceLoop, this);
 }
@@ -69,7 +64,6 @@ void CWindSession::Stop()
 		m_connectionThread.join();
 	}
 	FailPending("客户端已关闭");
-	net::EnvCleanup();
 }
 
 bool CWindSession::IsAuthenticated() const

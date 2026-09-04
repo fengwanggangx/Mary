@@ -20,6 +20,7 @@ class CBootLoader final
 
 		bool Initialize();
 		bool Run();
+		void Stop();
 		void Finalize();
 		const std::filesystem::path& GetRoot() const;
 		net::CTcpClient& GetTcpClient();
