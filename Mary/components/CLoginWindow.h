@@ -23,6 +23,7 @@ protected:
 private slots:
 	void OnLoginBtnClicked();
 	void OnCloseBtnClicked();
+	void OnSettingsBtnClicked();
 
 private:
 	void ConnectSlots();

@@ -1,4 +1,5 @@
 #include "CLoginWindow.h"
+#include "CServerSettingsDialog.h"
 #include <QMouseEvent>
 #include <QCryptographicHash>
 #include <QMessageBox>
@@ -21,6 +22,7 @@ void LoginWindow::ConnectSlots()
 {
 	QObject::connect(ui->pushButton_login, &QPushButton::clicked, this, &LoginWindow::OnLoginBtnClicked);
 	QObject::connect(ui->pushButton_close, &QPushButton::clicked, this, &LoginWindow::OnCloseBtnClicked);
+	QObject::connect(ui->pushButton_settings, &QPushButton::clicked, this, &LoginWindow::OnSettingsBtnClicked);
 }
 
 void LoginWindow::mousePressEvent(QMouseEvent* event)
@@ -80,4 +82,10 @@ void LoginWindow::OnCloseBtnClicked()
 {
 	reject();
 	//QApplication::quit();
+}
+
+void LoginWindow::OnSettingsBtnClicked()
+{
+	CServerSettingsDialog dialog(this);
+	dialog.exec();
 }

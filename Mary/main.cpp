@@ -11,6 +11,13 @@
 int main(int argc, char* argv[])
 {
 	QApplication application(argc, argv);
+	LoginWindow loginWindow;
+	if (QDialog::Accepted != loginWindow.exec())
+	{
+		CLogger::InstancePtr()->ShutDown();
+		return 0;
+	}
+
 	CBootLoader boot;
 	if (!boot.Initialize())
 	{
@@ -28,14 +35,9 @@ int main(int argc, char* argv[])
 		}
 	});
 
-	LoginWindow loginWindow;
-	int result = 0;
-	if (QDialog::Accepted == loginWindow.exec())
-	{
-		CMainWindow mainWindow;
-		mainWindow.show();
-		result = application.exec();
-	}
+	CMainWindow mainWindow;
+	mainWindow.show();
+	int result = application.exec();
 
 	boot.Stop();
 	if (bootThread.joinable())

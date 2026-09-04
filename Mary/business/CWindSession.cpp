@@ -1,4 +1,5 @@
 #include "CWindSession.h"
+#include "../configuration/CServerSettings.h"
 
 #include "../network/CTcpClient.h"
 #include "../network/common_net.h"
@@ -15,8 +16,9 @@
 CWindSession::CWindSession(QObject* pParent) : QObject(pParent)
 {
 	QSettings settings(QCoreApplication::applicationDirPath() + "/mary.ini", QSettings::IniFormat);
-	m_host = settings.value("wind/host", "127.0.0.1").toString();
-	m_port = settings.value("wind/port", 9877).toInt();
+	configuration::CServerSite site = configuration::CServerSettings::LoadSite(configuration::CServerSettings::GetActiveSiteId());
+	m_host = site.windHost;
+	m_port = site.windPort;
 	m_user = settings.value("wind/user").toString();
 	m_password = settings.value("wind/password").toString();
 	m_heartbeatSeconds = std::max(1, settings.value("wind/heartbeat_seconds", 15).toInt());

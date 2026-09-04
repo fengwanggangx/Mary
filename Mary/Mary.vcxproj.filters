@@ -83,6 +83,12 @@
     <ClCompile Include="components\CLoginWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
+    <ClCompile Include="components\CServerSettingsDialog.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="configuration\CServerSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="components\CMainWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
@@ -245,6 +251,9 @@
     <QtUic Include="components\CLoginWindow.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
+    <QtUic Include="components\CServerSettingsDialog.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
     <QtUic Include="components\CMainWindow.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
@@ -390,6 +399,12 @@
     </ClInclude>
     <ClInclude Include="system\CBootLoader.h">
       <Filter>Source Files\system</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CServerSettingsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="configuration\CServerSettings.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

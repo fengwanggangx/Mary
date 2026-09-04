@@ -127,10 +127,12 @@
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
+    <ClCompile Include="components\CServerSettingsDialog.cpp" />
     <ClCompile Include="components\CMainWindow.cpp" />
     <ClCompile Include="components\CViewProductDateInfo.cpp" />
     <ClCompile Include="components\CViewProducts.cpp" />
     <ClCompile Include="components\CViewSettings.cpp" />
+    <ClCompile Include="configuration\CServerSettings.cpp" />
     <ClCompile Include="cryption\Cryption.cpp" />
     <ClCompile Include="database\CDBEngine.cpp" />
     <ClCompile Include="database\common_db.cpp" />
@@ -176,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="components\CLoginWindow.ui" />
+    <QtUic Include="components\CServerSettingsDialog.ui" />
     <QtUic Include="components\CMainWindow.ui" />
     <QtUic Include="components\CViewProductDateInfo.ui" />
     <QtUic Include="components\CViewProducts.ui" />
@@ -204,6 +207,8 @@
     <ClInclude Include="common\TQueue.h" />
     <ClInclude Include="common\traits.h" />
     <ClInclude Include="common\utility.h" />
+    <ClInclude Include="components\CServerSettingsDialog.h" />
+    <ClInclude Include="configuration\CServerSettings.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />
     <ClInclude Include="database\common_db.h" />

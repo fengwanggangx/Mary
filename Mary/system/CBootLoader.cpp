@@ -37,12 +37,13 @@ bool CBootLoader::Initialize()
 		return false;
 	}
 
-	std::string strHQMarketServer = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "System", "hqmarket_server", std::string());
-	std::string strHQMarketPort = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "System", "hqmarket_port", std::string());
+	std::string activeSite = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", "active", std::string());
+	std::string strHQMarketServer = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", activeSite + ".hqmarket.host", std::string());
+	std::string strHQMarketPort = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", activeSite + ".hqmarket.port", std::string());
 	if (strHQMarketServer.empty() || strHQMarketPort.empty())
 	{
 		m_nErrorCode = 3;
-		m_strLastError = "HQMarket hqmarket_server && hqmarket_port is required in ini/system.ini";
+		m_strLastError = "Active Server site and HQMarket endpoint are required in ini/system.ini";
 		net::EnvCleanup();
 		return false;
 	}
