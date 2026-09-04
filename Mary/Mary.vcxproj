@@ -60,10 +60,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <OutDir>$(ProjectDir)exec\</OutDir>
+    <OutDir>$(ProjectDir)exec\Debug\</OutDir>
+    <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutDir>$(ProjectDir)exec\</OutDir>
+    <OutDir>$(ProjectDir)exec\Release\</OutDir>
+    <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -248,6 +250,15 @@
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />
   </ImportGroup>
+  <Target Name="CopyRuntimeDependencies" AfterTargets="Build">
+    <ItemGroup>
+      <RuntimeDependency Include="$(SolutionDir)x64\$(Configuration)\*.dll" />
+      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libmysql.dll" Condition="'$(Configuration)'=='Debug'" />
+      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libcrypto-3-x64.dll" Condition="'$(Configuration)'=='Debug'" />
+      <RuntimeDependency Include="E:\mysql-8.0.31\build\runtime_output_directory\Debug\libssl-3-x64.dll" Condition="'$(Configuration)'=='Debug'" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RuntimeDependency)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
