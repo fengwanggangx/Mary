@@ -28,7 +28,7 @@ bool CBootLoader::Initialize()
 		return false;
 	}
 
-	m_strToken = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "HQMarket", "token", std::string());
+	m_strToken = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "HTrader", "token", std::string());
 	if (m_strToken.empty())
 	{
 		m_nErrorCode = 2;
