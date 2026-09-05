@@ -25,11 +25,11 @@ namespace ini
 	{
 		DECLARE_SINGLE_DFAULT(CINIHandler)
 
-	public:
+	  public:
 		template <class Type, std::enable_if_t<!std::is_convertible<Type, std::string>::value, int> = 0>
-		Type GetValue(Config config, const std::string& section, const std::string& key, Type&& defaultValue) const
+		Type GetValue(Config config, const std::string &section, const std::string &key, Type &&defaultValue) const
 		{
-			const auto& iter = m_iniFiles.find(config);
+			const auto &iter = m_iniFiles.find(config);
 			if (m_iniFiles.end() == iter)
 			{
 				return std::forward<Type>(defaultValue);
@@ -38,9 +38,9 @@ namespace ini
 		}
 
 		template <class Type, std::enable_if_t<std::is_convertible<Type, std::string>::value, int> = 0>
-		std::string GetValue(Config config, const std::string& section, const std::string& key, Type&& defaultValue) const
+		std::string GetValue(Config config, const std::string &section, const std::string &key, Type &&defaultValue) const
 		{
-			const auto& iter = m_iniFiles.find(config);
+			const auto &iter = m_iniFiles.find(config);
 			if (m_iniFiles.end() == iter)
 			{
 				return std::forward<Type>(defaultValue);
@@ -49,9 +49,9 @@ namespace ini
 		}
 
 		template <class Type>
-		bool SetValue(Config config, const std::string& section, const std::string& key, Type&& value)
+		bool SetValue(Config config, const std::string &section, const std::string &key, Type &&value)
 		{
-			const auto& iter = m_iniFiles.find(config);
+			const auto &iter = m_iniFiles.find(config);
 			if (m_iniFiles.end() == iter)
 			{
 				return false;
@@ -60,10 +60,12 @@ namespace ini
 		}
 
 		bool Load();
+		std::vector<std::pair<std::string, std::string>> GetSection(Config config, const std::string &section) const;
+		bool UpdateEntry(Config config, const std::string &section, const std::string &key, const std::optional<std::string> &value, const std::string &oldKey = {});
 
-	private:
+	  private:
 		std::unordered_map<Config, std::unique_ptr<CIniFile>> m_iniFiles;
 	};
-}
+} // namespace ini
 
 #endif
