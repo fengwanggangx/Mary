@@ -8,10 +8,10 @@ namespace ini
 {
 	namespace
 	{
-		using ConfigFile = std::pair<Config, std::filesystem::path>;
-
-		const std::array<ConfigFile, 1> configFiles{
-			ConfigFile{Config::System, std::filesystem::path("ini") / "system.ini"}};
+		const std::array<std::pair<Config, std::filesystem::path>, 1> configFiles
+		{
+			{ Config::System, std::filesystem::path("ini") / "system.ini" }
+		};
 	} // namespace
 
 	CINIHandler::CINIHandler()
@@ -21,7 +21,7 @@ namespace ini
 
 	CINIHandler::~CINIHandler() = default;
 
-	std::vector<std::pair<std::string, std::string>> CINIHandler::GetSection(Config config, const std::string &section) const
+	std::vector<std::pair<std::string, std::string>> CINIHandler::GetSection(Config config, const std::string& section) const
 	{
 		auto iter = m_iniFiles.find(config);
 		if (m_iniFiles.end() == iter)
@@ -44,9 +44,9 @@ namespace ini
 			return true;
 		}
 
-		for (const ConfigFile &configFile : configFiles)
+		for (const auto& v : configFiles)
 		{
-			m_iniFiles.emplace(configFile.first, std::make_unique<CIniFile>(configFile.second.string()));
+			m_iniFiles.emplace(v.first, std::make_unique<CIniFile>(v.second.string()));
 		}
 		return true;
 	}
