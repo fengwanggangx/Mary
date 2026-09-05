@@ -1,14 +1,9 @@
 #pragma once
 
 #include "LoginService.h"
+#include "../network/CTcpClient.h"
 #include <functional>
 #include <memory>
-
-namespace net
-{
-	struct CNetEvent;
-	class CTcpClient;
-}
 
 class AuthSession final
 {

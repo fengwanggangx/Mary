@@ -17,10 +17,6 @@
       <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
       <Extensions>ui</Extensions>
     </Filter>
-    <Filter Include="Translation Files">
-      <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
-      <Extensions>ts</Extensions>
-    </Filter>
     <Filter Include="Form Files\components">
       <UniqueIdentifier>{c9d83bcd-903d-485e-825e-839ef52a53fd}</UniqueIdentifier>
     </Filter>
@@ -63,17 +59,26 @@
     <Filter Include="Source Files\system">
       <UniqueIdentifier>{93a51169-bdf8-41c7-a2ce-dbb3cc807a34}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lua">
+    <Filter Include="Source Files\auth">
+      <UniqueIdentifier>{8b9f9eb5-6ed8-4c9b-9c0f-7e0a3d5c9a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lua">
       <UniqueIdentifier>{d2bdc679-baa9-49a9-93a5-bdded37913ea}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
     </Filter>
-    <Filter Include="business">
+    <Filter Include="Source Files\business">
       <UniqueIdentifier>{a3820762-49b4-4323-8b51-8aa425aec09c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="auth\LoginService.cpp">
+      <Filter>Source Files\auth</Filter>
+    </ClCompile>
+    <ClCompile Include="auth\AuthSession.cpp">
+      <Filter>Source Files\auth</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -168,7 +173,7 @@
       <Filter>Source Files\system</Filter>
     </ClCompile>
     <ClCompile Include="business\CWindSession.cpp">
-      <Filter>business</Filter>
+      <Filter>Source Files\business</Filter>
     </ClCompile>
     <ClCompile Include="cryption\Cryption.cpp">
       <Filter>Source Files\cryption</Filter>
@@ -204,16 +209,16 @@
       <Filter>Source Files\basic</Filter>
     </ClCompile>
     <ClCompile Include="lua\CLuaVM.cpp">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\CLuaLoader.cpp">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\defines_lua.cpp">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\CLuaParam.cpp">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClCompile>
     <ClCompile Include="common\utility.cpp">
       <Filter>Source Files\common</Filter>
@@ -230,7 +235,7 @@
       <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="business\CWindSession.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\business</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -268,6 +273,12 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="auth\LoginService.h">
+      <Filter>Source Files\auth</Filter>
+    </ClInclude>
+    <ClInclude Include="auth\AuthSession.h">
+      <Filter>Source Files\auth</Filter>
+    </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
     </ClInclude>
@@ -373,20 +384,26 @@
     <ClInclude Include="basic\CDistributor.h">
       <Filter>Source Files\basic</Filter>
     </ClInclude>
+    <ClInclude Include="basic\CallbackRegistry.h">
+      <Filter>Source Files\basic</Filter>
+    </ClInclude>
+    <ClInclude Include="basic\QtCallbackBridge.h">
+      <Filter>Source Files\basic</Filter>
+    </ClInclude>
     <ClInclude Include="lua\CLuaVM.h">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\CLuaLoader.h">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\defines_lua.h">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\CLuaParam.h">
-      <Filter>lua</Filter>
+      <Filter>Source Files\lua</Filter>
     </ClInclude>
     <ClInclude Include="defines.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="common\TQueue.h">
       <Filter>Source Files\common</Filter>
@@ -404,25 +421,25 @@
       <Filter>Source Files\system</Filter>
     </ClInclude>
     <ClInclude Include="components\CServerSettingsDialog.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CServerSiteDialog.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CRiskSettings.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CSystemSettings.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CViewHQMarket.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CViewStrategySettings.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="configuration\CServerSettings.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -432,7 +449,5 @@
     <None Include="scripts\main.lua">
       <Filter>Source Files\scripts</Filter>
     </None>
-    <None Include="NETWORK_MIGRATION.md" />
-    <None Include="mary.ini.example" />
   </ItemGroup>
 </Project>

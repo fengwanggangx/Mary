@@ -253,8 +253,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="request\request.proto" />
-    <None Include="NETWORK_MIGRATION.md" />
-    <None Include="mary.ini.example" />
     <None Include="scripts\main.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
