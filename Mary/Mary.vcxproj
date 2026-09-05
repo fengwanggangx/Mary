@@ -124,6 +124,7 @@
     <ClCompile Include="basic\CDistributor.cpp" />
     <ClCompile Include="business\CWindSession.cpp" />
     <ClCompile Include="auth\LoginService.cpp" />
+    <ClCompile Include="auth\AuthSession.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
@@ -197,6 +198,8 @@
     <ClInclude Include="basic\CDistributor.h" />
     <ClInclude Include="basic\CallbackRegistry.h" />
     <ClInclude Include="basic\QtCallbackBridge.h" />
+    <ClInclude Include="auth\AuthSession.h" />
+    <ClInclude Include="auth\LoginService.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />

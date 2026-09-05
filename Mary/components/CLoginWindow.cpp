@@ -1,5 +1,6 @@
 #include "CLoginWindow.h"
 #include "CServerSettingsDialog.h"
+#include "../configuration/CServerSettings.h"
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QMetaObject>
@@ -10,12 +11,19 @@ LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWi
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
 	m_loginService = std::make_unique<LoginService>();
-	m_loginCallbackId = m_loginService->Subscribe([this](const LoginEvent& event)
+	m_loginCallbackId = m_loginService->Subscribe([this](const AuthEvent& event)
 	{
 		QMetaObject::invokeMethod(this, [this, event]()
 		{
-			if (event.success) { accept(); }
-			else { QMessageBox::information(this, "Tips", QString::fromStdString(event.message)); }
+			if (AuthState::Success == event.state)
+			{
+				accept();
+			}
+			else if (AuthState::Failed == event.state)
+			{
+				ui->pushButton_login->setEnabled(true);
+				QMessageBox::information(this, "Tips", QString::fromStdString(event.message));
+			}
 		}, Qt::QueuedConnection);
 	});
 }
@@ -71,6 +79,13 @@ void LoginWindow::OnLoginBtnClicked()
 	CLoginParam request;
 	request.account = ui->lineEdit_account->text().toStdString();
 	request.password = ui->lineEdit_passwd->text().toStdString();
+	const QString activeSiteId = configuration::CServerSettings::GetActiveSiteId();
+	const configuration::CServerSite site = configuration::CServerSettings::LoadSite(activeSiteId);
+	request.site.id = site.id.toStdString();
+	request.site.name = site.name.toStdString();
+	request.site.host = site.windHost.toStdString();
+	request.site.port = site.windPort;
+	ui->pushButton_login->setEnabled(false);
 	m_loginService->Login(request);
 }
 

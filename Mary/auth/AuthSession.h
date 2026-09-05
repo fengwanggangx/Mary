@@ -1,0 +1,36 @@
+#pragma once
+
+#include "LoginService.h"
+#include <functional>
+#include <memory>
+
+namespace net
+{
+	struct CNetEvent;
+	class CTcpClient;
+}
+
+class AuthSession final
+{
+public:
+	using Callback = std::function<void(const AuthEvent&)>;
+
+	AuthSession() = default;
+	~AuthSession();
+	AuthSession(const AuthSession&) = delete;
+	AuthSession& operator=(const AuthSession&) = delete;
+
+	void Start(const CLoginParam& param, Callback callback);
+	void Cancel();
+	bool IsRunning() const noexcept;
+
+private:
+	void OnNetworkEvent(const net::CNetEvent& event);
+	void SendAuthentication();
+	void Notify(AuthEvent event);
+
+	std::unique_ptr<net::CTcpClient> m_client;
+	CLoginParam m_param;
+	Callback m_callback;
+	bool m_running{false};
+};
