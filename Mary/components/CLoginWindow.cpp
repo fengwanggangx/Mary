@@ -1,20 +1,31 @@
 #include "CLoginWindow.h"
 #include "CServerSettingsDialog.h"
 #include <QMouseEvent>
-#include <QCryptographicHash>
 #include <QMessageBox>
+#include <QMetaObject>
 
-LoginWindow::LoginWindow(QWidget *parent)
-	: QDialog(parent)
-	, ui(new Ui::LoginWindowClass())
+LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWindowClass())
 {
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
+	m_loginService = std::make_unique<LoginService>(MakeLocalLoginClient());
+	m_loginCallbackId = m_loginService->Subscribe([this](const LoginEvent& event)
+	{
+		QMetaObject::invokeMethod(this, [this, event]()
+		{
+			if (event.success) { accept(); }
+			else { QMessageBox::information(this, "Tips", QString::fromStdString(event.message)); }
+		}, Qt::QueuedConnection);
+	});
 }
 
 LoginWindow::~LoginWindow()
 {
+	if (nullptr != m_loginService)
+	{
+		m_loginService->Unsubscribe(m_loginCallbackId);
+	}
 	delete ui;
 }
 
@@ -57,25 +68,10 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
-	static QString strValidAdmin = "admin";
-	static QString strValidAccount = "fengwanggang";
-	static QString strValidPasswd = "123456";
-	static QString strMd5Account = QCryptographicHash::hash(strValidAccount.toUtf8(), QCryptographicHash::Md5).toHex();
-	static QString strMd5Passwd = QCryptographicHash::hash(strValidPasswd.toUtf8(), QCryptographicHash::Md5).toHex();
-
-	QString strAccount = QCryptographicHash::hash(ui->lineEdit_account->text().toUtf8(), QCryptographicHash::Md5).toHex();
-	QString strPasswd = QCryptographicHash::hash(ui->lineEdit_passwd->text().toUtf8(), QCryptographicHash::Md5).toHex();
-
-	QString strCheckCode = ui->lineEdit_checkcode->text();
-	if (true || (ui->lineEdit_account->text().toUtf8() == strValidAdmin) || ((strAccount == strMd5Account) && (strPasswd == strMd5Passwd)))
-	{
-		accept();
-	}
-	else
-	{
-
-		QMessageBox::information(nullptr, "Tips", "账号或密码错误，请重新输入");
-	}
+	LoginRequest request;
+	request.account = ui->lineEdit_account->text().toStdString();
+	request.password = ui->lineEdit_passwd->text().toStdString();
+	m_loginService->Login(request);
 }
 
 void LoginWindow::OnCloseBtnClicked()

@@ -123,6 +123,7 @@
     <ClCompile Include="basic\CDatable.cpp" />
     <ClCompile Include="basic\CDistributor.cpp" />
     <ClCompile Include="business\CWindSession.cpp" />
+    <ClCompile Include="auth\LoginService.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
