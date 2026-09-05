@@ -16,9 +16,13 @@
 CWindSession::CWindSession(QObject* pParent) : QObject(pParent)
 {
 	QSettings settings(QCoreApplication::applicationDirPath() + "/mary.ini", QSettings::IniFormat);
-	configuration::CServerSite site = configuration::CServerSettings::LoadSite(configuration::CServerSettings::GetActiveSiteId());
-	m_host = site.windHost;
-	m_port = site.windPort;
+	configuration::CHostMgr::InstanceRef().Initialize();
+	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
+	if (site.has_value())
+	{
+		m_host = QString::fromStdString(site->m_strHost);
+		m_port = static_cast<int>(site->m_port);
+	}
 	m_user = settings.value("wind/user").toString();
 	m_password = settings.value("wind/password").toString();
 	m_heartbeatSeconds = std::max(1, settings.value("wind/heartbeat_seconds", 15).toInt());

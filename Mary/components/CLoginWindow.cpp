@@ -7,6 +7,7 @@
 
 LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWindowClass())
 {
+	configuration::CHostMgr::InstanceRef().Initialize();
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
@@ -79,12 +80,16 @@ void LoginWindow::OnLoginBtnClicked()
 	CLoginParam request;
 	request.account = ui->lineEdit_account->text().toStdString();
 	request.password = ui->lineEdit_passwd->text().toStdString();
-	const QString activeSiteId = configuration::CServerSettings::GetActiveSiteId();
-	const configuration::CServerSite site = configuration::CServerSettings::LoadSite(activeSiteId);
-	request.site.id = site.id.toStdString();
-	request.site.name = site.name.toStdString();
-	request.site.host = site.windHost.toStdString();
-	request.site.port = site.windPort;
+	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
+	if (!site.has_value())
+	{
+		QMessageBox::warning(this, "登录失败", "没有可用的服务器配置。");
+		return;
+	}
+	request.site.id = site->m_strKey;
+	request.site.name = site->m_strName;
+	request.site.host = site->m_strHost;
+	request.site.port = static_cast<int>(site->m_port);
 	ui->pushButton_login->setEnabled(false);
 	m_loginService->Login(request);
 }

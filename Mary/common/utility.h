@@ -75,11 +75,16 @@ namespace utility
 		return (std::errc{} == parsed.ec) && (pEnd == parsed.ptr);
 	}
 
+	template <class _Ty>
+	bool between(_Ty v, _Ty v1, _Ty v2)
+	{
+		return (v > v1) && (v < v2);
+	}
+
 	std::string lower(std::string strVal);
 
-	size_t SplitString(const std::string& s, std::vector<std::string>& vc, char delim, bool bEmpty = false);
-
-	std::size_t SplitStringView(const std::string& str, std::vector<stringview>& views, char delim, bool bEmpty = false);
+	std::size_t split(const std::string& s, std::vector<std::string>& v, char delim, bool bEmpty = false);
+	std::size_t split(const std::string& s, std::vector<std::string_view>& v, char delim, bool bEmpty = false);
 
 } // namespace utility
 

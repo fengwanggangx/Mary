@@ -5,13 +5,13 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-CServerSiteDialog::CServerSiteDialog(const configuration::CServerSite& site, bool readOnly, QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSiteDialogClass()), m_site(site)
+CServerSiteDialog::CServerSiteDialog(const configuration::CHostInfo& site, bool readOnly, QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSiteDialogClass()), m_site(site)
 {
 	ui->setupUi(this);
 	setWindowTitle(readOnly ? "查看站点" : "新增站点");
-	ui->nameEdit->setText(site.name);
-	ui->hostEdit->setText(site.windHost);
-	ui->portEdit->setText(QString::number(0 < site.windPort ? site.windPort : 8601));
+	ui->nameEdit->setText(QString::fromStdString(site.m_strName));
+	ui->hostEdit->setText(QString::fromStdString(site.m_strHost));
+	ui->portEdit->setText(QString::number(0 < site.m_port ? site.m_port : 8601));
 	ui->portEdit->setValidator(new QIntValidator(1, 65535, ui->portEdit));
 	ui->nameEdit->setReadOnly(readOnly);
 	ui->hostEdit->setReadOnly(readOnly);
@@ -33,7 +33,7 @@ CServerSiteDialog::~CServerSiteDialog()
 	delete ui;
 }
 
-const configuration::CServerSite& CServerSiteDialog::GetSite() const
+const configuration::CHostInfo& CServerSiteDialog::GetSite() const
 {
 	return m_site;
 }
@@ -56,10 +56,8 @@ void CServerSiteDialog::AcceptSite()
 		return;
 	}
 
-	m_site.name = name;
-	m_site.windHost = host;
-	m_site.windPort = port;
-	m_site.hqMarketHost = host;
-	m_site.hqMarketPort = port;
+	m_site.m_strName = name.toStdString();
+	m_site.m_strHost = host.toStdString();
+	m_site.m_port = static_cast<unsigned int>(port);
 	accept();
 }

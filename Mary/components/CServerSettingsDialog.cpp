@@ -7,21 +7,21 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTcpSocket>
-#include <QUuid>
-
 #include <limits>
+#include <exception>
 
 namespace
 {
-	QString MakeSiteText(const configuration::CServerSite& site)
+	QString MakeSiteText(const configuration::CHostInfo& site)
 	{
-		return QString("%1 (%2:%3)").arg(site.name, site.windHost).arg(site.windPort);
+		return QString("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_port);
 	}
 }
 
 CServerSettingsDialog::CServerSettingsDialog(QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSettingsDialogClass())
 {
 	ui->setupUi(this);
+	configuration::CHostMgr::InstanceRef().Initialize();
 	connect(ui->siteCombo, &QComboBox::currentIndexChanged, this, &CServerSettingsDialog::UpdateButtons);
 	connect(ui->viewButton, &QPushButton::clicked, this, &CServerSettingsDialog::ViewSite);
 	connect(ui->autoFastestCheck, &QCheckBox::toggled, this, [this](bool checked)
@@ -45,16 +45,15 @@ CServerSettingsDialog::~CServerSettingsDialog()
 
 void CServerSettingsDialog::LoadSites()
 {
-	QString activeSiteId = configuration::CServerSettings::GetActiveSiteId();
 	ui->siteCombo->clear();
-	for (const configuration::CServerSite& site : configuration::CServerSettings::LoadSites())
+	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
-		if (site.enabled)
+		if (site.m_bEnabled)
 		{
-			ui->siteCombo->addItem(MakeSiteText(site), site.id);
+			ui->siteCombo->addItem(MakeSiteText(site), QString::fromStdString(site.m_strKey));
 		}
 	}
-	int activeIndex = ui->siteCombo->findData(activeSiteId);
+	int activeIndex = 0;
 	ui->siteCombo->setCurrentIndex(0 <= activeIndex ? activeIndex : 0);
 	UpdateButtons();
 }
@@ -70,13 +69,16 @@ void CServerSettingsDialog::UpdateButtons()
 
 void CServerSettingsDialog::ViewSite()
 {
-	configuration::CServerSite site = configuration::CServerSettings::LoadSite(ui->siteCombo->currentData().toString());
-	if (site.id.isEmpty())
+	const QString key = ui->siteCombo->currentData().toString();
+	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
-		return;
+		if (key.toStdString() == site.m_strKey)
+		{
+			CServerSiteDialog dialog(site, true, this);
+			dialog.exec();
+			return;
+		}
 	}
-	CServerSiteDialog dialog(site, true, this);
-	dialog.exec();
 }
 
 void CServerSettingsDialog::SelectFastestSite()
@@ -84,9 +86,9 @@ void CServerSettingsDialog::SelectFastestSite()
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	qint64 bestElapsed = std::numeric_limits<qint64>::max();
 	QString bestSiteId;
-	for (const configuration::CServerSite& site : configuration::CServerSettings::LoadSites())
+	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
-		if (!site.enabled || site.windHost.isEmpty() || 0 >= site.windPort)
+		if (!site.m_bEnabled || site.m_strHost.empty() || 0 >= site.m_port)
 		{
 			continue;
 		}
@@ -94,14 +96,14 @@ void CServerSettingsDialog::SelectFastestSite()
 		QTcpSocket socket;
 		QElapsedTimer timer;
 		timer.start();
-		socket.connectToHost(site.windHost, static_cast<quint16>(site.windPort));
+		socket.connectToHost(QString::fromStdString(site.m_strHost), static_cast<quint16>(site.m_port));
 		if (socket.waitForConnected(1500))
 		{
 			qint64 elapsed = timer.elapsed();
 			if (elapsed < bestElapsed)
 			{
 				bestElapsed = elapsed;
-				bestSiteId = site.id;
+				bestSiteId = QString::fromStdString(site.m_strKey);
 			}
 			socket.abort();
 		}
@@ -120,22 +122,26 @@ void CServerSettingsDialog::SelectFastestSite()
 
 void CServerSettingsDialog::AddSite()
 {
-	configuration::CServerSite site;
-	site.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-	site.enabled = true;
+	configuration::CHostInfo site;
+	site.m_strKey = "host" + std::to_string(configuration::CHostMgr::InstanceRef().GetHosts().size() + 1);
+	site.m_bEnabled = true;
 	CServerSiteDialog dialog(site, false, this);
 	if (QDialog::Accepted != dialog.exec())
 	{
 		return;
 	}
-	const configuration::CServerSite& newSite = dialog.GetSite();
-	if (!configuration::CServerSettings::SaveSite(newSite))
+	const configuration::CHostInfo& newSite = dialog.GetSite();
+	try
+	{
+		configuration::CHostMgr::InstanceRef().Add(newSite);
+	}
+	catch (const std::exception&)
 	{
 		QMessageBox::warning(this, "新增失败", "无法写入 ini/system.ini。");
 		return;
 	}
 	LoadSites();
-	ui->siteCombo->setCurrentIndex(ui->siteCombo->findData(newSite.id));
+	ui->siteCombo->setCurrentIndex(ui->siteCombo->findData(QString::fromStdString(newSite.m_strKey)));
 }
 
 void CServerSettingsDialog::RemoveSite()
@@ -152,7 +158,19 @@ void CServerSettingsDialog::RemoveSite()
 	{
 		return;
 	}
-	if (!configuration::CServerSettings::RemoveSite(siteId))
+	try
+	{
+		const auto& hosts = configuration::CHostMgr::InstanceRef().GetHosts();
+		for (std::size_t i = 0; i < hosts.size(); ++i)
+		{
+			if (siteId.toStdString() == hosts[i].m_strKey)
+			{
+				configuration::CHostMgr::InstanceRef().Remove(i);
+				break;
+			}
+		}
+	}
+	catch (const std::exception&)
 	{
 		QMessageBox::warning(this, "删除失败", "无法删除当前站点。");
 		return;
@@ -162,8 +180,7 @@ void CServerSettingsDialog::RemoveSite()
 
 void CServerSettingsDialog::AcceptSelection()
 {
-	QString siteId = ui->siteCombo->currentData().toString();
-	if (siteId.isEmpty() || !configuration::CServerSettings::SetActiveSiteId(siteId))
+	if (ui->siteCombo->currentData().toString().isEmpty())
 	{
 		QMessageBox::warning(this, "保存失败", "请选择一个有效站点。");
 		return;
