@@ -21,20 +21,20 @@ namespace ini
 
 	CINIHandler::~CINIHandler() = default;
 
-	std::vector<std::pair<std::string, std::string>> CINIHandler::GetSection(Config config, const std::string& section) const
+	std::vector<std::pair<std::string, std::string>> CINIHandler::GetSection(Config config, const std::string& strSection) const
 	{
-		auto iter = m_iniFiles.find(config);
-		if (m_iniFiles.end() == iter)
+		auto mIter = m_iniFiles.find(config);
+		if (m_iniFiles.end() == mIter)
 		{
 			return {};
 		}
-		return iter->second->GetSection(section);
+		return mIter->second->GetSection(strSection);
 	}
 
-	bool CINIHandler::UpdateEntry(Config config, const std::string &section, const std::string &key, const std::optional<std::string> &value, const std::string &oldKey)
+	bool CINIHandler::UpdateEntry(Config config, const std::string& strSection, const std::string& strKey, const std::optional<std::string>& value, const std::string& oldKey)
 	{
-		auto iter = m_iniFiles.find(config);
-		return m_iniFiles.end() != iter && iter->second->UpdateEntry(section, key, value, oldKey);
+		auto mIter = m_iniFiles.find(config);
+		return m_iniFiles.end() != mIter && mIter->second->UpdateEntry(strSection, strKey, value, oldKey);
 	}
 
 	bool CINIHandler::Load()

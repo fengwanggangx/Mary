@@ -5,7 +5,7 @@
 
 namespace ini
 {
-	std::vector<std::pair<std::string, std::string>> CIniFile::GetSection(const std::string &section) const
+	std::vector<std::pair<std::string, std::string>> CIniFile::GetSection(const std::string& section) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		CSimpleIniA::TNamesDepend keys;
@@ -13,14 +13,14 @@ namespace ini
 		keys.sort(CSimpleIniA::Entry::LoadOrder());
 		std::vector<std::pair<std::string, std::string>> entries;
 		entries.reserve(keys.size());
-		for (const auto &key : keys)
+		for (const auto& key : keys)
 		{
 			entries.emplace_back(key.pItem, m_pParser->GetValue(section.c_str(), key.pItem, ""));
 		}
 		return entries;
 	}
 
-	bool CIniFile::UpdateEntry(const std::string &section, const std::string &key, const std::optional<std::string> &value, const std::string &oldKey)
+	bool CIniFile::UpdateEntry(const std::string& section, const std::string& key, const std::optional<std::string>& value, const std::string& oldKey)
 	{
 		if (section.empty() || key.empty())
 		{
@@ -63,7 +63,7 @@ namespace ini
 		return true;
 	}
 
-	CIniFile::CIniFile(const std::string &strFile) : m_pParser(std::make_unique<CSimpleIniA>(false, false, false)), m_strFileName(strFile)
+	CIniFile::CIniFile(const std::string& strFile) : m_pParser(std::make_unique<CSimpleIniA>(false, false, false)), m_strFileName(strFile)
 	{
 		Load(strFile);
 	}
@@ -73,13 +73,13 @@ namespace ini
 		Save();
 	}
 
-	bool CIniFile::Load(const std::string &strFile)
+	bool CIniFile::Load(const std::string& strFile)
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		SI_Error ret = m_pParser->LoadFile(strFile.c_str());
-		if (ret < 0)
+		if (0 > ret)
 		{
-			if (ret == SI_FILE)
+			if (SI_FILE == ret)
 			{
 				std::ofstream f(strFile);
 				if (!f.is_open())
@@ -96,34 +96,34 @@ namespace ini
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		SI_Error ret = m_pParser->SaveFile(m_strFileName.c_str());
-		return ret >= 0;
+		return 0 <= ret;
 	}
 
-	int CIniFile::GetInt(const std::string &strSection, const std::string &strKey, int nDefault) const
+	int CIniFile::GetInt(const std::string& strSection, const std::string& strKey, int nDefault) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		return m_pParser->GetLongValue(strSection.c_str(), strKey.c_str(), nDefault);
 	}
 
-	bool CIniFile::GetBool(const std::string &strSection, const std::string &strKey, bool bDefault) const
+	bool CIniFile::GetBool(const std::string& strSection, const std::string& strKey, bool bDefault) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		return m_pParser->GetBoolValue(strSection.c_str(), strKey.c_str(), bDefault);
 	}
 
-	double CIniFile::GetDouble(const std::string &strSection, const std::string &strKey, double fDefault) const
+	double CIniFile::GetDouble(const std::string& strSection, const std::string& strKey, double fDefault) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		return m_pParser->GetDoubleValue(strSection.c_str(), strKey.c_str(), fDefault);
 	}
 
-	std::string CIniFile::GetString(const std::string &strSection, const std::string &strKey, const std::string &strDefault) const
+	std::string CIniFile::GetString(const std::string& strSection, const std::string& strKey, const std::string& strDefault) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		return m_pParser->GetValue(strSection.c_str(), strKey.c_str(), strDefault.c_str());
 	}
 
-	bool CIniFile::SetInt(const std::string &strSection, const std::string &strKey, int nVal)
+	bool CIniFile::SetInt(const std::string& strSection, const std::string& strKey, int nVal)
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		bool bRet = SI_FAIL != m_pParser->SetLongValue(strSection.c_str(), strKey.c_str(), nVal);
@@ -131,7 +131,7 @@ namespace ini
 		return bRet;
 	}
 
-	bool CIniFile::SetBool(const std::string &strSection, const std::string &strKey, bool bVal)
+	bool CIniFile::SetBool(const std::string& strSection, const std::string& strKey, bool bVal)
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		bool bRet = SI_FAIL != m_pParser->SetBoolValue(strSection.c_str(), strKey.c_str(), bVal);
@@ -139,7 +139,7 @@ namespace ini
 		return bRet;
 	}
 
-	bool CIniFile::SetDouble(const std::string &strSection, const std::string &strKey, double fVal)
+	bool CIniFile::SetDouble(const std::string& strSection, const std::string& strKey, double fVal)
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		bool bRet = SI_FAIL != m_pParser->SetDoubleValue(strSection.c_str(), strKey.c_str(), fVal);
@@ -147,7 +147,7 @@ namespace ini
 		return bRet;
 	}
 
-	bool CIniFile::SetString(const std::string &strSection, const std::string &strKey, const std::string &strVal)
+	bool CIniFile::SetString(const std::string& strSection, const std::string& strKey, const std::string& strVal)
 	{
 		std::unique_lock<std::shared_mutex> lck(m_mtx_parser);
 		bool bRet = SI_FAIL != m_pParser->SetValue(strSection.c_str(), strKey.c_str(), strVal.c_str());
@@ -155,53 +155,53 @@ namespace ini
 		return bRet;
 	}
 
-	int CIniFile::GetValue(const std::string &strSection, const std::string &strKey, int nDefault) const
+	int CIniFile::GetValue(const std::string& strSection, const std::string& strKey, int nDefault) const
 	{
 		return GetInt(strSection, strKey, nDefault);
 	}
-	bool CIniFile::GetValue(const std::string &strSection, const std::string &strKey, bool bDefault) const
+	bool CIniFile::GetValue(const std::string& strSection, const std::string& strKey, bool bDefault) const
 	{
 		return GetBool(strSection, strKey, bDefault);
 	}
-	double CIniFile::GetValue(const std::string &strSection, const std::string &strKey, double fDefault) const
+	double CIniFile::GetValue(const std::string& strSection, const std::string& strKey, double fDefault) const
 	{
 		return GetDouble(strSection, strKey, fDefault);
 	}
 
-	std::string CIniFile::GetValue(const std::string &strSection, const std::string &strKey, const std::string &strDefault) const
+	std::string CIniFile::GetValue(const std::string& strSection, const std::string& strKey, const std::string& strDefault) const
 	{
 		return GetString(strSection, strKey, strDefault);
 	}
 
-	bool CIniFile::SetValue(const std::string &strSection, const std::string &strKey, int nVal)
+	bool CIniFile::SetValue(const std::string& strSection, const std::string& strKey, int nVal)
 	{
 		return SetInt(strSection, strKey, nVal);
 	}
 
-	bool CIniFile::SetValue(const std::string &strSection, const std::string &strKey, bool bVal)
+	bool CIniFile::SetValue(const std::string& strSection, const std::string& strKey, bool bVal)
 	{
 		return SetBool(strSection, strKey, bVal);
 	}
 
-	bool CIniFile::SetValue(const std::string &strSection, const std::string &strKey, double fVal)
+	bool CIniFile::SetValue(const std::string& strSection, const std::string& strKey, double fVal)
 	{
 		return SetDouble(strSection, strKey, fVal);
 	}
 
-	bool CIniFile::SetValue(const std::string &strSection, const std::string &strKey, const std::string &strVal)
+	bool CIniFile::SetValue(const std::string& strSection, const std::string& strKey, const std::string& strVal)
 	{
 		return SetString(strSection, strKey, strVal);
 	}
 
-	bool CIniFile::IsSectionExists(const std::string &strSection) const
+	bool CIniFile::IsSectionExists(const std::string& strSection) const
 	{
 		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		CSimpleIniA::TNamesDepend sections;
 		m_pParser->GetAllSections(sections);
 
-		for (const auto &s : sections)
+		for (const auto& s : sections)
 		{
-			if (s.pItem == strSection)
+			if (strSection == s.pItem)
 			{
 				return true;
 			}
@@ -219,7 +219,7 @@ namespace ini
 			m_pParser->GetAllSections(sections);
 		}
 
-		for (const auto &s : sections)
+		for (const auto& s : sections)
 		{
 			ret.emplace_back(s.pItem);
 		}
