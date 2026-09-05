@@ -2,10 +2,9 @@
 
 #include "../basic/CallbackRegistry.h"
 #include <functional>
-#include <memory>
 #include <string>
 
-struct LoginRequest 
+struct CLoginParam 
 { 
 	std::string account;
 	std::string password; 
@@ -17,25 +16,14 @@ struct LoginEvent
 	std::string message; 
 };
 
-class ILoginClient
-{
-public:
-	using Callback = std::function<void(const LoginEvent&)>;
-	virtual ~ILoginClient() = default;
-	virtual void Login(const LoginRequest& request, Callback callback) = 0;
-};
-
 class LoginService final
 {
 public:
-	explicit LoginService(std::unique_ptr<ILoginClient> client);
-	CallbackId Subscribe(std::function<void(const LoginEvent&)> callback);
-	void Unsubscribe(CallbackId id);
-	void Login(const LoginRequest& request);
+	LoginService() = default;
+	_TyCallbackId Subscribe(std::function<void(const LoginEvent&)> callback);
+	void Unsubscribe(_TyCallbackId id);
+	void Login(const CLoginParam& param);
 
 private:
-	std::unique_ptr<ILoginClient> m_client;
 	CallbackRegistry<LoginEvent> m_events;
 };
-
-std::unique_ptr<ILoginClient> MakeLocalLoginClient();

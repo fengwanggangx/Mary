@@ -9,7 +9,7 @@ LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWi
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
-	m_loginService = std::make_unique<LoginService>(MakeLocalLoginClient());
+	m_loginService = std::make_unique<LoginService>();
 	m_loginCallbackId = m_loginService->Subscribe([this](const LoginEvent& event)
 	{
 		QMetaObject::invokeMethod(this, [this, event]()
@@ -68,7 +68,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
-	LoginRequest request;
+	CLoginParam request;
 	request.account = ui->lineEdit_account->text().toStdString();
 	request.password = ui->lineEdit_passwd->text().toStdString();
 	m_loginService->Login(request);

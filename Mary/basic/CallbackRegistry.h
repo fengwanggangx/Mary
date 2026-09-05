@@ -2,49 +2,49 @@
 
 #include <cstdint>
 #include <functional>
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 
-	using CallbackId = std::uint64_t;
+	using _TyCallbackId = std::uint64_t;
 
-	template <typename Event>
+	template <typename _TyParam>
 	class CallbackRegistry final
 	{
 	public:
-		using Callback = std::function<void(const Event&)>;
+		using _TyCallback = std::function<void(const _TyParam&)>;
 
-		CallbackId Subscribe(Callback callback)
+		_TyCallbackId Subscribe(_TyCallback callback)
 		{
-			std::lock_guard<std::mutex> lock(m_mtx_callbacks);
-			CallbackId id = ++m_nextId;
+			std::lock_guard<std::shared_mutex> lock(m_mtx_callbacks);
+			_TyCallbackId id = ++m_nextId;
 			m_callbacks.emplace(id, std::move(callback));
 			return id;
 		}
 
-		void Unsubscribe(CallbackId id)
+		void Unsubscribe(_TyCallbackId id)
 		{
-			std::lock_guard<std::mutex> lock(m_mtx_callbacks);
+			std::lock_guard<std::shared_mutex> lock(m_mtx_callbacks);
 			m_callbacks.erase(id);
 		}
 
-		void Notify(const Event& event)
+		void Notify(const _TyParam& v) const
 		{
-			std::unordered_map<CallbackId, Callback> callbacks;
+			std::unordered_map<_TyCallbackId, _TyCallback> callbacks;
 			{
-				std::lock_guard<std::mutex> lock(m_mtx_callbacks);
+				std::shared_lock<std::shared_mutex> lock(m_mtx_callbacks);
 				callbacks = m_callbacks;
 			}
 			for (const auto& item : callbacks)
 			{
 				if (item.second)
 				{
-					item.second(event);
+					item.second(v);
 				}
 			}
 		}
 
 	private:
-		std::mutex m_mtx_callbacks;
-		CallbackId m_nextId{0};
-		std::unordered_map<CallbackId, Callback> m_callbacks;
+		mutable std::shared_mutex m_mtx_callbacks;
+		_TyCallbackId m_nextId{0};
+		std::unordered_map<_TyCallbackId, _TyCallback> m_callbacks;
 	};

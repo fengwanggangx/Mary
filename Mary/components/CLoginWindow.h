@@ -36,5 +36,5 @@ private:
 	QPoint m_dragPosition;
 	bool m_isDragging{ false };
 	std::unique_ptr<LoginService> m_loginService;
-	CallbackId m_loginCallbackId{0};
+	_TyCallbackId m_loginCallbackId{0};
 };

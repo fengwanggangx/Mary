@@ -6,7 +6,7 @@
 #include <QObject>
 
 	template <typename Event, typename Owner>
-	CallbackId BindToQt(CallbackRegistry<Event>& registry, Owner* owner, std::function<void(const Event&)> callback)
+	_TyCallbackId BindToQt(CallbackRegistry<Event>& registry, Owner* owner, std::function<void(const Event&)> callback)
 	{
 		QPointer<Owner> safeOwner(owner);
 		return registry.Subscribe([safeOwner, callback = std::move(callback)](const Event& event)
