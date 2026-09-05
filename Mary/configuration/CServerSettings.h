@@ -5,7 +5,7 @@
 
 #include <optional>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 namespace configuration
 {
@@ -14,7 +14,7 @@ namespace configuration
 		std::string m_strKey;
 		std::string m_strName;
 		std::string m_strHost;
-		unsigned int m_port{0};
+		unsigned int m_nPort{0};
 		bool m_bEnabled{ false };
 
 		bool operator==(const CHostInfo& arg) const;
@@ -31,12 +31,12 @@ namespace configuration
 
 	  public:
 		void Initialize();
-		std::string CHostMgr::Key() const;
+		std::string Key() const;
 		const std::unordered_map<std::string, CHostInfo>& GetHosts() const;
 		std::optional<CHostInfo> GetActiveHost() const;
 		// Invalid arguments and persistence failures are reported by exceptions.
 		bool Add(const CHostInfo &v);
-		bool Remove(std::string& strKey);
+		bool Remove(const std::string& strKey);
 		bool Modify(const CHostInfo &v);
 
 	  private:

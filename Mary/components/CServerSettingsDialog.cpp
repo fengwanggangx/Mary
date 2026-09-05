@@ -14,7 +14,7 @@ namespace
 {
 	QString MakeSiteText(const configuration::CHostInfo& site)
 	{
-		return QString("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_port);
+		return QString("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_nPort);
 	}
 }
 
@@ -46,8 +46,9 @@ CServerSettingsDialog::~CServerSettingsDialog()
 void CServerSettingsDialog::LoadSites()
 {
 	ui->siteCombo->clear();
-	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
+	for (const auto& v : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
+		const auto& site = v.second;
 		if (site.m_bEnabled)
 		{
 			ui->siteCombo->addItem(MakeSiteText(site), QString::fromStdString(site.m_strKey));
@@ -70,8 +71,9 @@ void CServerSettingsDialog::UpdateButtons()
 void CServerSettingsDialog::ViewSite()
 {
 	const QString key = ui->siteCombo->currentData().toString();
-	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
+	for (const auto& v : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
+		const auto& site = v.second;
 		if (key.toStdString() == site.m_strKey)
 		{
 			CServerSiteDialog dialog(site, true, this);
@@ -86,9 +88,10 @@ void CServerSettingsDialog::SelectFastestSite()
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	qint64 bestElapsed = std::numeric_limits<qint64>::max();
 	QString bestSiteId;
-	for (const configuration::CHostInfo& site : configuration::CHostMgr::InstanceRef().GetHosts())
+	for (const auto v : configuration::CHostMgr::InstanceRef().GetHosts())
 	{
-		if (!site.m_bEnabled || site.m_strHost.empty() || 0 >= site.m_port)
+		const auto& site = v.second;
+		if (!site.m_bEnabled || site.m_strHost.empty() || 0 >= site.m_nPort)
 		{
 			continue;
 		}
@@ -96,7 +99,7 @@ void CServerSettingsDialog::SelectFastestSite()
 		QTcpSocket socket;
 		QElapsedTimer timer;
 		timer.start();
-		socket.connectToHost(QString::fromStdString(site.m_strHost), static_cast<quint16>(site.m_port));
+		socket.connectToHost(QString::fromStdString(site.m_strHost), static_cast<quint16>(site.m_nPort));
 		if (socket.waitForConnected(1500))
 		{
 			qint64 elapsed = timer.elapsed();
@@ -160,15 +163,7 @@ void CServerSettingsDialog::RemoveSite()
 	}
 	try
 	{
-		const auto& hosts = configuration::CHostMgr::InstanceRef().GetHosts();
-		for (std::size_t i = 0; i < hosts.size(); ++i)
-		{
-			if (siteId.toStdString() == hosts[i].m_strKey)
-			{
-				configuration::CHostMgr::InstanceRef().Remove(i);
-				break;
-			}
-		}
+		configuration::CHostMgr::InstanceRef().Remove(siteId.toStdString());
 	}
 	catch (const std::exception&)
 	{

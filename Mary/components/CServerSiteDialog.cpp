@@ -11,7 +11,7 @@ CServerSiteDialog::CServerSiteDialog(const configuration::CHostInfo& site, bool 
 	setWindowTitle(readOnly ? "查看站点" : "新增站点");
 	ui->nameEdit->setText(QString::fromStdString(site.m_strName));
 	ui->hostEdit->setText(QString::fromStdString(site.m_strHost));
-	ui->portEdit->setText(QString::number(0 < site.m_port ? site.m_port : 8601));
+	ui->portEdit->setText(QString::number(0 < site.m_nPort ? site.m_nPort : 8601));
 	ui->portEdit->setValidator(new QIntValidator(1, 65535, ui->portEdit));
 	ui->nameEdit->setReadOnly(readOnly);
 	ui->hostEdit->setReadOnly(readOnly);
@@ -58,6 +58,6 @@ void CServerSiteDialog::AcceptSite()
 
 	m_site.m_strName = name.toStdString();
 	m_site.m_strHost = host.toStdString();
-	m_site.m_port = static_cast<unsigned int>(port);
+	m_site.m_nPort = static_cast<unsigned int>(port);
 	accept();
 }

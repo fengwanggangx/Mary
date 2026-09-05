@@ -1,6 +1,4 @@
 #include "CIniFile.h"
-#include <QSaveFile>
-#include <fstream>
 #include <mutex>
 
 namespace ini
@@ -51,13 +49,7 @@ namespace ini
 		{
 			parser->Delete(strSection.c_str(), strKey.c_str());
 		}
-		data.clear();
-		if (0 > parser->Save(data))
-		{
-			return false;
-		}
-		QSaveFile file(QString::fromLocal8Bit(m_strFileName.c_str()));
-		if (!file.open(QIODevice::WriteOnly) || static_cast<qint64>(data.size()) != file.write(data.data(), static_cast<qint64>(data.size())) || !file.commit())
+		if (0 > parser->SaveFile(m_strFileName.c_str()))
 		{
 			return false;
 		}
@@ -84,13 +76,9 @@ namespace ini
 		{
 			if (SI_FILE == ret)
 			{
-				std::ofstream f(strFile);
-				if (!f.is_open())
-				{
-					return false;
-				}
-				f.close();
+				return 0 <= m_pParser->SaveFile(strFile.c_str());
 			}
+			return false;
 		}
 		return true;
 	}

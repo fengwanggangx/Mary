@@ -89,7 +89,7 @@ void LoginWindow::OnLoginBtnClicked()
 	request.site.id = site->m_strKey;
 	request.site.name = site->m_strName;
 	request.site.host = site->m_strHost;
-	request.site.port = static_cast<int>(site->m_port);
+	request.site.port = static_cast<int>(site->m_nPort);
 	ui->pushButton_login->setEnabled(false);
 	m_loginService->Login(request);
 }

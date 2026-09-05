@@ -1,5 +1,6 @@
 #include "CServerSettings.h"
 #include "../ini/CINIHandler.h"
+#include "../common/utility.h"
 #include <array>
 #include <charconv>
 #include <stdexcept>
@@ -10,13 +11,14 @@
 
 namespace configuration
 {
-	static constexpr unsigned int cs_port_limit = 65535;
+	static constexpr unsigned int cs_port_low_limit = 0;
+	static constexpr unsigned int cs_port_up_limit = 65535;
 
 	CHostMgr::~CHostMgr() = default;
 
 	bool CHostInfo::Valid() const
 	{
-		return !m_strName.empty() && !m_strHost.empty() && utility::between(m_port, 0, cs_port_limit);
+		return !m_strName.empty() && !m_strHost.empty() && utility::between(m_nPort, cs_port_low_limit, cs_port_up_limit);
 	}
 
 	bool CHostInfo::Deserialize(const std::string &strKey, const std::string &strInfo)
@@ -32,8 +34,8 @@ namespace configuration
 			return false;
 		}
 
-		int nPort = 0;
-		if (!utility::to_number(v.at(2), nPort) || utility::between(nPort, 0, cs_port_limit))
+		unsigned int nPort = 0;
+		if (!utility::to_number(std::string(v.at(2)), nPort) || utility::between(nPort, cs_port_low_limit, cs_port_up_limit))
 		{
 			return false;
 		}
@@ -41,14 +43,14 @@ namespace configuration
 		m_strKey = strKey;
 		m_strName = v.at(0);
 		m_strHost = v.at(1);
-		m_port = nPort;
+		m_nPort = nPort;
 		m_bEnabled = "1" == v.at(3);
 		return true;
 	}
 
 	bool CHostInfo::operator==(const CHostInfo& arg) const
 	{
-		return (m_strHost == arg.m_strHost) && (m_port == arg.m_port);
+		return (m_strHost == arg.m_strHost) && (m_nPort == arg.m_nPort);
 	}
 
 	std::string CHostInfo::Serialize() const
@@ -57,7 +59,7 @@ namespace configuration
 		{
 			return {};
 		}
-		return m_strName + "_" + m_strHost + "_" + std::to_string(m_port) + "_" + (m_bEnabled ? "1" : "0");
+		return m_strName + "_" + m_strHost + "_" + std::to_string(m_nPort) + "_" + (m_bEnabled ? "1" : "0");
 	}
 
 	void CHostMgr::Initialize()
@@ -70,7 +72,7 @@ namespace configuration
 			CHostInfo host;
 			if (host.Deserialize(entry.first, entry.second))
 			{
-				m_hosts.emplace_back(entry.first, std::move(host));
+				m_hosts.emplace(entry.first, std::move(host));
 			}
 		}
 	}
@@ -87,11 +89,12 @@ namespace configuration
 
 	std::optional<CHostInfo> CHostMgr::GetActiveHost() const
 	{
-		for (const auto &host : m_hosts)
+		for (const auto& v : m_hosts)
 		{
-			if (host.m_bEnabled && host.Valid())
+			const auto& info = v.second;
+			if (info.m_bEnabled && info.Valid())
 			{
-				return host;
+				return info;
 			}
 		}
 		return std::nullopt;
@@ -111,11 +114,11 @@ namespace configuration
 			}
 		}
 
-		if (!ini::CINIHandler::InstanceRef().UpdateEntry(ini::Config::System, "Server", m_hosts.m_strKey, v.Serialize()))
+		if (!ini::CINIHandler::InstanceRef().UpdateEntry(ini::Config::System, "Server", v.m_strKey, v.Serialize()))
 		{
 			return false;
 		}
-		m_hosts.emplace_back(m_hosts.m_strKey, v);
+		m_hosts.emplace(v.m_strKey, v);
 		return true;
 	}
 
@@ -147,6 +150,7 @@ namespace configuration
 			return false;
 		}
 		m_hosts[v.m_strKey] = v;
+		return true;
 	}
 
 } // namespace configuration

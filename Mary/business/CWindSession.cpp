@@ -21,7 +21,7 @@ CWindSession::CWindSession(QObject* pParent) : QObject(pParent)
 	if (site.has_value())
 	{
 		m_host = QString::fromStdString(site->m_strHost);
-		m_port = static_cast<int>(site->m_port);
+		m_port = static_cast<int>(site->m_nPort);
 	}
 	m_user = settings.value("wind/user").toString();
 	m_password = settings.value("wind/password").toString();
