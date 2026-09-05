@@ -17,8 +17,8 @@ namespace ini
 	  public:
 		explicit CIniFile(const std::string& strFile);
 		~CIniFile();
-		std::vector<std::pair<std::string, std::string>> GetSection(const std::string& section) const;
-		bool UpdateEntry(const std::string& section, const std::string& key, const std::optional<std::string>& value, const std::string& oldKey = {});
+		std::vector<std::pair<std::string, std::string>> GetSection(const std::string& strSection) const;
+		bool UpdateEntry(const std::string& strSection, const std::string& strKey, const std::optional<std::string>& value, const std::string& oldKey = {});
 
 	  public:
 		int GetInt(const std::string& strSection, const std::string& strKey, int nDefault) const;

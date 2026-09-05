@@ -5,24 +5,27 @@
 
 namespace ini
 {
-	std::vector<std::pair<std::string, std::string>> CIniFile::GetSection(const std::string& section) const
+	std::vector<std::pair<std::string, std::string>> CIniFile::GetSection(const std::string& strSection) const
 	{
-		std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
 		CSimpleIniA::TNamesDepend keys;
-		m_pParser->GetAllKeys(section.c_str(), keys);
-		keys.sort(CSimpleIniA::Entry::LoadOrder());
 		std::vector<std::pair<std::string, std::string>> entries;
-		entries.reserve(keys.size());
-		for (const auto& key : keys)
+
 		{
-			entries.emplace_back(key.pItem, m_pParser->GetValue(section.c_str(), key.pItem, ""));
+			std::shared_lock<std::shared_mutex> lck(m_mtx_parser);
+			m_pParser->GetAllKeys(strSection.c_str(), keys);
+			keys.sort(CSimpleIniA::Entry::LoadOrder());
+			entries.reserve(keys.size());
+			for (const auto& strKey : keys)
+			{
+				entries.emplace_back(strKey.pItem, m_pParser->GetValue(strSection.c_str(), strKey.pItem, ""));
+			}
 		}
 		return entries;
 	}
 
-	bool CIniFile::UpdateEntry(const std::string& section, const std::string& key, const std::optional<std::string>& value, const std::string& oldKey)
+	bool CIniFile::UpdateEntry(const std::string& strSection, const std::string& strKey, const std::optional<std::string>& value, const std::string& oldKey)
 	{
-		if (section.empty() || key.empty())
+		if (strSection.empty() || strKey.empty())
 		{
 			return false;
 		}
@@ -35,18 +38,18 @@ namespace ini
 		}
 		if (value.has_value())
 		{
-			if (0 > parser->SetValue(section.c_str(), key.c_str(), value->c_str()))
+			if (0 > parser->SetValue(strSection.c_str(), strKey.c_str(), value->c_str()))
 			{
 				return false;
 			}
 			if (!oldKey.empty())
 			{
-				parser->Delete(section.c_str(), oldKey.c_str());
+				parser->Delete(strSection.c_str(), oldKey.c_str());
 			}
 		}
 		else
 		{
-			parser->Delete(section.c_str(), key.c_str());
+			parser->Delete(strSection.c_str(), strKey.c_str());
 		}
 		data.clear();
 		if (0 > parser->Save(data))
