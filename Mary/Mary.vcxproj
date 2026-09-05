@@ -195,6 +195,8 @@
   <ItemGroup>
     <ClInclude Include="basic\CDatable.h" />
     <ClInclude Include="basic\CDistributor.h" />
+    <ClInclude Include="basic\CallbackRegistry.h" />
+    <ClInclude Include="basic\QtCallbackBridge.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />

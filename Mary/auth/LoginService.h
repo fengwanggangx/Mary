@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/CallbackRegistry.h"
+#include "../basic/CallbackRegistry.h"
 #include <functional>
 #include <memory>
 #include <string>
