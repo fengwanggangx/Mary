@@ -16,7 +16,6 @@
 CWindSession::CWindSession(QObject* pParent) : QObject(pParent)
 {
 	QSettings settings(QCoreApplication::applicationDirPath() + "/mary.ini", QSettings::IniFormat);
-	configuration::CHostMgr::InstanceRef().Initialize();
 	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
 	if (site.has_value())
 	{

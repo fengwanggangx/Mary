@@ -14,7 +14,8 @@ namespace configuration
 		std::string m_strKey;
 		std::string m_strName;
 		std::string m_strHost;
-		unsigned int m_nPort{0};
+		unsigned int m_nPort{ 0 };
+
 		bool m_bEnabled{ false };
 
 		bool operator==(const CHostInfo& arg) const;
@@ -30,7 +31,6 @@ namespace configuration
 		DECLARE_SINGLE_DFAULT(CHostMgr)
 
 	  public:
-		void Initialize();
 		std::string Key() const;
 		const std::unordered_map<std::string, CHostInfo>& GetHosts() const;
 		std::optional<CHostInfo> GetActiveHost() const;
@@ -39,7 +39,14 @@ namespace configuration
 		bool Remove(const std::string& strKey);
 		bool Modify(const CHostInfo &v);
 
+		bool SetConnectFast(bool v);
+		bool IsConnectFast() const;
+
+	private:
+		void Initialize();
+
 	  private:
+		bool m_bConnectFast{ false };
 		std::unordered_map<std::string, CHostInfo> m_hosts;
 	};
 } // namespace configuration

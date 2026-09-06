@@ -71,19 +71,19 @@ namespace db
 
 		sqlite3_stmt* pStatement = nullptr;
 		int nRet = sqlite3_prepare_v2(static_cast<sqlite3*>(m_pDB), strSQL.c_str(), -1, &pStatement, nullptr);
-		auto statement = std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>(pStatement, sqlite3_finalize);
+		std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> statement(pStatement, sqlite3_finalize);
 		if (SQLITE_OK != nRet)
 		{
 			return table;
 		}
 
-		std::size_t nCols = static_cast<std::size_t>(sqlite3_column_count(statement.get()));
-		table.first.reserve(nCols);
-		for (std::size_t i = 0; i < nCols; ++i)
+		int nCols = sqlite3_column_count(statement.get());
+		table.first.reserve(static_cast<std::size_t>(nCols));
+		for (int i = 0; i < nCols; ++i)
 		{
 			table.first.emplace_back();
 			CColumnInfo& column = table.first.back();
-			column.m_uId = i;
+			column.m_uId = static_cast<unsigned int>(i);
 			column.m_strName = sqlite3_column_name(statement.get(), i);
 		}
 
@@ -91,8 +91,8 @@ namespace db
 		{
 			table.second.emplace_back();
 			auto& row = table.second.back();
-			row.reserve(nCols);
-			for (std::size_t i = 0; i < nCols; ++i)
+			row.reserve(static_cast<std::size_t>(nCols));
+			for (int i = 0; i < nCols; ++i)
 			{
 				const unsigned char* pszValue = sqlite3_column_text(statement.get(), i);
 				row.emplace_back(nullptr == pszValue ? "" : reinterpret_cast<const char*>(pszValue));

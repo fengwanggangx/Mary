@@ -14,6 +14,11 @@ namespace configuration
 	static constexpr unsigned int cs_port_low_limit = 0;
 	static constexpr unsigned int cs_port_up_limit = 65535;
 
+	CHostMgr::CHostMgr()
+	{
+		Initialize();
+	}
+
 	CHostMgr::~CHostMgr() = default;
 
 	bool CHostInfo::Valid() const
@@ -35,7 +40,7 @@ namespace configuration
 		}
 
 		unsigned int nPort = 0;
-		if (!utility::to_number(std::string(v.at(2)), nPort) || utility::between(nPort, cs_port_low_limit, cs_port_up_limit))
+		if (!utility::to_number(std::string(v.at(2)), nPort) || !utility::between(nPort, cs_port_low_limit, cs_port_up_limit))
 		{
 			return false;
 		}
@@ -67,13 +72,21 @@ namespace configuration
 		auto entries = ini::CINIHandler::InstanceRef().GetSection(ini::Config::System, "Server");
 		m_hosts.clear();
 		m_hosts.reserve(entries.size());
-		for (const auto &entry : entries)
+		for (const auto& [k, v] : entries)
 		{
-			CHostInfo host;
-			if (host.Deserialize(entry.first, entry.second))
+			if (k == "connect_fast")
 			{
-				m_hosts.emplace(entry.first, std::move(host));
+				m_bConnectFast = "1" == v;
 			}
+			else if (k.find("host") == 0)
+			{
+				CHostInfo host;
+				if (host.Deserialize(k, v))
+				{
+					m_hosts.emplace(k, std::move(host));
+				}
+			}
+
 		}
 	}
 
@@ -151,6 +164,18 @@ namespace configuration
 		}
 		m_hosts[v.m_strKey] = v;
 		return true;
+	}
+
+	bool CHostMgr::SetConnectFast(bool v)
+	{
+		bool bRet = m_bConnectFast;
+		m_bConnectFast = v;
+		return bRet;
+	}
+
+	bool CHostMgr::IsConnectFast() const
+	{
+		return m_bConnectFast;
 	}
 
 } // namespace configuration

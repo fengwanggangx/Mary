@@ -7,7 +7,6 @@
 
 LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWindowClass())
 {
-	configuration::CHostMgr::InstanceRef().Initialize();
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	

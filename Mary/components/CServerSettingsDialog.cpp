@@ -14,14 +14,14 @@ namespace
 {
 	QString MakeSiteText(const configuration::CHostInfo& site)
 	{
-		return QString("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_nPort);
+		QString siteText = QStringLiteral("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_nPort);
+		return siteText;
 	}
 }
 
 CServerSettingsDialog::CServerSettingsDialog(QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSettingsDialogClass())
 {
 	ui->setupUi(this);
-	configuration::CHostMgr::InstanceRef().Initialize();
 	connect(ui->siteCombo, &QComboBox::currentIndexChanged, this, &CServerSettingsDialog::UpdateButtons);
 	connect(ui->viewButton, &QPushButton::clicked, this, &CServerSettingsDialog::ViewSite);
 	connect(ui->autoFastestCheck, &QCheckBox::toggled, this, [this](bool checked)
@@ -46,13 +46,11 @@ CServerSettingsDialog::~CServerSettingsDialog()
 void CServerSettingsDialog::LoadSites()
 {
 	ui->siteCombo->clear();
-	for (const auto& v : configuration::CHostMgr::InstanceRef().GetHosts())
+	const auto& hosts = configuration::CHostMgr::InstanceRef().GetHosts();
+	for (const auto& v : hosts)
 	{
 		const auto& site = v.second;
-		if (site.m_bEnabled)
-		{
-			ui->siteCombo->addItem(MakeSiteText(site), QString::fromStdString(site.m_strKey));
-		}
+		ui->siteCombo->addItem(MakeSiteText(site), QString::fromStdString(site.m_strKey));
 	}
 	int activeIndex = 0;
 	ui->siteCombo->setCurrentIndex(0 <= activeIndex ? activeIndex : 0);
@@ -85,48 +83,13 @@ void CServerSettingsDialog::ViewSite()
 
 void CServerSettingsDialog::SelectFastestSite()
 {
-	QApplication::setOverrideCursor(Qt::WaitCursor);
-	qint64 bestElapsed = std::numeric_limits<qint64>::max();
-	QString bestSiteId;
-	for (const auto v : configuration::CHostMgr::InstanceRef().GetHosts())
-	{
-		const auto& site = v.second;
-		if (!site.m_bEnabled || site.m_strHost.empty() || 0 >= site.m_nPort)
-		{
-			continue;
-		}
-
-		QTcpSocket socket;
-		QElapsedTimer timer;
-		timer.start();
-		socket.connectToHost(QString::fromStdString(site.m_strHost), static_cast<quint16>(site.m_nPort));
-		if (socket.waitForConnected(1500))
-		{
-			qint64 elapsed = timer.elapsed();
-			if (elapsed < bestElapsed)
-			{
-				bestElapsed = elapsed;
-				bestSiteId = QString::fromStdString(site.m_strKey);
-			}
-			socket.abort();
-		}
-	}
-	QApplication::restoreOverrideCursor();
-
-	int bestIndex = ui->siteCombo->findData(bestSiteId);
-	if (0 > bestIndex)
-	{
-		QMessageBox::warning(this, "选择最快", "没有可连接的站点，请检查地址和端口。");
-		return;
-	}
-	ui->siteCombo->setCurrentIndex(bestIndex);
-	QMessageBox::information(this, "选择最快", QString("已选择 %1，连接耗时 %2 毫秒。").arg(ui->siteCombo->currentText()).arg(bestElapsed));
+	configuration::CHostMgr::InstanceRef().SetConnectFast();
 }
 
 void CServerSettingsDialog::AddSite()
 {
 	configuration::CHostInfo site;
-	site.m_strKey = "host" + std::to_string(configuration::CHostMgr::InstanceRef().GetHosts().size() + 1);
+	site.m_strKey = configuration::CHostMgr::InstanceRef().Key();
 	site.m_bEnabled = true;
 	CServerSiteDialog dialog(site, false, this);
 	if (QDialog::Accepted != dialog.exec())
