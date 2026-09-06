@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LoginService.h"
+#include "CLoginService.h"
 #include "../network/CTcpClient.h"
 #include <functional>
 #include <memory>

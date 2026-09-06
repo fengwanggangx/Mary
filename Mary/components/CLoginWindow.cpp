@@ -1,6 +1,6 @@
 #include "CLoginWindow.h"
 #include "CServerSettingsDialog.h"
-#include "../configuration/CServerSettings.h"
+#include "../configuration/CHostMgr.h"
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QMetaObject>
@@ -10,8 +10,7 @@ LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWi
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
-	m_loginService = std::make_unique<LoginService>();
-	m_loginCallbackId = m_loginService->Subscribe([this](const AuthEvent& event)
+	m_loginCallbackId = CLoginService::InstanceRef().Subscribe([this](const AuthEvent& event)
 	{
 		QMetaObject::invokeMethod(this, [this, event]()
 		{
@@ -30,10 +29,7 @@ LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWi
 
 LoginWindow::~LoginWindow()
 {
-	if (nullptr != m_loginService)
-	{
-		m_loginService->Unsubscribe(m_loginCallbackId);
-	}
+	CLoginService::InstanceRef().Unsubscribe(m_loginCallbackId);
 	delete ui;
 }
 
@@ -76,7 +72,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
-	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
+	std::optional<CHostInfo> site = CHostMgr::InstanceRef().GetActiveHost();
 	if (!site.has_value())
 	{
 		QMessageBox::warning(this, "登录失败", "没有可用的服务器配置。");
@@ -86,13 +82,10 @@ void LoginWindow::OnLoginBtnClicked()
 	ui->pushButton_login->setEnabled(false);
 
 	CLoginParam param;
-	param.account = ui->lineEdit_account->text().toStdString();
-	param.password = ui->lineEdit_passwd->text().toStdString();
-	param.site.id = site->m_strKey;
-	param.site.name = site->m_strName;
-	param.site.host = site->m_strHost;
-	param.site.port = static_cast<int>(site->m_nPort);
-	m_loginService->Login(param);
+	param.m_strAccount = ui->lineEdit_account->text().toStdString();
+	param.m_strPassword = ui->lineEdit_passwd->text().toStdString();
+	param.m_host = std::move(*site);
+	CLoginService::InstanceRef().Login(param);
 }
 
 void LoginWindow::OnCloseBtnClicked()

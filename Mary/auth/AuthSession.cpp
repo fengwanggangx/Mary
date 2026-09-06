@@ -17,7 +17,7 @@ void AuthSession::Start(const CLoginParam& param, Callback callback)
 	m_callback = std::move(callback);
 	m_running = true;
 
-	m_client = std::make_unique<net::CTcpClient>(m_param.site.host, m_param.site.port);
+	m_client = std::make_unique<net::CTcpClient>(m_param.m_host.m_strHost, static_cast<int>(m_param.m_host.m_nPort));
 	m_client->RegisterHandler([this](const net::CNetEvent& event)
 	{
 		OnNetworkEvent(event);
@@ -85,13 +85,13 @@ void AuthSession::OnNetworkEvent(const net::CNetEvent& event)
 		{
 			Notify({AuthState::Failed, AuthError::AuthenticationFailed, false, "账号或密码错误，请重新输入"});
 		}
-		m_param.password.clear();
+		m_param.m_strPassword.clear();
 		m_running = false;
 		return;
 	}
 
 	Notify({AuthState::Failed, AuthError::NetworkError, false, "网络连接已断开"});
-	m_param.password.clear();
+	m_param.m_strPassword.clear();
 	m_running = false;
 }
 
@@ -100,12 +100,12 @@ void AuthSession::SendAuthentication()
 	CRequest request;
 	request.SetType(CRequest::Type::QUERY_AUTH);
 	request.SetCmd("auth");
-	request.SetExtraData("user", m_param.account);
-	request.SetExtraData("password", m_param.password);
+	request.SetExtraData("user", m_param.m_strAccount);
+	request.SetExtraData("password", m_param.m_strPassword);
 	if (!m_client->SendRequest(request))
 	{
 		Notify({AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败"});
-		m_param.password.clear();
+		m_param.m_strPassword.clear();
 		m_running = false;
 	}
 }

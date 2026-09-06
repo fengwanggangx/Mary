@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #include "ui_CLoginWindow.h"
-#include "../auth/LoginService.h"
+#include "../auth/CLoginService.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class LoginWindowClass; };
@@ -35,6 +35,5 @@ private:
 private:
 	QPoint m_dragPosition;
 	bool m_isDragging{ false };
-	std::unique_ptr<LoginService> m_loginService;
 	_TyCallbackId m_loginCallbackId{0};
 };

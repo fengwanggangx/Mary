@@ -73,7 +73,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="auth\LoginService.cpp">
+    <ClCompile Include="auth\CLoginService.cpp">
       <Filter>Source Files\auth</Filter>
     </ClCompile>
     <ClCompile Include="auth\AuthSession.cpp">
@@ -91,7 +91,7 @@
     <ClCompile Include="components\CServerSettingsDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="configuration\CServerSettings.cpp">
+    <ClCompile Include="configuration\CHostMgr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="components\CMainWindow.cpp">
@@ -273,7 +273,7 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="auth\LoginService.h">
+    <ClInclude Include="auth\CLoginService.h">
       <Filter>Source Files\auth</Filter>
     </ClInclude>
     <ClInclude Include="auth\AuthSession.h">
@@ -438,7 +438,7 @@
     <ClInclude Include="components\CViewStrategySettings.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
-    <ClInclude Include="configuration\CServerSettings.h">
+    <ClInclude Include="configuration\CHostMgr.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

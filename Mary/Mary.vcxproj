@@ -123,7 +123,7 @@
     <ClCompile Include="basic\CDatable.cpp" />
     <ClCompile Include="basic\CDistributor.cpp" />
     <ClCompile Include="business\CWindSession.cpp" />
-    <ClCompile Include="auth\LoginService.cpp" />
+    <ClCompile Include="auth\CLoginService.cpp" />
     <ClCompile Include="auth\AuthSession.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
@@ -136,7 +136,7 @@
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
-    <ClCompile Include="configuration\CServerSettings.cpp" />
+    <ClCompile Include="configuration\CHostMgr.cpp" />
     <ClCompile Include="cryption\Cryption.cpp" />
     <ClCompile Include="database\CDBEngine.cpp" />
     <ClCompile Include="database\common_db.cpp" />
@@ -199,7 +199,7 @@
     <ClInclude Include="basic\CallbackRegistry.h" />
     <ClInclude Include="basic\QtCallbackBridge.h" />
     <ClInclude Include="auth\AuthSession.h" />
-    <ClInclude Include="auth\LoginService.h" />
+    <ClInclude Include="auth\CLoginService.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />
@@ -214,7 +214,7 @@
     <ClInclude Include="components\CSystemSettings.h" />
     <ClInclude Include="components\CViewHQMarket.h" />
     <ClInclude Include="components\CViewStrategySettings.h" />
-    <ClInclude Include="configuration\CServerSettings.h" />
+    <ClInclude Include="configuration\CHostMgr.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />
     <ClInclude Include="database\common_db.h" />

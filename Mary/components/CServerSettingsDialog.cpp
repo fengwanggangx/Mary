@@ -12,7 +12,7 @@
 
 namespace
 {
-	QString MakeSiteText(const configuration::CHostInfo& site)
+	QString MakeSiteText(const CHostInfo& site)
 	{
 		QString siteText = QStringLiteral("%1 (%2:%3)").arg(QString::fromStdString(site.m_strName), QString::fromStdString(site.m_strHost)).arg(site.m_nPort);
 		return siteText;
@@ -40,7 +40,7 @@ CServerSettingsDialog::~CServerSettingsDialog()
 void CServerSettingsDialog::LoadSites()
 {
 	ui->siteCombo->clear();
-	const auto& hosts = configuration::CHostMgr::InstanceRef().GetHosts();
+	const auto& hosts = CHostMgr::InstanceRef().GetHosts();
 	for (const auto& v : hosts)
 	{
 		const auto& site = v.second;
@@ -63,7 +63,7 @@ void CServerSettingsDialog::UpdateButtons()
 void CServerSettingsDialog::ViewSite()
 {
 	const QString key = ui->siteCombo->currentData().toString();
-	for (const auto& v : configuration::CHostMgr::InstanceRef().GetHosts())
+	for (const auto& v : CHostMgr::InstanceRef().GetHosts())
 	{
 		const auto& site = v.second;
 		if (key.toStdString() == site.m_strKey)
@@ -77,23 +77,23 @@ void CServerSettingsDialog::ViewSite()
 
 void CServerSettingsDialog::OnAutoFastestToggled(bool checked)
 {
-	configuration::CHostMgr::InstanceRef().SetConnectFast(checked);
+	CHostMgr::InstanceRef().SetConnectFast(checked);
 }
 
 void CServerSettingsDialog::AddSite()
 {
-	configuration::CHostInfo site;
-	site.m_strKey = configuration::CHostMgr::InstanceRef().Key();
+	CHostInfo site;
+	site.m_strKey = CHostMgr::InstanceRef().Key();
 	site.m_bEnabled = true;
 	CServerSiteDialog dialog(site, false, this);
 	if (QDialog::Accepted != dialog.exec())
 	{
 		return;
 	}
-	const configuration::CHostInfo& newSite = dialog.GetSite();
+	const CHostInfo& newSite = dialog.GetSite();
 	try
 	{
-		configuration::CHostMgr::InstanceRef().Add(newSite);
+		CHostMgr::InstanceRef().Add(newSite);
 	}
 	catch (const std::exception&)
 	{
@@ -120,7 +120,7 @@ void CServerSettingsDialog::RemoveSite()
 	}
 	try
 	{
-		configuration::CHostMgr::InstanceRef().Remove(siteId.toStdString());
+		CHostMgr::InstanceRef().Remove(siteId.toStdString());
 	}
 	catch (const std::exception&)
 	{

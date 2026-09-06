@@ -1,5 +1,5 @@
 #include "CWindSession.h"
-#include "../configuration/CServerSettings.h"
+#include "../configuration/CHostMgr.h"
 
 #include "../network/CTcpClient.h"
 #include "../network/common_net.h"
@@ -16,7 +16,7 @@
 CWindSession::CWindSession(QObject* pParent) : QObject(pParent)
 {
 	QSettings settings(QCoreApplication::applicationDirPath() + "/mary.ini", QSettings::IniFormat);
-	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
+	std::optional<CHostInfo> site = CHostMgr::InstanceRef().GetActiveHost();
 	if (site.has_value())
 	{
 		m_host = QString::fromStdString(site->m_strHost);

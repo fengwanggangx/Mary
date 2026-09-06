@@ -5,7 +5,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-CServerSiteDialog::CServerSiteDialog(const configuration::CHostInfo& site, bool readOnly, QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSiteDialogClass()), m_site(site)
+CServerSiteDialog::CServerSiteDialog(const CHostInfo& site, bool readOnly, QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSiteDialogClass()), m_site(site)
 {
 	ui->setupUi(this);
 	setWindowTitle(readOnly ? "查看站点" : "新增站点");
@@ -33,7 +33,7 @@ CServerSiteDialog::~CServerSiteDialog()
 	delete ui;
 }
 
-const configuration::CHostInfo& CServerSiteDialog::GetSite() const
+const CHostInfo& CServerSiteDialog::GetSite() const
 {
 	return m_site;
 }
