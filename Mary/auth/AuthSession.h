@@ -15,16 +15,17 @@ public:
 	AuthSession(const AuthSession&) = delete;
 	AuthSession& operator=(const AuthSession&) = delete;
 
-	void Start(const CLoginParam& param, Callback callback);
+	void Start(AuthOperation operation, const CLoginParam& param, Callback callback);
 	void Cancel();
 	bool IsRunning() const noexcept;
 
 private:
 	void OnNetworkEvent(const net::CNetEvent& event);
-	void SendAuthentication();
+	void SendRequest();
 	void Notify(AuthEvent event);
 
 	std::unique_ptr<net::CTcpClient> m_client;
+	AuthOperation m_operation{ AuthOperation::Login };
 	CLoginParam m_param;
 	Callback m_callback;
 	bool m_running{false};

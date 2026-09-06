@@ -85,6 +85,9 @@
     <ClCompile Include="components\CLoginWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
+    <ClCompile Include="components\CRegisterDialog.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
     <ClCompile Include="components\CServerSiteDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
@@ -231,6 +234,9 @@
     <QtMoc Include="components\CLoginWindow.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
+    <QtMoc Include="components\CRegisterDialog.h">
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
     <QtMoc Include="components\CMainWindow.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
@@ -248,6 +254,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="components\CLoginWindow.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CRegisterDialog.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
     <QtUic Include="components\CServerSiteDialog.ui">

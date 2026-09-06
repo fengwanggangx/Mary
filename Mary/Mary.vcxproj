@@ -129,6 +129,7 @@
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
     <ClCompile Include="components\CLoginWindow.cpp" />
+    <ClCompile Include="components\CRegisterDialog.cpp" />
     <ClCompile Include="components\CServerSiteDialog.cpp" />
     <ClCompile Include="components\CServerSettingsDialog.cpp" />
     <ClCompile Include="components\CMainWindow.cpp" />
@@ -182,6 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="components\CLoginWindow.ui" />
+    <QtUic Include="components\CRegisterDialog.ui" />
     <QtUic Include="components\CServerSiteDialog.ui" />
     <QtUic Include="components\CServerSettingsDialog.ui" />
     <QtUic Include="components\CMainWindow.ui" />
@@ -192,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h" />
+    <QtMoc Include="components\CRegisterDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basic\CDatable.h" />

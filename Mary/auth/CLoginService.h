@@ -15,6 +15,19 @@ struct CLoginParam
 	CHostInfo m_host;
 };
 
+struct CRegisterParam
+{
+	std::string m_strAccount;
+	std::string m_strPassword;
+	CHostInfo m_host;
+};
+
+enum class AuthOperation
+{
+	Login,
+	Register
+};
+
 enum class AuthState
 {
 	Idle,
@@ -38,10 +51,11 @@ enum class AuthError
 
 struct AuthEvent
 {
-	AuthState state{AuthState::Idle};
-	AuthError error{AuthError::None};
-	bool success{false}; 
-	std::string message;
+	AuthOperation m_operation{ AuthOperation::Login };
+	AuthState m_state{ AuthState::Idle };
+	AuthError m_error{ AuthError::None };
+	bool m_success{ false };
+	std::string m_message;
 };
 
 class AuthSession;
@@ -57,11 +71,15 @@ public:
 	void Unsubscribe(_TyCallbackId id);
 	void Login(const CLoginParam& param);
 	void Login(const CLoginParam& param, _TyCallback callback);
+	void Register(const CRegisterParam& param);
+	void Register(const CRegisterParam& param, _TyCallback callback);
 	void Cancel();
-	bool IsLoggingIn() const noexcept;
+	bool IsBusy() const noexcept;
 
 private:
+	void Start(AuthOperation operation, const CLoginParam& param, _TyCallback callback);
+
 	std::unique_ptr<AuthSession> m_session;
 	CallbackRegistry<AuthEvent> m_events;
-	bool m_loggingIn{false};
+	bool m_busy{ false };
 };

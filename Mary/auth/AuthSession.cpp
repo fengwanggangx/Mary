@@ -10,9 +10,10 @@ AuthSession::~AuthSession()
 	Cancel();
 }
 
-void AuthSession::Start(const CLoginParam& param, Callback callback)
+void AuthSession::Start(AuthOperation operation, const CLoginParam& param, Callback callback)
 {
 	Cancel();
+	m_operation = operation;
 	m_param = param;
 	m_callback = std::move(callback);
 	m_running = true;
@@ -24,10 +25,10 @@ void AuthSession::Start(const CLoginParam& param, Callback callback)
 		return 1;
 	});
 
-	Notify({AuthState::Connecting, AuthError::None, false, "正在连接站点"});
+	Notify({ m_operation, AuthState::Connecting, AuthError::None, false, "正在连接站点" });
 	if (0 != m_client->Initialize())
 	{
-		Notify({AuthState::Failed, AuthError::ConnectFailed, false, "连接站点失败"});
+		Notify({ m_operation, AuthState::Failed, AuthError::ConnectFailed, false, "连接站点失败" });
 		Cancel();
 		return;
 	}
@@ -63,15 +64,16 @@ void AuthSession::OnNetworkEvent(const net::CNetEvent& event)
 
 	if (net::em_event::connected == event.m_event)
 	{
-		Notify({AuthState::Authenticating, AuthError::None, false, "正在认证"});
-		SendAuthentication();
+		Notify({ m_operation, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == m_operation ? "正在认证" : "正在注册" });
+		SendRequest();
 		return;
 	}
 
 	if (net::em_event::request == event.m_event && (nullptr != event.m_request))
 	{
 		const std::string command = event.m_request->GetCmd();
-		if ("auth" != command)
+		std::string expectedCommand = AuthOperation::Login == m_operation ? "auth" : "register";
+		if (expectedCommand != command)
 		{
 			return;
 		}
@@ -79,32 +81,32 @@ void AuthSession::OnNetworkEvent(const net::CNetEvent& event)
 		const std::string error = event.m_request->GetReturnData("error_message");
 		if (error.empty())
 		{
-			Notify({AuthState::Success, AuthError::None, true, "登录成功"});
+			Notify({ m_operation, AuthState::Success, AuthError::None, true, AuthOperation::Login == m_operation ? "登录成功" : "注册成功" });
 		}
 		else
 		{
-			Notify({AuthState::Failed, AuthError::AuthenticationFailed, false, "账号或密码错误，请重新输入"});
+			Notify({ m_operation, AuthState::Failed, AuthError::AuthenticationFailed, false, error });
 		}
 		m_param.m_strPassword.clear();
 		m_running = false;
 		return;
 	}
 
-	Notify({AuthState::Failed, AuthError::NetworkError, false, "网络连接已断开"});
+	Notify({ m_operation, AuthState::Failed, AuthError::NetworkError, false, "网络连接已断开" });
 	m_param.m_strPassword.clear();
 	m_running = false;
 }
 
-void AuthSession::SendAuthentication()
+void AuthSession::SendRequest()
 {
 	CRequest request;
-	request.SetType(CRequest::Type::QUERY_AUTH);
-	request.SetCmd("auth");
+	request.SetType(AuthOperation::Login == m_operation ? CRequest::Type::QUERY_AUTH : CRequest::Type::UPDATE_AUTH);
+	request.SetCmd(AuthOperation::Login == m_operation ? "auth" : "register");
 	request.SetExtraData("user", m_param.m_strAccount);
 	request.SetExtraData("password", m_param.m_strPassword);
 	if (!m_client->SendRequest(request))
 	{
-		Notify({AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败"});
+		Notify({ m_operation, AuthState::Failed, AuthError::NetworkError, false, AuthOperation::Login == m_operation ? "认证请求发送失败" : "注册请求发送失败" });
 		m_param.m_strPassword.clear();
 		m_running = false;
 	}

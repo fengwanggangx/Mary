@@ -23,6 +23,7 @@ protected:
 
 private slots:
 	void OnLoginBtnClicked();
+	void OnRegisterBtnClicked();
 	void OnCloseBtnClicked();
 	void OnSettingsBtnClicked();
 
@@ -30,10 +31,10 @@ private:
 	void ConnectSlots();
 
 private:
-	Ui::LoginWindowClass *ui;
+	Ui::LoginWindowClass* ui;
 
 private:
 	QPoint m_dragPosition;
 	bool m_isDragging{ false };
-	_TyCallbackId m_loginCallbackId{0};
+	_TyCallbackId m_loginCallbackId{ 0 };
 };

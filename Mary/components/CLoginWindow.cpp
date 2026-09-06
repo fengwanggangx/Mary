@@ -1,11 +1,12 @@
 #include "CLoginWindow.h"
 #include "CServerSettingsDialog.h"
+#include "CRegisterDialog.h"
 #include "../configuration/CHostMgr.h"
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QMetaObject>
 
-LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWindowClass())
+LoginWindow::LoginWindow(QWidget* parent) : QDialog(parent), ui(new Ui::LoginWindowClass())
 {
 	ui->setupUi(this);
 	setWindowFlag(Qt::FramelessWindowHint);
@@ -14,14 +15,18 @@ LoginWindow::LoginWindow(QWidget *parent) : QDialog(parent) , ui(new Ui::LoginWi
 	{
 		QMetaObject::invokeMethod(this, [this, event]()
 		{
-			if (AuthState::Success == event.state)
+			if (AuthOperation::Login != event.m_operation)
+			{
+				return;
+			}
+			if (AuthState::Success == event.m_state)
 			{
 				accept();
 			}
-			else if (AuthState::Failed == event.state)
+			else if (AuthState::Failed == event.m_state)
 			{
 				ui->pushButton_login->setEnabled(true);
-				QMessageBox::information(this, "Tips", QString::fromStdString(event.message));
+				QMessageBox::information(this, "提示", QString::fromStdString(event.m_message));
 			}
 		}, Qt::QueuedConnection);
 	});
@@ -36,6 +41,7 @@ LoginWindow::~LoginWindow()
 void LoginWindow::ConnectSlots()
 {
 	QObject::connect(ui->pushButton_login, &QPushButton::clicked, this, &LoginWindow::OnLoginBtnClicked);
+	QObject::connect(ui->pushButton_register, &QPushButton::clicked, this, &LoginWindow::OnRegisterBtnClicked);
 	QObject::connect(ui->pushButton_close, &QPushButton::clicked, this, &LoginWindow::OnCloseBtnClicked);
 	QObject::connect(ui->pushButton_settings, &QPushButton::clicked, this, &LoginWindow::OnSettingsBtnClicked);
 }
@@ -86,6 +92,18 @@ void LoginWindow::OnLoginBtnClicked()
 	param.m_strPassword = ui->lineEdit_passwd->text().toStdString();
 	param.m_host = std::move(*site);
 	CLoginService::InstanceRef().Login(param);
+}
+
+void LoginWindow::OnRegisterBtnClicked()
+{
+	CRegisterDialog dialog(this);
+	dialog.SetAccount(ui->lineEdit_account->text());
+	if (QDialog::Accepted == dialog.exec())
+	{
+		ui->lineEdit_account->setText(dialog.Account());
+		ui->lineEdit_passwd->clear();
+		ui->lineEdit_passwd->setFocus();
+	}
 }
 
 void LoginWindow::OnCloseBtnClicked()

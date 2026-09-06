@@ -27,34 +27,53 @@ void CLoginService::Login(const CLoginParam& param)
 
 void CLoginService::Login(const CLoginParam& param, _TyCallback callback)
 {
-	if (m_loggingIn)
+	Start(AuthOperation::Login, param, std::move(callback));
+}
+
+void CLoginService::Register(const CRegisterParam& param)
+{
+	Register(param, _TyCallback{});
+}
+
+void CLoginService::Register(const CRegisterParam& param, _TyCallback callback)
+{
+	CLoginParam sessionParam;
+	sessionParam.m_strAccount = param.m_strAccount;
+	sessionParam.m_strPassword = param.m_strPassword;
+	sessionParam.m_host = param.m_host;
+	Start(AuthOperation::Register, sessionParam, std::move(callback));
+}
+
+void CLoginService::Start(AuthOperation operation, const CLoginParam& param, _TyCallback callback)
+{
+	if (m_busy)
 	{
 		return;
 	}
 
 	if (param.m_strAccount.empty() || param.m_strPassword.empty())
 	{
-		m_events.Notify({AuthState::Failed, AuthError::InvalidInput, false, "账号和密码不能为空"});
+		m_events.Notify({ operation, AuthState::Failed, AuthError::InvalidInput, false, "账号和密码不能为空" });
 		return;
 	}
 
 	if (!param.m_host.Valid())
 	{
-		m_events.Notify({AuthState::Failed, AuthError::InvalidSite, false, "当前站点配置无效"});
+		m_events.Notify({ operation, AuthState::Failed, AuthError::InvalidSite, false, "当前站点配置无效" });
 		return;
 	}
 
-	m_loggingIn = true;
-	m_session->Start(param, [this, callback = std::move(callback)](const AuthEvent& event)
+	m_busy = true;
+	m_session->Start(operation, param, [this, callback = std::move(callback)](const AuthEvent& event)
 	{
 		m_events.Notify(event);
 		if (callback)
 		{
 			callback(event);
 		}
-		if (AuthState::Success == event.state || AuthState::Failed == event.state || AuthState::Cancelled == event.state)
+		if (AuthState::Success == event.m_state || AuthState::Failed == event.m_state || AuthState::Cancelled == event.m_state)
 		{
-			m_loggingIn = false;
+			m_busy = false;
 		}
 	});
 }
@@ -65,10 +84,10 @@ void CLoginService::Cancel()
 	{
 		m_session->Cancel();
 	}
-	m_loggingIn = false;
+	m_busy = false;
 }
 
-bool CLoginService::IsLoggingIn() const noexcept
+bool CLoginService::IsBusy() const noexcept
 {
-	return m_loggingIn;
+	return m_busy;
 }
