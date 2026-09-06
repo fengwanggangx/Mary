@@ -1,5 +1,5 @@
-#ifndef __DATABASE_COMMON_H__
-#define __DATABASE_COMMON_H__
+#ifndef DATABASE_COMMON_DB_H
+#define DATABASE_COMMON_DB_H
 
 #include <string>
 
@@ -7,8 +7,8 @@ namespace db
 {
 	struct CConnectParam
 	{
-		CConnectParam(const std::string& strHost, unsigned int nPort, const std::string& strAccount, const std::string& strPasswd, const std::string& strDB, const std::string& strCharset);
-		CConnectParam(const std::string& strParam, char delimiter);
+		CConnectParam(const std::string& host, unsigned int port, const std::string& account, const std::string& password, const std::string& database, const std::string& charset);
+		CConnectParam(const std::string& parameter, char delimiter);
 		std::string m_strHost;
 		unsigned int m_nPort{0};
 		std::string m_strAccount;
@@ -35,9 +35,9 @@ namespace db
 		sqlite
 	};
 
-	em_data_types GetDataType(em_database ty, int nType);
-	std::string GetDBName(em_database ty);
-	em_database GetDBType(const std::string& strName);
+	em_data_types GetDataType(em_database databaseType, int nativeType);
+	std::string GetDBName(em_database databaseType);
+	em_database GetDBType(const std::string& name);
 } // namespace db
 
 #endif
