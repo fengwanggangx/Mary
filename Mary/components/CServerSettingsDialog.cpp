@@ -24,13 +24,7 @@ CServerSettingsDialog::CServerSettingsDialog(QWidget* pParent) : QDialog(pParent
 	ui->setupUi(this);
 	connect(ui->siteCombo, &QComboBox::currentIndexChanged, this, &CServerSettingsDialog::UpdateButtons);
 	connect(ui->viewButton, &QPushButton::clicked, this, &CServerSettingsDialog::ViewSite);
-	connect(ui->autoFastestCheck, &QCheckBox::toggled, this, [this](bool checked)
-	{
-		if (checked)
-		{
-			SelectFastestSite();
-		}
-	});
+	connect(ui->autoFastestCheck, &QCheckBox::toggled, this, &CServerSettingsDialog::OnAutoFastestToggled);
 	connect(ui->addButton, &QPushButton::clicked, this, &CServerSettingsDialog::AddSite);
 	connect(ui->removeButton, &QPushButton::clicked, this, &CServerSettingsDialog::RemoveSite);
 	connect(ui->okButton, &QPushButton::clicked, this, &CServerSettingsDialog::AcceptSelection);
@@ -81,9 +75,9 @@ void CServerSettingsDialog::ViewSite()
 	}
 }
 
-void CServerSettingsDialog::SelectFastestSite()
+void CServerSettingsDialog::OnAutoFastestToggled(bool checked)
 {
-	configuration::CHostMgr::InstanceRef().SetConnectFast();
+	configuration::CHostMgr::InstanceRef().SetConnectFast(checked);
 }
 
 void CServerSettingsDialog::AddSite()

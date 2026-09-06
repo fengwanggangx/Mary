@@ -10,7 +10,7 @@ LoginService::~LoginService()
 	Cancel();
 }
 
-_TyCallbackId LoginService::Subscribe(Callback callback)
+_TyCallbackId LoginService::Subscribe(_TyCallback callback)
 {
 	return m_events.Subscribe(std::move(callback));
 }
@@ -22,10 +22,10 @@ void LoginService::Unsubscribe(_TyCallbackId id)
 
 void LoginService::Login(const CLoginParam& param)
 {
-	Login(param, Callback{});
+	Login(param, _TyCallback{});
 }
 
-void LoginService::Login(const CLoginParam& param, Callback callback)
+void LoginService::Login(const CLoginParam& param, _TyCallback callback)
 {
 	if (m_loggingIn)
 	{

@@ -76,21 +76,23 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
-	CLoginParam request;
-	request.account = ui->lineEdit_account->text().toStdString();
-	request.password = ui->lineEdit_passwd->text().toStdString();
 	const std::optional<configuration::CHostInfo> site = configuration::CHostMgr::InstanceRef().GetActiveHost();
 	if (!site.has_value())
 	{
 		QMessageBox::warning(this, "登录失败", "没有可用的服务器配置。");
 		return;
 	}
-	request.site.id = site->m_strKey;
-	request.site.name = site->m_strName;
-	request.site.host = site->m_strHost;
-	request.site.port = static_cast<int>(site->m_nPort);
+
 	ui->pushButton_login->setEnabled(false);
-	m_loginService->Login(request);
+
+	CLoginParam param;
+	param.account = ui->lineEdit_account->text().toStdString();
+	param.password = ui->lineEdit_passwd->text().toStdString();
+	param.site.id = site->m_strKey;
+	param.site.name = site->m_strName;
+	param.site.host = site->m_strHost;
+	param.site.port = static_cast<int>(site->m_nPort);
+	m_loginService->Login(param);
 }
 
 void LoginWindow::OnCloseBtnClicked()

@@ -19,7 +19,7 @@ private:
 	void LoadSites();
 	void UpdateButtons();
 	void ViewSite();
-	void SelectFastestSite();
+	void OnAutoFastestToggled(bool checked);
 	void AddSite();
 	void RemoveSite();
 	void AcceptSelection();

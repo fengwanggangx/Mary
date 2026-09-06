@@ -54,17 +54,17 @@ class AuthSession;
 class LoginService final
 {
 public:
-	using Callback = std::function<void(const AuthEvent&)>;
+	using _TyCallback = std::function<void(const AuthEvent&)>;
 
 	LoginService();
 	~LoginService();
 	LoginService(const LoginService&) = delete;
 	LoginService& operator=(const LoginService&) = delete;
 
-	_TyCallbackId Subscribe(Callback callback);
+	_TyCallbackId Subscribe(_TyCallback callback);
 	void Unsubscribe(_TyCallbackId id);
 	void Login(const CLoginParam& param);
-	void Login(const CLoginParam& param, Callback callback);
+	void Login(const CLoginParam& param, _TyCallback callback);
 	void Cancel();
 	bool IsLoggingIn() const noexcept;
 
