@@ -127,7 +127,7 @@ bool CSession::Subscribe(const std::string& strKey, const request::RequestParame
 	}
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		m_desiredSubscriptions.insert_or_assign(strKey, Subscription{ param });
+		m_subscriptions.insert_or_assign(strKey, Subscription{ param });
 	}
 	return (0 != SendRequest(request::Subscription(param)));
 }
@@ -136,7 +136,7 @@ bool CSession::Unsubscribe(const std::string& strKey, const request::RequestPara
 {
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		if (0 == m_desiredSubscriptions.erase(strKey))
+		if (0 == m_subscriptions.erase(strKey))
 		{
 			return false;
 		}
@@ -226,12 +226,12 @@ void CSession::MaintenanceLoop()
 	std::chrono::steady_clock::time_point nextHeartbeat = std::chrono::steady_clock::now();
 	while (!m_stopping.load())
 	{
-		std::unique_lock<std::mutex> waitLock(m_mtx_wait);
-		m_cv_loops.wait_for(waitLock, std::chrono::milliseconds(250), [this]()
+		std::unique_lock<std::mutex> lck(m_mtx_wait);
+		m_cv_loops.wait_for(lck, std::chrono::milliseconds(250), [this]()
 		{
 			return m_stopping.load();
 		});
-		waitLock.unlock();
+		lck.unlock();
 		if (m_stopping.load())
 		{
 			break;
@@ -246,12 +246,12 @@ void CSession::MaintenanceLoop()
 		std::vector<SessionResponse> expired;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pending);
-			for (auto mIter = m_reqs_pending.begin(); m_reqs_pending.end() != mIter;)
+			for (auto mIter = m_reqs_sendout.begin(); m_reqs_sendout.end() != mIter;)
 			{
 				if (mIter->second.m_deadline <= now)
 				{
 					expired.push_back({ mIter->first, mIter->second.m_cmd, {}, "请求超时" });
-					mIter = m_reqs_pending.erase(mIter);
+					mIter = m_reqs_sendout.erase(mIter);
 				}
 				else
 				{
@@ -297,10 +297,10 @@ void CSession::HandleResponse(const CRequest& response)
 	std::string cmd = response.GetCmd();
 	request::RequestParameters result = response.GetReturnData();
 	std::string error;
-	auto errorIter = result.find("error_message");
-	if (result.end() != errorIter)
+	const auto mIter = result.find("error_message");
+	if (result.end() != mIter)
 	{
-		error = errorIter->second;
+		error = mIter->second;
 	}
 
 	if ((CRequest::Type::QUERY_AUTH == response.GetType()) || (CRequest::Type::UPDATE_AUTH == response.GetType()))
@@ -330,7 +330,7 @@ void CSession::HandleResponse(const CRequest& response)
 
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_reqs_pending.erase(id);
+		m_reqs_sendout.erase(id);
 	}
 	NotifyResponse({ id, std::move(cmd), std::move(result), std::move(error) });
 }
@@ -361,18 +361,18 @@ void CSession::SendAuthentication()
 bool CSession::SendRequest(const CRequest& req)
 {
 	CRequest::Type t = req.GetType();
-	bool bAuth = (CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t);
-	if (!bAuth && !IsAuthenticated())
+	bool bAuthRequest = (CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t);
+	if (!bAuthRequest && !IsAuthenticated())
 	{
 		return false;
 	}
 
 	std::uint64_t id = req.GetId();
 	std::string strCmd = req.GetCmd();
-	if (!bAuth)
+	if (!bAuthRequest)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_reqs_pending.emplace(id, PendingRequest{ strCmd, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
+		m_reqs_sendout.emplace(id, PendingRequest{ strCmd, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
 	}
 	bool bRet = false;
 	{
@@ -381,10 +381,10 @@ bool CSession::SendRequest(const CRequest& req)
 	}
 	if (!bRet)
 	{
-		if (!bAuth)
+		if (!bAuthRequest)
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pending);
-			m_reqs_pending.erase(id);
+			m_reqs_sendout.erase(id);
 		}
 	}
 	return bRet;
@@ -392,30 +392,30 @@ bool CSession::SendRequest(const CRequest& req)
 
 void CSession::RestoreSubscriptions()
 {
-	std::unordered_map<std::string, Subscription> subscriptions;
+	decltype(m_subscriptions) sub;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		subscriptions = m_desiredSubscriptions;
+		sub = m_subscriptions;
 	}
-	for (const auto& [k, v] : subscriptions)
+	for (const auto& [k, v] : sub)
 	{
 		SendRequest(request::Subscription(v.m_param));
 	}
 }
 
-void CSession::FailPending(const std::string& reason)
+void CSession::FailPending(const std::string& strReson)
 {
 	std::vector<SessionResponse> failed;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		failed.reserve(m_reqs_pending.size());
-		for (const auto& [id, pending] : m_reqs_pending)
+		failed.reserve(m_reqs_sendout.size());
+		for (const auto& [id, pending] : m_reqs_sendout)
 		{
-			failed.push_back({ id, pending.m_cmd, {}, reason });
+			failed.push_back({ id, pending.m_cmd, {}, strReson });
 		}
-		m_reqs_pending.clear();
+		m_reqs_sendout.clear();
 	}
-	for (SessionResponse& response : failed)
+	for (auto& response : failed)
 	{
 		NotifyResponse(std::move(response));
 	}

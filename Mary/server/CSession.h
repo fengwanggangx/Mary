@@ -110,9 +110,9 @@ private:
 	bool m_authRequested{ false };
 
 	std::mutex m_mtx_pending;
-	std::unordered_map<_TyRequestId, PendingRequest> m_reqs_pending;
+	std::unordered_map<_TyRequestId, PendingRequest> m_reqs_sendout;
 	std::mutex m_mtx_subscriptions;
-	std::unordered_map<std::string, Subscription> m_desiredSubscriptions;
+	std::unordered_map<std::string, Subscription> m_subscriptions;
 
 	std::mutex m_mtx_callbacks;
 	StateCallback m_stateCallback;
