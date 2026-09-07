@@ -85,7 +85,7 @@ private:
 	void StartConnection();
 	void ConnectionLoop();
 	void MaintenanceLoop();
-	void OnNetEvent(const net::CNetEvent& ev);
+	int OnNetEvent(const net::CNetEvent& ev);
 	void HandleResponse(const CRequest& response);
 	void SendAuthentication();
 	bool SendRequest(const CRequest& request);
@@ -105,8 +105,8 @@ private:
 	std::atomic<SessionState> m_state{ SessionState::Disconnected };
 
 
-	std::thread m_thread_conn;	//Á¬½Ó¡¢ÊÕ°ü¡¢¶ÏÏßÖØÁ¬
-	std::thread m_thread_heartbeat;	//·¢ËÍĞÄÌø¡¢¼ì²éÇëÇó³¬Ê±
+	std::thread m_thread_conn;	//è¿æ¥ã€æ”¶åŒ…ã€æ–­çº¿é‡è¿
+	std::thread m_thread_heartbeat;	//å‘é€å¿ƒè·³ã€æ£€æŸ¥è¯·æ±‚è¶…æ—¶
 
 	std::mutex m_mtx_loops;
 	std::condition_variable m_cv_loops;

@@ -197,11 +197,8 @@ void CSession::ConnectionLoop()
 			break;
 		}
 		std::unique_ptr<net::CTcpClient> client = std::make_unique<net::CTcpClient>(host->m_strHost, static_cast<int>(host->m_nPort));
-		client->RegisterHandler([this](const net::CNetEvent& event)
-		{
-			OnNetEvent(event);
-			return 1;
-		});
+		client->RegisterHandler(std::bind_front(&CSession::OnNetEvent, this));
+
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_client);
 			m_client = std::move(client);
@@ -286,19 +283,19 @@ void CSession::MaintenanceLoop()
 	}
 }
 
-void CSession::OnNetEvent(const net::CNetEvent& ev)
+int CSession::OnNetEvent(const net::CNetEvent& ev)
 {
 	if (net::em_event::connected == ev.m_event)
 	{
 		m_state.store(SessionState::Connected);
 		NotifyState(SessionState::Connected, "已连接");
 		SendAuthentication();
-		return;
+		return 1;
 	}
 	if ((net::em_event::request == ev.m_event) && (nullptr != ev.m_request))
 	{
 		HandleResponse(*ev.m_request);
-		return;
+		return 1;
 	}
 
 	bool bAuthed = IsAuthenticated();
@@ -309,6 +306,7 @@ void CSession::OnNetEvent(const net::CNetEvent& ev)
 	{
 		NotifyState(SessionState::Disconnected, "认证连接已断开");
 	}
+	return 1;
 }
 
 void CSession::HandleResponse(const CRequest& response)
