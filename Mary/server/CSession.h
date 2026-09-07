@@ -55,8 +55,8 @@ public:
 	void Authenticate(const CAuthParam& param, AuthCallback&& cb);
 	void CancelAuthentication();
 	void Stop();
-	bool Subscribe(const std::string& k, const request::RequestParameters& param);
-	bool Unsubscribe(const std::string& k, const request::RequestParameters& param);
+	bool Subscribe(const std::string& strKey, const request::RequestParameters& param);
+	bool Unsubscribe(const std::string& strKey, const request::RequestParameters& param);
 	void SetStateCallback(StateCallback&& cb);
 	void SetResponseCallback(ResponseCallback&& cb);
 	void SetErrorCallback(ErrorCallback&& cb);

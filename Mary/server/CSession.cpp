@@ -138,7 +138,7 @@ bool CSession::Subscribe(const std::string& strKey, const request::RequestParame
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
 		m_subscriptions.insert_or_assign(strKey, Subscription{ param });
 	}
-	return (0 != SendRequest(request::Subscription(param)));
+	return SendRequest(request::Subscription(param));
 }
 
 bool CSession::Unsubscribe(const std::string& strKey, const request::RequestParameters& param)
@@ -150,7 +150,7 @@ bool CSession::Unsubscribe(const std::string& strKey, const request::RequestPara
 			return false;
 		}
 	}
-	return !IsAuthenticated() || (0 != SendRequest(request::UnSubscription(param)));
+	return SendRequest(request::UnSubscription(param));
 }
 
 void CSession::SetStateCallback(StateCallback&& cb)
@@ -410,7 +410,7 @@ void CSession::SendAuthentication()
 		NotifyAuthentication({ op, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == op ? "正在认证" : "正在注册" });
 
 		request::AuthAction action = AuthOperation::Login == op ? request::AuthAction::Login : request::AuthAction::Register;
-		if (0 == SendRequest(request::Auth(action, auth_param->m_strAccount, auth_param->m_strPassword)))
+		if (!SendRequest(request::Auth(action, auth_param->m_strAccount, auth_param->m_strPassword)))
 		{
 			NotifyAuthentication({ op, AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败" });
 		}
@@ -429,7 +429,7 @@ void CSession::SendAuthentication()
 
 	m_state.store(SessionState::Authenticating);
 	NotifyState(SessionState::Authenticating, "正在重新认证");
-	if (0 == SendRequest(request::Auth(login_info->m_strToken)))
+	if (!SendRequest(request::Auth(login_info->m_strToken)))
 	{
 		m_state.store(SessionState::Connected);
 		NotifyError("重新认证请求发送失败");

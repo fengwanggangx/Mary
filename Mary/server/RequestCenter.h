@@ -16,8 +16,8 @@ namespace request
 		Register
 	};
 
-	CRequest Auth(AuthAction action, const std::string& account, const std::string& password);
-	CRequest Auth(const std::string& token);
+	CRequest Auth(AuthAction action, const std::string& strAccount, const std::string& strPassword);
+	CRequest Auth(const std::string& strToken);
 	CRequest Subscription(const RequestParameters& param);
 	CRequest UnSubscription(const RequestParameters& param);
 	CRequest HeartBeat();
