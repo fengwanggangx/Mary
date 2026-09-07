@@ -20,21 +20,12 @@ void CLoginService::Unsubscribe(_TyCallbackId id)
 	m_events.Unsubscribe(id);
 }
 
-void CLoginService::Login(const CLoginParam& param)
+bool CLoginInfo::Valid() const noexcept
 {
-	Start(AuthOperation::Login, param);
+	return !m_strAccount.empty() && !m_strToken.empty() && m_host.Valid();
 }
 
-void CLoginService::Register(const CRegisterParam& param)
-{
-	CLoginParam sessionParam;
-	sessionParam.m_strAccount = param.m_strAccount;
-	sessionParam.m_strPassword = param.m_strPassword;
-	sessionParam.m_host = param.m_host;
-	Start(AuthOperation::Register, sessionParam);
-}
-
-void CLoginService::Start(AuthOperation operation, const CLoginParam& param)
+void CLoginService::Authenticate(const CAuthParam& param)
 {
 	if (m_busy)
 	{
@@ -43,18 +34,18 @@ void CLoginService::Start(AuthOperation operation, const CLoginParam& param)
 
 	if (param.m_strAccount.empty() || param.m_strPassword.empty())
 	{
-		m_events.Notify({ operation, AuthState::Failed, AuthError::InvalidInput, false, "账号和密码不能为空" });
+		m_events.Notify({ param.m_operation, AuthState::Failed, AuthError::InvalidInput, false, "账号和密码不能为空" });
 		return;
 	}
 
 	if (!param.m_host.Valid())
 	{
-		m_events.Notify({ operation, AuthState::Failed, AuthError::InvalidSite, false, "当前站点配置无效" });
+		m_events.Notify({ param.m_operation, AuthState::Failed, AuthError::InvalidSite, false, "当前站点配置无效" });
 		return;
 	}
 
 	m_busy = true;
-	CSession::InstanceRef().Authenticate(operation, param, [this](const AuthEvent& event)
+	CSession::InstanceRef().Authenticate(param, [this](const AuthEvent& event)
 	{
 		m_events.Notify(event);
 		if (AuthState::Success == event.m_state || AuthState::Failed == event.m_state || AuthState::Cancelled == event.m_state)

@@ -74,9 +74,10 @@ void CRegisterDialog::Register()
 	}
 
 	m_ui.registerButton->setEnabled(false);
-	CRegisterParam param;
+	CAuthParam param;
+	param.m_operation = AuthOperation::Register;
 	param.m_strAccount = account.toStdString();
 	param.m_strPassword = password.toStdString();
 	param.m_host = std::move(*site);
-	CLoginService::InstanceRef().Register(param);
+	CLoginService::InstanceRef().Authenticate(param);
 }

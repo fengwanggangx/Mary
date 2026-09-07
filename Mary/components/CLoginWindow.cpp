@@ -87,11 +87,12 @@ void LoginWindow::OnLoginBtnClicked()
 
 	ui->pushButton_login->setEnabled(false);
 
-	CLoginParam param;
+	CAuthParam param;
+	param.m_operation = AuthOperation::Login;
 	param.m_strAccount = ui->lineEdit_account->text().toStdString();
 	param.m_strPassword = ui->lineEdit_passwd->text().toStdString();
 	param.m_host = std::move(*site);
-	CLoginService::InstanceRef().Login(param);
+	CLoginService::InstanceRef().Authenticate(param);
 }
 
 void LoginWindow::OnRegisterBtnClicked()

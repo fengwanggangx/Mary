@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -51,7 +52,7 @@ public:
 	using ResponseCallback = std::function<void(const SessionResponse&)>;
 	using ErrorCallback = std::function<void(const std::string&)>;
 
-	void Authenticate(AuthOperation op, const CLoginParam& param, AuthCallback&& cb);
+	void Authenticate(const CAuthParam& param, AuthCallback&& cb);
 	void CancelAuthentication();
 	void Stop();
 	bool Subscribe(const std::string& k, const request::RequestParameters& param);
@@ -61,6 +62,7 @@ public:
 	void SetErrorCallback(ErrorCallback&& cb);
 	bool IsAuthenticated() const noexcept;
 	SessionState GetState() const noexcept;
+	std::optional<CLoginInfo> GetLoginInfo() const;
 
 private:
 	struct PendingRequest
@@ -72,6 +74,12 @@ private:
 	struct Subscription
 	{
 		request::RequestParameters m_param;
+	};
+
+	struct AuthContext
+	{
+		CAuthParam m_param;
+		AuthCallback m_callback;
 	};
 
 	void StartConnection();
@@ -103,11 +111,9 @@ private:
 	std::mutex m_mtx_wait;
 	std::condition_variable m_cv_loops;
 
-	std::mutex m_mtx_auth;
-	AuthOperation m_authOperation{ AuthOperation::Login };
-	CLoginParam m_authParam;
-	AuthCallback m_authCallback;
-	bool m_authRequested{ false };
+	mutable std::mutex m_mtx_auth;
+	std::optional<AuthContext> m_authContext;
+	std::optional<CLoginInfo> m_loginInfo;
 
 	std::mutex m_mtx_pending;
 	std::unordered_map<_TyRequestId, PendingRequest> m_reqs_sendout;
@@ -119,7 +125,6 @@ private:
 	ResponseCallback m_responseCallback;
 	ErrorCallback m_errorCallback;
 
-	CHostInfo m_host;
 	int m_heartbeatSeconds{ 15 };
 	int m_timeoutSeconds{ 10 };
 	int m_maxReconnectSeconds{ 30 };

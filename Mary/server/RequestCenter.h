@@ -17,6 +17,7 @@ namespace request
 	};
 
 	CRequest Auth(AuthAction action, const std::string& account, const std::string& password);
+	CRequest Auth(const std::string& token);
 	CRequest Subscription(const RequestParameters& param);
 	CRequest UnSubscription(const RequestParameters& param);
 	CRequest HeartBeat();

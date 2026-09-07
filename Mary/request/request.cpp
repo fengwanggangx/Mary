@@ -3,6 +3,7 @@
 #include "request.pb.h"
 
 #include <atomic>
+#include <common/utility.h>
 
 namespace
 {
@@ -123,4 +124,17 @@ bool CRequest::Serialize(std::string* pOutput) const
 bool CRequest::Deserialize(const std::string& strData)
 {
 	return m_data->ParseFromString(strData);
+}
+
+std::optional<std::pair<int, std::string>> CRequest::GetErrorInfo() const
+{
+	std::string strErrorCode = GetReturnData("error_code");
+	if (strErrorCode.empty())
+	{
+		return std::nullopt;
+	}
+
+	int nCode = 0;
+	utility::to_number(strErrorCode, nCode);
+	return std::pair<int, std::string>{ nCode, GetReturnData("error_message") };
 }

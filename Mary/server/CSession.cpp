@@ -13,12 +13,21 @@ CSession::~CSession()
 	Stop();
 }
 
-void CSession::Authenticate(AuthOperation op, const CLoginParam& param, AuthCallback&& cb)
+void CSession::Authenticate(const CAuthParam& param, AuthCallback&& cb)
 {
 	bool bRestart = false;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		bRestart = m_connectionThread.joinable() && !(m_host == param.m_host);
+		std::optional<CHostInfo> host;
+		if (m_authContext.has_value())
+		{
+			host = m_authContext->m_param.m_host;
+		}
+		else if (m_loginInfo.has_value())
+		{
+			host = m_loginInfo->m_host;
+		}
+		bRestart = m_connectionThread.joinable() && (!host.has_value() || !(host.value() == param.m_host));
 	}
 	if (bRestart)
 	{
@@ -27,11 +36,8 @@ void CSession::Authenticate(AuthOperation op, const CLoginParam& param, AuthCall
 
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		m_authOperation = op;
-		m_authParam = param;
-		m_authCallback = std::move(cb);
-		m_authRequested = true;
-		m_host = param.m_host;
+		m_loginInfo.reset();
+		m_authContext.emplace(AuthContext{ param, std::move(cb) });
 	}
 
 	SessionState state = m_state.load();
@@ -48,22 +54,20 @@ void CSession::Authenticate(AuthOperation op, const CLoginParam& param, AuthCall
 void CSession::CancelAuthentication()
 {
 	AuthCallback cb;
-	AuthEvent event;
+	AuthEvent ev;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		if (!m_authRequested)
+		if (!m_authContext.has_value())
 		{
 			return;
 		}
-		event = { m_authOperation, AuthState::Cancelled, AuthError::Cancelled, false, "认证已取消" };
-		cb = m_authCallback;
-		m_authRequested = false;
-		m_authCallback = nullptr;
-		m_authParam.m_strPassword.clear();
+		ev = { m_authContext->m_param.m_operation, AuthState::Cancelled, AuthError::Cancelled, false, "认证已取消" };
+		cb = std::move(m_authContext->m_callback);
+		m_authContext.reset();
 	}
 	if (nullptr != cb)
 	{
-		cb(event);
+		cb(ev);
 	}
 }
 
@@ -102,9 +106,8 @@ void CSession::Stop()
 	FailPending("客户端已关闭");
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		m_authParam.m_strPassword.clear();
-		m_authRequested = false;
-		m_authCallback = nullptr;
+		m_authContext.reset();
+		m_loginInfo.reset();
 	}
 	m_state.store(SessionState::Disconnected);
 }
@@ -117,6 +120,12 @@ bool CSession::IsAuthenticated() const noexcept
 SessionState CSession::GetState() const noexcept
 {
 	return m_state.load();
+}
+
+std::optional<CLoginInfo> CSession::GetLoginInfo() const
+{
+	std::lock_guard<std::mutex> lock(m_mtx_auth);
+	return m_loginInfo;
 }
 
 bool CSession::Subscribe(const std::string& strKey, const request::RequestParameters& param)
@@ -171,12 +180,23 @@ void CSession::ConnectionLoop()
 		m_state.store(state);
 		NotifyState(state, 1 == reconnectSeconds ? "正在连接" : std::to_string(reconnectSeconds) + " 秒后重连");
 
-		CHostInfo host;
+		std::optional<CHostInfo> host;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_auth);
-			host = m_host;
+			if (m_authContext.has_value())
+			{
+				host = m_authContext->m_param.m_host;
+			}
+			else if (m_loginInfo.has_value())
+			{
+				host = m_loginInfo->m_host;
+			}
 		}
-		std::unique_ptr<net::CTcpClient> client = std::make_unique<net::CTcpClient>(host.m_strHost, static_cast<int>(host.m_nPort));
+		if (!host.has_value())
+		{
+			break;
+		}
+		std::unique_ptr<net::CTcpClient> client = std::make_unique<net::CTcpClient>(host->m_strHost, static_cast<int>(host->m_nPort));
 		client->RegisterHandler([this](const net::CNetEvent& event)
 		{
 			OnNetEvent(event);
@@ -200,7 +220,7 @@ void CSession::ConnectionLoop()
 			NotifyError("连接初始化失败：" + std::to_string(result));
 		}
 
-		bool wasAuthenticated = IsAuthenticated();
+		bool bAuthed = IsAuthenticated();
 		m_state.store(SessionState::Disconnected);
 		FailPending("连接已断开");
 		{
@@ -216,7 +236,7 @@ void CSession::ConnectionLoop()
 		{
 			return m_stopping.load();
 		});
-		reconnectSeconds = wasAuthenticated ? 1 : (std::min)(m_maxReconnectSeconds, reconnectSeconds * 2);
+		reconnectSeconds = bAuthed ? 1 : (std::min)(m_maxReconnectSeconds, reconnectSeconds * 2);
 	}
 	NotifyState(SessionState::Disconnected, "已关闭");
 }
@@ -293,68 +313,126 @@ void CSession::OnNetEvent(const net::CNetEvent& ev)
 
 void CSession::HandleResponse(const CRequest& response)
 {
-	std::uint64_t id = response.GetId();
-	std::string cmd = response.GetCmd();
-	request::RequestParameters result = response.GetReturnData();
-	std::string error;
-	const auto mIter = result.find("error_message");
-	if (result.end() != mIter)
-	{
-		error = mIter->second;
-	}
-
-	if ((CRequest::Type::QUERY_AUTH == response.GetType()) || (CRequest::Type::UPDATE_AUTH == response.GetType()))
-	{
-		AuthOperation op = CRequest::Type::QUERY_AUTH == response.GetType() ? AuthOperation::Login : AuthOperation::Register;
-		if (error.empty())
-		{
-			if (AuthOperation::Login == op)
-			{
-				m_state.store(SessionState::Ready);
-				NotifyState(SessionState::Ready, "已认证");
-				RestoreSubscriptions();
-			}
-			else
-			{
-				m_state.store(SessionState::Connected);
-			}
-			NotifyAuthentication({ op, AuthState::Success, AuthError::None, true, AuthOperation::Login == op ? "登录成功" : "注册成功" });
-		}
-		else
-		{
-			m_state.store(SessionState::Connected);
-			NotifyAuthentication({ op, AuthState::Failed, AuthError::AuthenticationFailed, false, error });
-		}
-		return;
-	}
-
+	_TyRequestId id = response.GetId();
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
 		m_reqs_sendout.erase(id);
 	}
-	NotifyResponse({ id, std::move(cmd), std::move(result), std::move(error) });
+
+	std::string strCmd = response.GetCmd();
+
+	auto err = response.GetErrorInfo();
+	std::string strError = err->second;
+
+	CRequest::Type t = response.GetType();
+
+	if ((CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t))
+	{
+		AuthOperation op = CRequest::Type::QUERY_AUTH == t ? AuthOperation::Login : AuthOperation::Register;
+		std::optional<CAuthParam> authParam;
+		{
+			std::lock_guard<std::mutex> lock(m_mtx_auth);
+			if (m_authContext.has_value())
+			{
+				authParam = m_authContext->m_param;
+				op = authParam->m_operation;
+			}
+		}
+		if (err.has_value())
+		{
+			m_state.store(SessionState::Connected);
+			if (authParam.has_value())
+			{
+				NotifyAuthentication({ op, AuthState::Failed, AuthError::AuthenticationFailed, false, strError });
+			}
+			else
+			{
+				{
+					std::lock_guard<std::mutex> lock(m_mtx_auth);
+					m_loginInfo.reset();
+				}
+				NotifyError("重新认证失败：" + strError);
+			}
+			return;
+		}
+
+		if (AuthOperation::Login == op)
+		{
+			if (authParam.has_value())
+			{
+				CLoginInfo info;
+				info.m_strAccount = authParam->m_strAccount;
+				info.m_strToken = response.GetReturnData("token");
+				info.m_host = authParam->m_host;
+				std::lock_guard<std::mutex> lock(m_mtx_auth);
+				m_loginInfo = std::move(info);
+			}
+			m_state.store(SessionState::Ready);
+			NotifyState(SessionState::Ready, "已认证");
+			RestoreSubscriptions();
+		}
+		else
+		{
+			m_state.store(SessionState::Connected);
+		}
+		if (authParam.has_value())
+		{
+			NotifyAuthentication({ op, AuthState::Success, AuthError::None, true, AuthOperation::Login == op ? "登录成功" : "注册成功" });
+		}
+
+		return;
+	}
+
+	request::RequestParameters ret = response.GetReturnData();
+	NotifyResponse({ id, std::move(strCmd), std::move(ret), std::move(strError) });
 }
 
 void CSession::SendAuthentication()
 {
-	AuthOperation op;
-	CLoginParam param;
+	std::optional<CAuthParam> auth_param;
+	std::optional<CLoginInfo> login_info;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		if (!m_authRequested)
+		if (m_authContext.has_value())
 		{
-			return;
+			auth_param = m_authContext->m_param;
 		}
-		op = m_authOperation;
-		param = m_authParam;
+		else if (m_loginInfo.has_value())
+		{
+			login_info = m_loginInfo;
+		}
 	}
-	m_state.store(SessionState::Authenticating);
-	NotifyAuthentication({ op, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == op ? "正在认证" : "正在注册" });
 
-	request::AuthAction action = AuthOperation::Login == op ? request::AuthAction::Login : request::AuthAction::Register;
-	if (0 == SendRequest(request::Auth(action, param.m_strAccount, param.m_strPassword)))
+	if (auth_param.has_value())
 	{
-		NotifyAuthentication({ op, AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败" });
+		AuthOperation op = auth_param->m_operation;
+		m_state.store(SessionState::Authenticating);
+		NotifyAuthentication({ op, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == op ? "正在认证" : "正在注册" });
+
+		request::AuthAction action = AuthOperation::Login == op ? request::AuthAction::Login : request::AuthAction::Register;
+		if (0 == SendRequest(request::Auth(action, auth_param->m_strAccount, auth_param->m_strPassword)))
+		{
+			NotifyAuthentication({ op, AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败" });
+		}
+		return;
+	}
+
+	if (!login_info.has_value())
+	{
+		return;
+	}
+	if (!login_info->Valid())
+	{
+		NotifyError("登录信息中没有有效 token，无法重新认证");
+		return;
+	}
+
+	m_state.store(SessionState::Authenticating);
+	NotifyState(SessionState::Authenticating, "正在重新认证");
+	if (0 == SendRequest(request::Auth(login_info->m_strToken)))
+	{
+		m_state.store(SessionState::Connected);
+		NotifyError("重新认证请求发送失败");
 	}
 }
 
@@ -367,7 +445,7 @@ bool CSession::SendRequest(const CRequest& req)
 		return false;
 	}
 
-	std::uint64_t id = req.GetId();
+	_TyRequestId id = req.GetId();
 	std::string strCmd = req.GetCmd();
 	if (!bAuthRequest)
 	{
@@ -426,15 +504,18 @@ void CSession::NotifyAuthentication(AuthEvent ev)
 	AuthCallback cb;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
-		cb = m_authCallback;
+		if (!m_authContext.has_value())
+		{
+			return;
+		}
 		if ((AuthState::Success == ev.m_state) || (AuthState::Failed == ev.m_state) || (AuthState::Cancelled == ev.m_state))
 		{
-			m_authCallback = nullptr;
-			m_authRequested = AuthState::Success == ev.m_state && AuthOperation::Login == ev.m_operation;
-			if (!m_authRequested)
-			{
-				m_authParam.m_strPassword.clear();
-			}
+			cb = std::move(m_authContext->m_callback);
+			m_authContext.reset();
+		}
+		else
+		{
+			cb = m_authContext->m_callback;
 		}
 	}
 	if (nullptr != cb)

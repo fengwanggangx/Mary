@@ -8,24 +8,27 @@
 #include <functional>
 #include <string>
 
-struct CLoginParam
-{
-	std::string m_strAccount;
-	std::string m_strPassword;
-	CHostInfo m_host;
-};
-
-struct CRegisterParam
-{
-	std::string m_strAccount;
-	std::string m_strPassword;
-	CHostInfo m_host;
-};
-
 enum class AuthOperation
 {
 	Login,
 	Register
+};
+
+struct CAuthParam
+{
+	AuthOperation m_operation{ AuthOperation::Login };
+	std::string m_strAccount;
+	std::string m_strPassword;
+	CHostInfo m_host;
+};
+
+struct CLoginInfo
+{
+	std::string m_strAccount;
+	std::string m_strToken;
+	CHostInfo m_host;
+
+	bool Valid() const noexcept;
 };
 
 enum class AuthState
@@ -67,14 +70,11 @@ public:
 
 	_TyCallbackId Subscribe(_TyCallback&& callback);
 	void Unsubscribe(_TyCallbackId id);
-	void Login(const CLoginParam& param);
-	void Register(const CRegisterParam& param);
+	void Authenticate(const CAuthParam& param);
 	void Cancel();
 	bool IsBusy() const noexcept;
 
 private:
-	void Start(AuthOperation operation, const CLoginParam& param);
-
 	CallbackRegistry<AuthEvent> m_events;
 	std::atomic_bool m_busy{ false };
 };

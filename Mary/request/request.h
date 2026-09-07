@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <optional>
 
 namespace request
 {
@@ -33,25 +34,35 @@ public:
 	CRequest(CRequest&&) noexcept;
 	CRequest& operator=(CRequest&&) noexcept;
 
+public:
 	_TyRequestId GetId() const;
 	void SetId(_TyRequestId id);
+
 	Type GetType() const;
 	void SetType(Type type);
+
 	std::string GetCmd() const;
 	void SetCmd(const std::string& strCmd);
+
 	std::string GetExtraData(const std::string& strKey) const;
 	std::unordered_map<std::string, std::string> GetExtraData() const;
+
 	void SetExtraData(const std::string& strKey, const std::string& strValue);
 	std::string GetReturnData(const std::string& strKey) const;
+
 	std::unordered_map<std::string, std::string> GetReturnData() const;
 	void SetReturnData(const std::string& strKey, const std::string& strValue);
 
 	void SetConnectionId(std::int64_t id);
 	std::int64_t GetConnectionId() const;
+
 	void SetFd(std::int64_t id);
 	std::int64_t GetFd() const;
+
 	bool Serialize(std::string* pOutput) const;
 	bool Deserialize(const std::string& strData);
+
+	std::optional<std::pair<int, std::string>> GetErrorInfo() const;
 
 private:
 	std::unique_ptr<request::RequestData> m_data;

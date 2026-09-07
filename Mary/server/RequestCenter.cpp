@@ -12,6 +12,15 @@ namespace request
 		return req;
 	}
 
+	CRequest Auth(const std::string& token)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::QUERY_AUTH);
+		req.SetCmd("auth");
+		req.SetExtraData("token", token);
+		return req;
+	}
+
 	CRequest Subscription(const RequestParameters& param)
 	{
 		CRequest req;
