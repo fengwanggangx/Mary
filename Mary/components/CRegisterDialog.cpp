@@ -1,6 +1,6 @@
 #include "CRegisterDialog.h"
 
-#include "../configuration/CHostMgr.h"
+#include "../server/CHostMgr.h"
 
 #include <QMessageBox>
 #include <QMetaObject>

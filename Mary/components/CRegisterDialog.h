@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ui_CRegisterDialog.h"
-#include "../auth/CLoginService.h"
+#include "../server/CLoginService.h"
 
 #include <QDialog>
 

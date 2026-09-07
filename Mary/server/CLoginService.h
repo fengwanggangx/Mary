@@ -2,10 +2,10 @@
 
 #include "../basic/CallbackRegistry.h"
 #include "../common/ISingleton.h"
-#include "../configuration/CHostMgr.h"
+#include "CHostMgr.h"
 
+#include <atomic>
 #include <functional>
-#include <memory>
 #include <string>
 
 struct CLoginParam
@@ -58,8 +58,6 @@ struct AuthEvent
 	std::string m_message;
 };
 
-class AuthSession;
-
 class CLoginService final : public ISingleton<CLoginService>
 {
 	DECLARE_SINGLE_DFAULT(CLoginService)
@@ -67,19 +65,16 @@ class CLoginService final : public ISingleton<CLoginService>
 public:
 	using _TyCallback = std::function<void(const AuthEvent&)>;
 
-	_TyCallbackId Subscribe(_TyCallback callback);
+	_TyCallbackId Subscribe(_TyCallback&& callback);
 	void Unsubscribe(_TyCallbackId id);
 	void Login(const CLoginParam& param);
-	void Login(const CLoginParam& param, _TyCallback callback);
 	void Register(const CRegisterParam& param);
-	void Register(const CRegisterParam& param, _TyCallback callback);
 	void Cancel();
 	bool IsBusy() const noexcept;
 
 private:
-	void Start(AuthOperation operation, const CLoginParam& param, _TyCallback callback);
+	void Start(AuthOperation operation, const CLoginParam& param);
 
-	std::unique_ptr<AuthSession> m_session;
 	CallbackRegistry<AuthEvent> m_events;
-	bool m_busy{ false };
+	std::atomic_bool m_busy{ false };
 };

@@ -1,0 +1,118 @@
+#ifndef MARY_SERVER_CSESSION_H
+#define MARY_SERVER_CSESSION_H
+
+#include "CLoginService.h"
+#include "RequestCenter.h"
+#include "../common/ISingleton.h"
+
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+
+namespace net
+{
+	class CTcpClient;
+	struct CNetEvent;
+}
+
+enum class SessionState
+{
+	Disconnected,
+	Connecting,
+	Connected,
+	Authenticating,
+	Ready,
+	Reconnecting,
+	Stopping
+};
+
+struct SessionResponse
+{
+	std::uint64_t m_id{ 0 };
+	std::string m_cmd;
+	request::RequestParameters m_result;
+	std::string m_error;
+};
+
+class CSession final : public ISingleton<CSession>
+{
+	DECLARE_SINGLE_DFAULT(CSession)
+
+public:
+	using AuthCallback = std::function<void(const AuthEvent&)>;
+	using StateCallback = std::function<void(SessionState, const std::string&)>;
+	using ResponseCallback = std::function<void(const SessionResponse&)>;
+	using ErrorCallback = std::function<void(const std::string&)>;
+
+	void Authenticate(AuthOperation op, const CLoginParam& param, AuthCallback&& cb);
+	void CancelAuthentication();
+	void Stop();
+	bool Subscribe(const std::string& k, const request::RequestParameters& param);
+	bool Unsubscribe(const std::string& k, const request::RequestParameters& param);
+	void SetStateCallback(StateCallback&& cb);
+	void SetResponseCallback(ResponseCallback&& cb);
+	void SetErrorCallback(ErrorCallback&& cb);
+	bool IsAuthenticated() const noexcept;
+	SessionState GetState() const noexcept;
+
+private:
+	struct PendingRequest
+	{
+		std::string m_cmd;
+		std::chrono::steady_clock::time_point m_deadline;
+	};
+
+	struct Subscription
+	{
+		request::RequestParameters m_param;
+	};
+
+	void StartConnection();
+	void ConnectionLoop();
+	void MaintenanceLoop();
+	void OnNetEvent(const net::CNetEvent& event);
+	void HandleResponse(const CRequest& response);
+	void SendAuthentication();
+	bool SendRequest(CRequest& request);
+	void RestoreSubscriptions();
+	void FailPending(const std::string& reason);
+	void NotifyAuthentication(AuthEvent event);
+	void NotifyState(SessionState state, const std::string& message);
+	void NotifyResponse(SessionResponse response);
+	void NotifyError(const std::string& error);
+
+	std::atomic_bool m_stopping{ false };
+	std::atomic<SessionState> m_state{ SessionState::Disconnected };
+	std::thread m_connectionThread;
+	std::thread m_maintenanceThread;
+	mutable std::mutex m_mtx_client;
+	std::unique_ptr<net::CTcpClient> m_client;
+	std::mutex m_mtx_auth;
+	AuthOperation m_authOperation{ AuthOperation::Login };
+	CLoginParam m_authParam;
+	AuthCallback m_authCallback;
+	bool m_authRequested{ false };
+	std::mutex m_mtx_pending;
+	std::unordered_map<std::uint64_t, PendingRequest> m_pendingRequests;
+	std::mutex m_mtx_subscriptions;
+	std::unordered_map<std::string, Subscription> m_desiredSubscriptions;
+	std::mutex m_mtx_callbacks;
+	StateCallback m_stateCallback;
+	ResponseCallback m_responseCallback;
+	ErrorCallback m_errorCallback;
+	std::mutex m_mtx_wait;
+	std::condition_variable m_waitCondition;
+	CHostInfo m_host;
+	int m_heartbeatSeconds{ 15 };
+	int m_timeoutSeconds{ 10 };
+	int m_maxReconnectSeconds{ 30 };
+};
+
+#endif

@@ -2,7 +2,7 @@
 
 #include <QDialog>
 #include "ui_CLoginWindow.h"
-#include "../auth/CLoginService.h"
+#include "../server/CLoginService.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class LoginWindowClass; };

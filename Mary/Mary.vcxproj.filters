@@ -59,25 +59,22 @@
     <Filter Include="Source Files\system">
       <UniqueIdentifier>{93a51169-bdf8-41c7-a2ce-dbb3cc807a34}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\auth">
-      <UniqueIdentifier>{8b9f9eb5-6ed8-4c9b-9c0f-7e0a3d5c9a11}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\lua">
       <UniqueIdentifier>{d2bdc679-baa9-49a9-93a5-bdded37913ea}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\business">
+    <Filter Include="Source Files\server">
       <UniqueIdentifier>{a3820762-49b4-4323-8b51-8aa425aec09c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="auth\CLoginService.cpp">
-      <Filter>Source Files\auth</Filter>
+    <ClCompile Include="server\CLoginService.cpp">
+      <Filter>Source Files\server</Filter>
     </ClCompile>
-    <ClCompile Include="auth\AuthSession.cpp">
-      <Filter>Source Files\auth</Filter>
+    <ClCompile Include="server\RequestCenter.cpp">
+      <Filter>Source Files\server</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
@@ -94,8 +91,8 @@
     <ClCompile Include="components\CServerSettingsDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="configuration\CHostMgr.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="server\CHostMgr.cpp">
+      <Filter>Source Files\server</Filter>
     </ClCompile>
     <ClCompile Include="components\CMainWindow.cpp">
       <Filter>Source Files\components</Filter>
@@ -175,8 +172,8 @@
     <ClCompile Include="system\CBootLoader.cpp">
       <Filter>Source Files\system</Filter>
     </ClCompile>
-    <ClCompile Include="business\CWindSession.cpp">
-      <Filter>Source Files\business</Filter>
+    <ClCompile Include="server\CSession.cpp">
+      <Filter>Source Files\server</Filter>
     </ClCompile>
     <ClCompile Include="cryption\Cryption.cpp">
       <Filter>Source Files\cryption</Filter>
@@ -240,9 +237,6 @@
     <QtMoc Include="components\CMainWindow.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
-    <QtMoc Include="business\CWindSession.h">
-      <Filter>Source Files\business</Filter>
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc">
@@ -282,11 +276,14 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="auth\CLoginService.h">
-      <Filter>Source Files\auth</Filter>
+    <ClInclude Include="server\CLoginService.h">
+      <Filter>Source Files\server</Filter>
     </ClInclude>
-    <ClInclude Include="auth\AuthSession.h">
-      <Filter>Source Files\auth</Filter>
+    <ClInclude Include="server\CSession.h">
+      <Filter>Source Files\server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\RequestCenter.h">
+      <Filter>Source Files\server</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
@@ -447,8 +444,8 @@
     <ClInclude Include="components\CViewStrategySettings.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
-    <ClInclude Include="configuration\CHostMgr.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="server\CHostMgr.h">
+      <Filter>Source Files\server</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

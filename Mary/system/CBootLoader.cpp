@@ -1,7 +1,5 @@
 #include "CBootLoader.h"
-#include "../network/CTcpClient.h"
-#include "../ini/CINIHandler.h"
-#include <cstdlib>
+#include "../network/common_net.h"
 
 CBootLoader::CBootLoader() = default;
 
@@ -28,58 +26,23 @@ bool CBootLoader::Initialize()
 		return false;
 	}
 
-	m_strToken = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "HTrader", "token", std::string());
-	if (m_strToken.empty())
-	{
-		m_nErrorCode = 2;
-		m_strLastError = "HQMarket token is required in ini/system.ini";
-		net::EnvCleanup();
-		return false;
-	}
-
-	std::string activeSite = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", "active", std::string());
-	std::string strHQMarketServer = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", activeSite + ".hqmarket.host", std::string());
-	std::string strHQMarketPort = ini::CINIHandler::InstanceRef().GetValue(ini::Config::System, "Server", activeSite + ".hqmarket.port", std::string());
-	if (strHQMarketServer.empty() || strHQMarketPort.empty())
-	{
-		m_nErrorCode = 3;
-		m_strLastError = "Active Server site and HQMarket endpoint are required in ini/system.ini";
-		net::EnvCleanup();
-		return false;
-	}
-
-	int nHQMarketPort = std::atoi(strHQMarketPort.c_str());
-	m_pTcpClient = std::make_unique<net::CTcpClient>(strHQMarketServer, nHQMarketPort);
-
 	m_bInitialized = true;
 	return true;
 }
 
 bool CBootLoader::Run()
 {
-	if (!m_bInitialized || (nullptr == m_pTcpClient))
+	if (!m_bInitialized)
 	{
 		m_nErrorCode = 4;
 		m_strLastError = "Boot loader is not initialized";
 		return false;
 	}
-	if (0 != m_pTcpClient->Initialize())
-	{
-		m_nErrorCode = 4;
-		m_strLastError = "HQMarket TCP client initialization failed";
-		return false;
-	}
-
-	m_pTcpClient->Start(true);
 	return true;
 }
 
 void CBootLoader::Stop()
 {
-	if (nullptr != m_pTcpClient)
-	{
-		m_pTcpClient->ShutDown();
-	}
 }
 
 void CBootLoader::Finalize()
@@ -90,19 +53,8 @@ void CBootLoader::Finalize()
 	}
 
 	Stop();
-	m_pTcpClient.reset();
 	m_bInitialized = false;
 	net::EnvCleanup();
-}
-
-net::CTcpClient& CBootLoader::GetTcpClient()
-{
-	return *m_pTcpClient;
-}
-
-const std::string& CBootLoader::GetToken() const
-{
-	return m_strToken;
 }
 
 const std::string& CBootLoader::GetLastError() const

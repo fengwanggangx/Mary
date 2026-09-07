@@ -1,7 +1,7 @@
 #include "CLoginWindow.h"
 #include "CServerSettingsDialog.h"
 #include "CRegisterDialog.h"
-#include "../configuration/CHostMgr.h"
+#include "../server/CHostMgr.h"
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QMetaObject>
