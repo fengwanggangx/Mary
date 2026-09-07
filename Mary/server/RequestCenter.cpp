@@ -40,8 +40,8 @@ namespace request
 	CRequest HeartBeat()
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("cmd");
+		req.SetType(CRequest::Type::HEARTBEAT);
+		req.SetCmd("heartbeat");
 		return req;
 	}
 }
