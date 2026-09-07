@@ -105,10 +105,10 @@ private:
 	std::atomic<SessionState> m_state{ SessionState::Disconnected };
 
 
-	std::thread m_connectionThread;
-	std::thread m_maintenanceThread;
+	std::thread m_thread_conn;	//连接、收包、断线重连
+	std::thread m_thread_heartbeat;	//发送心跳、检查请求超时
 
-	std::mutex m_mtx_wait;
+	std::mutex m_mtx_loops;
 	std::condition_variable m_cv_loops;
 
 	mutable std::mutex m_mtx_auth;

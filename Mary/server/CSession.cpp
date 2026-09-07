@@ -27,7 +27,7 @@ void CSession::Authenticate(const CAuthParam& param, AuthCallback&& cb)
 		{
 			host = m_loginInfo->m_host;
 		}
-		bRestart = m_connectionThread.joinable() && (!host.has_value() || !(host.value() == param.m_host));
+		bRestart = m_thread_conn.joinable() && (!host.has_value() || !(host.value() == param.m_host));
 	}
 	if (bRestart)
 	{
@@ -41,7 +41,7 @@ void CSession::Authenticate(const CAuthParam& param, AuthCallback&& cb)
 	}
 
 	SessionState state = m_state.load();
-	if (!m_connectionThread.joinable())
+	if (!m_thread_conn.joinable())
 	{
 		StartConnection();
 	}
@@ -74,13 +74,13 @@ void CSession::CancelAuthentication()
 void CSession::StartConnection()
 {
 	m_stopping.store(false);
-	m_connectionThread = std::thread(&CSession::ConnectionLoop, this);
-	m_maintenanceThread = std::thread(&CSession::MaintenanceLoop, this);
+	m_thread_conn = std::thread(&CSession::ConnectionLoop, this);
+	m_thread_heartbeat = std::thread(&CSession::MaintenanceLoop, this);
 }
 
 void CSession::Stop()
 {
-	if (!m_connectionThread.joinable() && !m_maintenanceThread.joinable())
+	if (!m_thread_conn.joinable() && !m_thread_heartbeat.joinable())
 	{
 		return;
 	}
@@ -95,13 +95,13 @@ void CSession::Stop()
 			m_client->ShutDown();
 		}
 	}
-	if (m_maintenanceThread.joinable())
+	if (m_thread_heartbeat.joinable())
 	{
-		m_maintenanceThread.join();
+		m_thread_heartbeat.join();
 	}
-	if (m_connectionThread.joinable())
+	if (m_thread_conn.joinable())
 	{
-		m_connectionThread.join();
+		m_thread_conn.join();
 	}
 	FailPending("客户端已关闭");
 	{
@@ -231,7 +231,7 @@ void CSession::ConnectionLoop()
 		{
 			break;
 		}
-		std::unique_lock<std::mutex> lock(m_mtx_wait);
+		std::unique_lock<std::mutex> lock(m_mtx_loops);
 		m_cv_loops.wait_for(lock, std::chrono::seconds(reconnectSeconds), [this]()
 		{
 			return m_stopping.load();
@@ -246,7 +246,7 @@ void CSession::MaintenanceLoop()
 	std::chrono::steady_clock::time_point nextHeartbeat = std::chrono::steady_clock::now();
 	while (!m_stopping.load())
 	{
-		std::unique_lock<std::mutex> lck(m_mtx_wait);
+		std::unique_lock<std::mutex> lck(m_mtx_loops);
 		m_cv_loops.wait_for(lck, std::chrono::milliseconds(250), [this]()
 		{
 			return m_stopping.load();
