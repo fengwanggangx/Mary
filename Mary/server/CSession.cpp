@@ -83,7 +83,7 @@ void CSession::Stop()
 
 	m_stopping.store(true);
 	m_state.store(SessionState::Stopping);
-	m_waitCondition.notify_all();
+	m_cv_loops.notify_all();
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_client);
 		if (nullptr != m_client)
@@ -119,24 +119,24 @@ SessionState CSession::GetState() const noexcept
 	return m_state.load();
 }
 
-bool CSession::Subscribe(const std::string& k, const request::RequestParameters& param)
+bool CSession::Subscribe(const std::string& strKey, const request::RequestParameters& param)
 {
-	if (k.empty())
+	if (strKey.empty())
 	{
 		return false;
 	}
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		m_desiredSubscriptions.insert_or_assign(k, Subscription{ param });
+		m_desiredSubscriptions.insert_or_assign(strKey, Subscription{ param });
 	}
-	return !IsAuthenticated() || (0 != SendRequest(request::Subscription(param)));
+	return (0 != SendRequest(request::Subscription(param)));
 }
 
-bool CSession::Unsubscribe(const std::string& k, const request::RequestParameters& param)
+bool CSession::Unsubscribe(const std::string& strKey, const request::RequestParameters& param)
 {
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		if (0 == m_desiredSubscriptions.erase(k))
+		if (0 == m_desiredSubscriptions.erase(strKey))
 		{
 			return false;
 		}
@@ -212,7 +212,7 @@ void CSession::ConnectionLoop()
 			break;
 		}
 		std::unique_lock<std::mutex> lock(m_mtx_wait);
-		m_waitCondition.wait_for(lock, std::chrono::seconds(reconnectSeconds), [this]()
+		m_cv_loops.wait_for(lock, std::chrono::seconds(reconnectSeconds), [this]()
 		{
 			return m_stopping.load();
 		});
@@ -227,7 +227,7 @@ void CSession::MaintenanceLoop()
 	while (!m_stopping.load())
 	{
 		std::unique_lock<std::mutex> waitLock(m_mtx_wait);
-		m_waitCondition.wait_for(waitLock, std::chrono::milliseconds(250), [this]()
+		m_cv_loops.wait_for(waitLock, std::chrono::milliseconds(250), [this]()
 		{
 			return m_stopping.load();
 		});
@@ -246,16 +246,16 @@ void CSession::MaintenanceLoop()
 		std::vector<SessionResponse> expired;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pending);
-			for (auto iter = m_pendingRequests.begin(); m_pendingRequests.end() != iter;)
+			for (auto mIter = m_reqs_pending.begin(); m_reqs_pending.end() != mIter;)
 			{
-				if (iter->second.m_deadline <= now)
+				if (mIter->second.m_deadline <= now)
 				{
-					expired.push_back({ iter->first, iter->second.m_cmd, {}, "请求超时" });
-					iter = m_pendingRequests.erase(iter);
+					expired.push_back({ mIter->first, mIter->second.m_cmd, {}, "请求超时" });
+					mIter = m_reqs_pending.erase(mIter);
 				}
 				else
 				{
-					++iter;
+					++mIter;
 				}
 			}
 		}
@@ -266,25 +266,25 @@ void CSession::MaintenanceLoop()
 	}
 }
 
-void CSession::OnNetEvent(const net::CNetEvent& event)
+void CSession::OnNetEvent(const net::CNetEvent& ev)
 {
-	if (net::em_event::connected == event.m_event)
+	if (net::em_event::connected == ev.m_event)
 	{
 		m_state.store(SessionState::Connected);
 		NotifyState(SessionState::Connected, "已连接");
 		SendAuthentication();
 		return;
 	}
-	if ((net::em_event::request == event.m_event) && (nullptr != event.m_request))
+	if ((net::em_event::request == ev.m_event) && (nullptr != ev.m_request))
 	{
-		HandleResponse(*event.m_request);
+		HandleResponse(*ev.m_request);
 		return;
 	}
 
 	bool bAuthed = IsAuthenticated();
 	m_state.store(SessionState::Disconnected);
 	NotifyState(SessionState::Disconnected, "连接已断开");
-	NotifyError(0 == event.m_error ? "服务器主动关闭连接" : "网络错误：" + std::to_string(event.m_error));
+	NotifyError(0 == ev.m_error ? "服务器主动关闭连接" : "网络错误：" + std::to_string(ev.m_error));
 	if (bAuthed)
 	{
 		NotifyState(SessionState::Disconnected, "认证连接已断开");
@@ -330,7 +330,7 @@ void CSession::HandleResponse(const CRequest& response)
 
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_pendingRequests.erase(id);
+		m_reqs_pending.erase(id);
 	}
 	NotifyResponse({ id, std::move(cmd), std::move(result), std::move(error) });
 }
@@ -358,7 +358,7 @@ void CSession::SendAuthentication()
 	}
 }
 
-bool CSession::SendRequest(CRequest& req)
+bool CSession::SendRequest(const CRequest& req)
 {
 	CRequest::Type t = req.GetType();
 	bool bAuth = (CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t);
@@ -372,19 +372,19 @@ bool CSession::SendRequest(CRequest& req)
 	if (!bAuth)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_pendingRequests.emplace(id, PendingRequest{ strCmd, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
+		m_reqs_pending.emplace(id, PendingRequest{ strCmd, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
 	}
 	bool bRet = false;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_client);
-		bRet = (nullptr != m_client) && m_client->IsConnected() && m_client->SendRequest(req);
+		bRet = (nullptr != m_client) && m_client->SendRequest(req);
 	}
 	if (!bRet)
 	{
 		if (!bAuth)
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pending);
-			m_pendingRequests.erase(id);
+			m_reqs_pending.erase(id);
 		}
 	}
 	return bRet;
@@ -408,12 +408,12 @@ void CSession::FailPending(const std::string& reason)
 	std::vector<SessionResponse> failed;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		failed.reserve(m_pendingRequests.size());
-		for (const auto& [id, pending] : m_pendingRequests)
+		failed.reserve(m_reqs_pending.size());
+		for (const auto& [id, pending] : m_reqs_pending)
 		{
 			failed.push_back({ id, pending.m_cmd, {}, reason });
 		}
-		m_pendingRequests.clear();
+		m_reqs_pending.clear();
 	}
 	for (SessionResponse& response : failed)
 	{
@@ -421,16 +421,16 @@ void CSession::FailPending(const std::string& reason)
 	}
 }
 
-void CSession::NotifyAuthentication(AuthEvent event)
+void CSession::NotifyAuthentication(AuthEvent ev)
 {
 	AuthCallback cb;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
 		cb = m_authCallback;
-		if ((AuthState::Success == event.m_state) || (AuthState::Failed == event.m_state) || (AuthState::Cancelled == event.m_state))
+		if ((AuthState::Success == ev.m_state) || (AuthState::Failed == ev.m_state) || (AuthState::Cancelled == ev.m_state))
 		{
 			m_authCallback = nullptr;
-			m_authRequested = AuthState::Success == event.m_state && AuthOperation::Login == event.m_operation;
+			m_authRequested = AuthState::Success == ev.m_state && AuthOperation::Login == ev.m_operation;
 			if (!m_authRequested)
 			{
 				m_authParam.m_strPassword.clear();
@@ -439,7 +439,7 @@ void CSession::NotifyAuthentication(AuthEvent event)
 	}
 	if (nullptr != cb)
 	{
-		cb(event);
+		cb(ev);
 	}
 }
 

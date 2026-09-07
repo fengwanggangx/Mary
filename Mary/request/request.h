@@ -11,6 +11,8 @@ namespace request
 	class RequestData;
 }
 
+using _TyRequestId = std::uint64_t;
+
 class CRequest final
 {
 public:
@@ -31,8 +33,8 @@ public:
 	CRequest(CRequest&&) noexcept;
 	CRequest& operator=(CRequest&&) noexcept;
 
-	std::uint64_t GetId() const;
-	void SetId(std::uint64_t id);
+	_TyRequestId GetId() const;
+	void SetId(_TyRequestId id);
 	Type GetType() const;
 	void SetType(Type type);
 	std::string GetCmd() const;

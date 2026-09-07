@@ -33,12 +33,12 @@ CRequest& CRequest::operator=(const CRequest& arg)
 CRequest::CRequest(CRequest&&) noexcept = default;
 CRequest& CRequest::operator=(CRequest&&) noexcept = default;
 
-std::uint64_t CRequest::GetId() const
+_TyRequestId CRequest::GetId() const
 {
 	return m_data->id();
 }
 
-void CRequest::SetId(std::uint64_t id)
+void CRequest::SetId(_TyRequestId id)
 {
 	m_data->set_id(id);
 }

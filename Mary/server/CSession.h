@@ -77,38 +77,48 @@ private:
 	void StartConnection();
 	void ConnectionLoop();
 	void MaintenanceLoop();
-	void OnNetEvent(const net::CNetEvent& event);
+	void OnNetEvent(const net::CNetEvent& ev);
 	void HandleResponse(const CRequest& response);
 	void SendAuthentication();
-	bool SendRequest(CRequest& request);
+	bool SendRequest(const CRequest& request);
 	void RestoreSubscriptions();
 	void FailPending(const std::string& reason);
-	void NotifyAuthentication(AuthEvent event);
+	void NotifyAuthentication(AuthEvent ev);
 	void NotifyState(SessionState state, const std::string& message);
 	void NotifyResponse(SessionResponse response);
 	void NotifyError(const std::string& error);
 
-	std::atomic_bool m_stopping{ false };
-	std::atomic<SessionState> m_state{ SessionState::Disconnected };
-	std::thread m_connectionThread;
-	std::thread m_maintenanceThread;
+private:
 	mutable std::mutex m_mtx_client;
 	std::unique_ptr<net::CTcpClient> m_client;
+
+private:
+	std::atomic_bool m_stopping{ false };
+	std::atomic<SessionState> m_state{ SessionState::Disconnected };
+
+
+	std::thread m_connectionThread;
+	std::thread m_maintenanceThread;
+
+	std::mutex m_mtx_wait;
+	std::condition_variable m_cv_loops;
+
 	std::mutex m_mtx_auth;
 	AuthOperation m_authOperation{ AuthOperation::Login };
 	CLoginParam m_authParam;
 	AuthCallback m_authCallback;
 	bool m_authRequested{ false };
+
 	std::mutex m_mtx_pending;
-	std::unordered_map<std::uint64_t, PendingRequest> m_pendingRequests;
+	std::unordered_map<_TyRequestId, PendingRequest> m_reqs_pending;
 	std::mutex m_mtx_subscriptions;
 	std::unordered_map<std::string, Subscription> m_desiredSubscriptions;
+
 	std::mutex m_mtx_callbacks;
 	StateCallback m_stateCallback;
 	ResponseCallback m_responseCallback;
 	ErrorCallback m_errorCallback;
-	std::mutex m_mtx_wait;
-	std::condition_variable m_waitCondition;
+
 	CHostInfo m_host;
 	int m_heartbeatSeconds{ 15 };
 	int m_timeoutSeconds{ 10 };
