@@ -160,11 +160,20 @@ namespace net
 		}
 
 		_TyConnectionId id = CNetPool::InstancePtr()->CloseAConnection(pEvent);
-		if ((id >= 0) && (nullptr != m_dispatcher))
+		if (id >= 0)
 		{
-			std::vector<CNetEvent> events;
-			events.emplace_back(em_event::disconnected, id);
-			m_dispatcher->Dispatch(std::move(events));
+			if (m_pEvent.get() == pEvent)
+			{
+				m_pEvent.release();
+			}
+			m_bConnected.store(false);
+			m_id = -1;
+			if (nullptr != m_dispatcher)
+			{
+				std::vector<CNetEvent> eventList;
+				eventList.emplace_back(em_event::disconnected, id);
+				m_dispatcher->Dispatch(std::move(eventList));
+			}
 		}
 	}
 } // namespace net

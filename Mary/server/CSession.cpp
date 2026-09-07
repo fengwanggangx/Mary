@@ -319,8 +319,12 @@ void CSession::HandleResponse(const CRequest& response)
 
 	std::string strCmd = response.GetCmd();
 
-	auto err = response.GetErrorInfo();
-	std::string strError = err->second;
+	std::optional<std::pair<int, std::string>> errorInfo = response.GetErrorInfo();
+	std::string strError;
+	if (errorInfo.has_value())
+	{
+		strError = errorInfo->second;
+	}
 
 	CRequest::Type t = response.GetType();
 
@@ -336,7 +340,7 @@ void CSession::HandleResponse(const CRequest& response)
 				op = authParam->m_operation;
 			}
 		}
-		if (err.has_value())
+		if (errorInfo.has_value())
 		{
 			m_state.store(SessionState::Connected);
 			if (authParam.has_value())
