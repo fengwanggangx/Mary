@@ -28,42 +28,6 @@ struct Typer<_Ty, std::enable_if_t<IsContainer<_Ty>>>
 	using type = typename _Ty::value_type;
 };
 
-struct stringview
-{
-	stringview() = default;
-	stringview(int nStart, int nEnd) : m_data{ nStart, nEnd }
-	{
-	}
-	const char* GetPtr(const std::string& org) const
-	{
-		return org.c_str() + m_data.first;
-	}
-
-	int GetLength() const
-	{
-		return m_data.second - m_data.first;
-	}
-
-	const std::string& GetString(const std::string& org) const
-	{
-		thread_local std::string s_val;
-		s_val.assign(GetPtr(org), GetLength());
-		return s_val;
-	}
-
-	bool Valid() const
-	{
-		return (m_data.first >= 0) && (m_data.second - m_data.first >= 0);
-	}
-
-	void SetView(int nStart, int nEnd)
-	{
-		m_data.first = nStart;
-		m_data.second = nEnd;
-	}
-	std::pair<int, int> m_data{ -1, -1 }; //[nStart, nEnd)
-};
-
 namespace utility
 {
 	template <typename _Ty>
