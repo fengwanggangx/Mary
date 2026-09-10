@@ -393,7 +393,9 @@ void CSession::HandleResponse(const CRequest& response)
 	}
 
 	request::RequestParameters ret = response.GetReturnData();
-	NotifyResponse({ id, std::move(strCmd), std::move(ret), std::move(strError) });
+	SessionResponse sessionResponse{ id, std::move(strCmd), std::move(ret), std::move(strError) };
+	sessionResponse.m_message.CopyFrom(response.GetData());
+	NotifyResponse(std::move(sessionResponse));
 }
 
 void CSession::SendAuthentication()

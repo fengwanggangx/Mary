@@ -4,6 +4,7 @@
 #include "CLoginService.h"
 #include "RequestCenter.h"
 #include "../common/ISingleton.h"
+#include "../request/request.pb.h"
 
 #include <atomic>
 #include <chrono>
@@ -40,6 +41,7 @@ struct SessionResponse
 	std::string m_cmd;
 	request::RequestParameters m_result;
 	std::string m_error;
+	_TyReqData m_message;
 };
 
 class CSession final : public ISingleton<CSession>
