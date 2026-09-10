@@ -314,7 +314,10 @@ void CSession::HandleResponse(const CRequest& response)
 	_TyRequestId id = response.GetId();
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_reqs_sendout.erase(id);
+		if (0 != id)
+		{
+			m_reqs_sendout.erase(id);
+		}
 	}
 
 	std::string strCmd = response.GetCmd();
@@ -327,8 +330,12 @@ void CSession::HandleResponse(const CRequest& response)
 	}
 
 	CRequest::Type t = response.GetType();
+	if ((CRequest::Type::HEARTBEAT == t) && ("heartbeat" == strCmd))
+	{
+		return;
+	}
 
-	if ((CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t))
+	if (((CRequest::Type::QUERY_AUTH == t) && ("auth" == strCmd)) || ((CRequest::Type::UPDATE_AUTH == t) && ("register" == strCmd)))
 	{
 		AuthOperation op = CRequest::Type::QUERY_AUTH == t ? AuthOperation::Login : AuthOperation::Register;
 		std::optional<CAuthParam> authParam;
@@ -463,8 +470,11 @@ bool CSession::SendRequest(const CRequest& req)
 	{
 		if (!bAuthRequest)
 		{
-			std::lock_guard<std::mutex> lock(m_mtx_pending);
+		std::lock_guard<std::mutex> lock(m_mtx_pending);
+		if (0 != id)
+		{
 			m_reqs_sendout.erase(id);
+		}
 		}
 	}
 	return bRet;

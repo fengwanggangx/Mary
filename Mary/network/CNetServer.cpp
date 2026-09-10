@@ -36,11 +36,8 @@ namespace net
 		struct bufferevent* pBuffer = CNetPool::InstancePtr()->RegisterConnect(fd, GetNet(), pAddr, nLength, CNetServer::Read_Callback, nullptr, CNetServer::Event_Callback, this);
 		if (nullptr != pBuffer)
 		{
-			CRequest* pReq = new CRequest;
-			pReq->SetType(CRequest::Type::QUERY_AUTH);
-			pReq->SetCmd("connet_build");
-			pReq->SetExtraData("retmsg", "connect_ok_hahhahahahhahaha");
-			net::utility::SendRequest(pReq, pBuffer, m_buffer_send);
+			timeval readTimeout{ 45, 0 };
+			bufferevent_set_timeouts(pBuffer, &readTimeout, nullptr);
 		}
 	}
 

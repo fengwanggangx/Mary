@@ -1,5 +1,7 @@
 #include "RequestCenter.h"
 
+#include <chrono>
+
 namespace request
 {
 	CRequest Auth(AuthAction action, const std::string& strAccount, const std::string& strPassword)
@@ -50,6 +52,8 @@ namespace request
 		CRequest req;
 		req.SetType(CRequest::Type::HEARTBEAT);
 		req.SetCmd("heartbeat");
+		std::int64_t nClientTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		req.SetExtraData("client_time_ms", std::to_string(nClientTime));
 		return req;
 	}
 }
