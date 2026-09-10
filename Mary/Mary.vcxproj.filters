@@ -130,7 +130,7 @@
     <ClCompile Include="request\request.pb.cc">
       <Filter>Source Files\request</Filter>
     </ClCompile>
-    <ClCompile Include="hqmarket\v1\market.pb.cc">
+    <ClCompile Include="request\v1\market.pb.cc">
       <Filter>Source Files\request</Filter>
     </ClCompile>
     <ClCompile Include="request\request.cpp">
@@ -315,7 +315,7 @@
     <ClInclude Include="request\request.pb.h">
       <Filter>Source Files\request</Filter>
     </ClInclude>
-    <ClInclude Include="hqmarket\v1\market.pb.h">
+    <ClInclude Include="request\v1\market.pb.h">
       <Filter>Source Files\request</Filter>
     </ClInclude>
     <ClInclude Include="xml\Xml.h">
@@ -458,7 +458,7 @@
     <None Include="request\request.proto">
       <Filter>Source Files\request</Filter>
     </None>
-    <None Include="hqmarket\v1\market.proto">
+    <None Include="request\v1\market.proto">
       <Filter>Source Files\request</Filter>
     </None>
     <None Include="scripts\main.lua">

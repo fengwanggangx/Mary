@@ -166,7 +166,7 @@
     <ClCompile Include="network\common_net.cpp" />
     <ClCompile Include="request\request.cpp" />
     <ClCompile Include="request\request.pb.cc" />
-    <ClCompile Include="hqmarket\v1\market.pb.cc" />
+    <ClCompile Include="request\v1\market.pb.cc" />
     <ClCompile Include="system\CBootLoader.cpp" />
     <ClCompile Include="thread\CThreadPool.cpp" />
     <ClCompile Include="xml\Xml.cpp" />
@@ -248,7 +248,7 @@
     <ClInclude Include="network\common_net.h" />
     <ClInclude Include="request\request.h" />
     <ClInclude Include="request\request.pb.h" />
-    <ClInclude Include="hqmarket\v1\market.pb.h" />
+    <ClInclude Include="request\v1\market.pb.h" />
     <ClInclude Include="system\CBootLoader.h" />
     <ClInclude Include="thread\CThreadPool.h" />
     <ClInclude Include="xml\Xml.h" />
@@ -258,7 +258,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="request\request.proto" />
-    <None Include="hqmarket\v1\market.proto" />
+    <None Include="request\v1\market.proto" />
     <None Include="scripts\main.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
