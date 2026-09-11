@@ -182,7 +182,14 @@ void CSession::SetStateCallback(StateCallback&& cb)
 void CSession::SetResponseCallback(ResponseCallback&& cb)
 {
 	std::lock_guard<std::mutex> lock(m_mtx_callbacks);
-	m_responseCallback = std::move(cb);
+	m_responseCallbacks.clear();
+	m_responseCallbacks.emplace_back(std::move(cb));
+}
+
+void CSession::RegisterResponseHandler(ResponseCallback&& cb)
+{
+	std::lock_guard<std::mutex> lock(m_mtx_callbacks);
+	m_responseCallbacks.emplace_back(std::move(cb));
 }
 
 void CSession::SetErrorCallback(ErrorCallback&& cb)
@@ -283,7 +290,7 @@ void CSession::MaintenanceLoop()
 			{
 				if (mIter->second.m_deadline <= now)
 				{
-					expired.push_back({ mIter->first, mIter->second.m_cmd, { }, "请求超时" });
+					expired.push_back({ mIter->first, mIter->second.m_cmd, {}, "请求超时" });
 					mIter = m_reqs_sendout.erase(mIter);
 				}
 				else
@@ -519,7 +526,7 @@ void CSession::FailPending(const std::string& strReson)
 		failed.reserve(m_reqs_sendout.size());
 		for (const auto& [id, pending] : m_reqs_sendout)
 		{
-			failed.push_back({ id, pending.m_cmd, { }, strReson });
+			failed.push_back({ id, pending.m_cmd, {}, strReson });
 		}
 		m_reqs_sendout.clear();
 	}
@@ -569,14 +576,17 @@ void CSession::NotifyState(SessionState state, const std::string& message)
 
 void CSession::NotifyResponse(SessionResponse response)
 {
-	ResponseCallback cb;
+	std::vector<ResponseCallback> callbacks;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_callbacks);
-		cb = m_responseCallback;
+		callbacks = m_responseCallbacks;
 	}
-	if (nullptr != cb)
+	for (const ResponseCallback& cb : callbacks)
 	{
-		cb(response);
+		if (nullptr != cb)
+		{
+			cb(response);
+		}
 	}
 }
 

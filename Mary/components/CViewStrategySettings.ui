@@ -4,10 +4,27 @@
  <widget class="QWidget" name="CViewStrategySettingsClass">
   <property name="windowTitle"><string>策略管理</string></property>
   <layout class="QVBoxLayout" name="rootLayout">
-   <item><widget class="QLabel" name="titleLabel"><property name="font"><font><pointsize>14</pointsize><bold>true</bold></font></property><property name="text"><string>策略管理</string></property></widget></item>
-   <item><spacer name="contentSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+   <property name="leftMargin"><number>16</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>16</number></property><property name="bottomMargin"><number>16</number></property>
+   <item><layout class="QHBoxLayout" name="titleLayout">
+    <item><widget class="QLabel" name="titleLabel"><property name="font"><font><pointsize>16</pointsize><bold>true</bold></font></property><property name="text"><string>策略管理</string></property></widget></item>
+    <item><spacer name="titleSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+    <item><widget class="QPushButton" name="refreshButton"><property name="text"><string>刷新</string></property></widget></item>
+    <item><widget class="QPushButton" name="addButton"><property name="text"><string>新增策略</string></property></widget></item>
+   </layout></item>
+   <item><layout class="QHBoxLayout" name="filterLayout">
+    <item><widget class="QLineEdit" name="searchEdit"><property name="placeholderText"><string>搜索策略名称 / ID</string></property><property name="clearButtonEnabled"><bool>true</bool></property></widget></item>
+    <item><widget class="QComboBox" name="statusCombo"><item><property name="text"><string>全部状态</string></property></item><item><property name="text"><string>已启用</string></property></item><item><property name="text"><string>已停用</string></property></item></widget></item>
+    <item><spacer name="filterSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+    <item><widget class="QLabel" name="countLabel"><property name="text"><string>共 0 条策略</string></property></widget></item>
+   </layout></item>
+   <item><widget class="QTableWidget" name="strategyTable">
+    <property name="alternatingRowColors"><bool>true</bool></property><property name="selectionBehavior"><enum>QAbstractItemView::SelectionBehavior::SelectRows</enum></property><property name="selectionMode"><enum>QAbstractItemView::SelectionMode::SingleSelection</enum></property><property name="editTriggers"><set>QAbstractItemView::EditTrigger::NoEditTriggers</set></property><property name="columnCount"><number>6</number></property>
+    <column><property name="text"><string>策略ID</string></property></column><column><property name="text"><string>策略名称</string></property></column><column><property name="text"><string>策略类型</string></property></column><column><property name="text"><string>订阅标的</string></property></column><column><property name="text"><string>状态</string></property></column><column><property name="text"><string>自动启动</string></property></column>
+   </widget></item>
+   <item><layout class="QHBoxLayout" name="actionLayout">
+    <item><widget class="QLabel" name="statusLabel"><property name="text"><string>就绪</string></property></widget></item><item><spacer name="actionSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="modifyButton"><property name="text"><string>修改</string></property></widget></item><item><widget class="QPushButton" name="deleteButton"><property name="text"><string>删除</string></property></widget></item>
+   </layout></item>
   </layout>
  </widget>
- <resources/>
- <connections/>
+ <resources/><connections/>
 </ui>

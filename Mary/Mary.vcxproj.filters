@@ -76,6 +76,9 @@
     <ClCompile Include="server\RequestCenter.cpp">
       <Filter>Source Files\server</Filter>
     </ClCompile>
+    <ClCompile Include="server\CStrategyService.cpp">
+      <Filter>Source Files\server</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -107,6 +110,9 @@
       <Filter>Source Files\components</Filter>
     </ClCompile>
     <ClCompile Include="components\CViewStrategySettings.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CStrategyEditDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
     <ClCompile Include="network\CNet.cpp">
@@ -240,6 +246,12 @@
     <QtMoc Include="components\CMainWindow.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
+    <QtMoc Include="components\CViewStrategySettings.h">
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="components\CStrategyEditDialog.h">
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc">
@@ -277,6 +289,9 @@
     <QtUic Include="components\CViewStrategySettings.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
+    <QtUic Include="components\CStrategyEditDialog.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="server\CLoginService.h">
@@ -286,6 +301,9 @@
       <Filter>Source Files\server</Filter>
     </ClInclude>
     <ClInclude Include="server\RequestCenter.h">
+      <Filter>Source Files\server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\CStrategyService.h">
       <Filter>Source Files\server</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
@@ -445,9 +463,6 @@
       <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="components\CViewHQMarket.h">
-      <Filter>Source Files\components</Filter>
-    </ClInclude>
-    <ClInclude Include="components\CViewStrategySettings.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
     <ClInclude Include="server\CHostMgr.h">

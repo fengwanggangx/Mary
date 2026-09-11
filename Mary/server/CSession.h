@@ -17,6 +17,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 namespace net
 {
@@ -65,6 +66,7 @@ class CSession final : public ISingleton<CSession>
 	bool DeleteStrategy(std::uint64_t id);
 	void SetStateCallback(StateCallback&& cb);
 	void SetResponseCallback(ResponseCallback&& cb);
+	void RegisterResponseHandler(ResponseCallback&& cb);
 	void SetErrorCallback(ErrorCallback&& cb);
 	bool IsAuthenticated() const noexcept;
 	SessionState GetState() const noexcept;
@@ -127,7 +129,7 @@ class CSession final : public ISingleton<CSession>
 
 	std::mutex m_mtx_callbacks;
 	StateCallback m_stateCallback;
-	ResponseCallback m_responseCallback;
+	std::vector<ResponseCallback> m_responseCallbacks;
 	ErrorCallback m_errorCallback;
 
 	int m_heartbeatSeconds{ 15 };

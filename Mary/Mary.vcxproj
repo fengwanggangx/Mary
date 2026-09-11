@@ -125,6 +125,7 @@
     <ClCompile Include="server\CSession.cpp" />
     <ClCompile Include="server\CLoginService.cpp" />
     <ClCompile Include="server\RequestCenter.cpp" />
+    <ClCompile Include="server\CStrategyService.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
+    <ClCompile Include="components\CStrategyEditDialog.cpp" />
     <ClCompile Include="server\CHostMgr.cpp" />
     <ClCompile Include="cryption\Cryption.cpp" />
     <ClCompile Include="database\CDBEngine.cpp" />
@@ -176,6 +178,8 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CMainWindow.h" />
+    <QtMoc Include="components\CViewStrategySettings.h" />
+    <QtMoc Include="components\CStrategyEditDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc" />
@@ -191,6 +195,7 @@
     <QtUic Include="components\CSystemSettings.ui" />
     <QtUic Include="components\CViewHQMarket.ui" />
     <QtUic Include="components\CViewStrategySettings.ui" />
+    <QtUic Include="components\CStrategyEditDialog.ui" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h" />
@@ -204,6 +209,7 @@
     <ClInclude Include="server\CLoginService.h" />
     <ClInclude Include="server\CSession.h" />
     <ClInclude Include="server\RequestCenter.h" />
+    <ClInclude Include="server\CStrategyService.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />
@@ -217,7 +223,6 @@
     <ClInclude Include="components\CRiskSettings.h" />
     <ClInclude Include="components\CSystemSettings.h" />
     <ClInclude Include="components\CViewHQMarket.h" />
-    <ClInclude Include="components\CViewStrategySettings.h" />
     <ClInclude Include="server\CHostMgr.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />
