@@ -1,10 +1,10 @@
 #ifndef MARY_SERVER_CSESSION_H
 #define MARY_SERVER_CSESSION_H
 
-#include "CLoginService.h"
-#include "RequestCenter.h"
 #include "../common/ISingleton.h"
 #include "../request/request.pb.h"
+#include "CLoginService.h"
+#include "RequestCenter.h"
 
 #include <atomic>
 #include <chrono>
@@ -22,7 +22,7 @@ namespace net
 {
 	class CTcpClient;
 	struct CNetEvent;
-}
+} // namespace net
 
 enum class SessionState
 {
@@ -48,7 +48,7 @@ class CSession final : public ISingleton<CSession>
 {
 	DECLARE_SINGLE_DFAULT(CSession)
 
-public:
+  public:
 	using AuthCallback = std::function<void(const AuthEvent&)>;
 	using StateCallback = std::function<void(SessionState, const std::string&)>;
 	using ResponseCallback = std::function<void(const SessionResponse&)>;
@@ -59,6 +59,10 @@ public:
 	void Stop();
 	bool Subscribe(const std::string& strKey, const request::RequestParameters& param);
 	bool Unsubscribe(const std::string& strKey, const request::RequestParameters& param);
+	bool AddStrategy(const _TyStrategyInfo& strategy);
+	bool ModifyStrategy(const _TyStrategyInfo& strategy);
+	bool QueryStrategies();
+	bool DeleteStrategy(std::uint64_t id);
 	void SetStateCallback(StateCallback&& cb);
 	void SetResponseCallback(ResponseCallback&& cb);
 	void SetErrorCallback(ErrorCallback&& cb);
@@ -66,7 +70,7 @@ public:
 	SessionState GetState() const noexcept;
 	std::optional<CLoginInfo> GetLoginInfo() const;
 
-private:
+  private:
 	struct PendingRequest
 	{
 		std::string m_cmd;
@@ -98,17 +102,16 @@ private:
 	void NotifyResponse(SessionResponse response);
 	void NotifyError(const std::string& error);
 
-private:
+  private:
 	mutable std::mutex m_mtx_client;
 	std::unique_ptr<net::CTcpClient> m_client;
 
-private:
+  private:
 	std::atomic_bool m_stopping{ false };
 	std::atomic<SessionState> m_state{ SessionState::Disconnected };
 
-
-	std::thread m_thread_conn;	//连接、收包、断线重连
-	std::thread m_thread_heartbeat;	//发送心跳、检查请求超时
+	std::thread m_thread_conn;		// 连接、收包、断线重连
+	std::thread m_thread_heartbeat; // 发送心跳、检查请求超时
 
 	std::mutex m_mtx_loops;
 	std::condition_variable m_cv_loops;

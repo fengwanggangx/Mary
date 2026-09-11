@@ -20,7 +20,11 @@ namespace request
 	CRequest Auth(const std::string& strToken);
 	CRequest Subscription(const RequestParameters& param);
 	CRequest UnSubscription(const RequestParameters& param);
+	CRequest AddStrategy(const _TyStrategyInfo& strategy);
+	CRequest ModifyStrategy(const _TyStrategyInfo& strategy);
+	CRequest QueryStrategies();
+	CRequest DeleteStrategy(std::uint64_t id);
 	CRequest HeartBeat();
-}
+} // namespace request
 
 #endif

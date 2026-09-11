@@ -47,6 +47,41 @@ namespace request
 		return req;
 	}
 
+	CRequest AddStrategy(const _TyStrategyInfo& strategy)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd("strategy_add");
+		req.SetData(strategy);
+		return req;
+	}
+
+	CRequest ModifyStrategy(const _TyStrategyInfo& strategy)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd("strategy_modify");
+		req.SetData(strategy);
+		return req;
+	}
+
+	CRequest QueryStrategies()
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd("strategy_query");
+		return req;
+	}
+
+	CRequest DeleteStrategy(std::uint64_t id)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd("strategy_delete");
+		req.SetExtraData("strategy_id", std::to_string(id));
+		return req;
+	}
+
 	CRequest HeartBeat()
 	{
 		CRequest req;
@@ -56,4 +91,4 @@ namespace request
 		req.SetExtraData("client_time_ms", std::to_string(nClientTime));
 		return req;
 	}
-}
+} // namespace request

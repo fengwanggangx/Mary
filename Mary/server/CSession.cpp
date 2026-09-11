@@ -153,6 +153,26 @@ bool CSession::Unsubscribe(const std::string& strKey, const request::RequestPara
 	return SendRequest(request::UnSubscription(param));
 }
 
+bool CSession::AddStrategy(const _TyStrategyInfo& strategy)
+{
+	return SendRequest(request::AddStrategy(strategy));
+}
+
+bool CSession::ModifyStrategy(const _TyStrategyInfo& strategy)
+{
+	return SendRequest(request::ModifyStrategy(strategy));
+}
+
+bool CSession::QueryStrategies()
+{
+	return SendRequest(request::QueryStrategies());
+}
+
+bool CSession::DeleteStrategy(std::uint64_t id)
+{
+	return SendRequest(request::DeleteStrategy(id));
+}
+
 void CSession::SetStateCallback(StateCallback&& cb)
 {
 	std::lock_guard<std::mutex> lock(m_mtx_callbacks);
@@ -230,9 +250,7 @@ void CSession::ConnectionLoop()
 		}
 		std::unique_lock<std::mutex> lock(m_mtx_loops);
 		m_cv_loops.wait_for(lock, std::chrono::seconds(reconnectSeconds), [this]()
-		{
-			return m_stopping.load();
-		});
+							{ return m_stopping.load(); });
 		reconnectSeconds = bAuthed ? 1 : (std::min)(m_maxReconnectSeconds, reconnectSeconds * 2);
 	}
 	NotifyState(SessionState::Disconnected, "已关闭");
@@ -245,9 +263,7 @@ void CSession::MaintenanceLoop()
 	{
 		std::unique_lock<std::mutex> lck(m_mtx_loops);
 		m_cv_loops.wait_for(lck, std::chrono::milliseconds(250), [this]()
-		{
-			return m_stopping.load();
-		});
+							{ return m_stopping.load(); });
 		lck.unlock();
 		if (m_stopping.load())
 		{
@@ -267,7 +283,7 @@ void CSession::MaintenanceLoop()
 			{
 				if (mIter->second.m_deadline <= now)
 				{
-					expired.push_back({ mIter->first, mIter->second.m_cmd, {}, "请求超时" });
+					expired.push_back({ mIter->first, mIter->second.m_cmd, { }, "请求超时" });
 					mIter = m_reqs_sendout.erase(mIter);
 				}
 				else
@@ -472,11 +488,11 @@ bool CSession::SendRequest(const CRequest& req)
 	{
 		if (!bAuthRequest)
 		{
-		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		if (0 != id)
-		{
-			m_reqs_sendout.erase(id);
-		}
+			std::lock_guard<std::mutex> lock(m_mtx_pending);
+			if (0 != id)
+			{
+				m_reqs_sendout.erase(id);
+			}
 		}
 	}
 	return bRet;
@@ -503,7 +519,7 @@ void CSession::FailPending(const std::string& strReson)
 		failed.reserve(m_reqs_sendout.size());
 		for (const auto& [id, pending] : m_reqs_sendout)
 		{
-			failed.push_back({ id, pending.m_cmd, {}, strReson });
+			failed.push_back({ id, pending.m_cmd, { }, strReson });
 		}
 		m_reqs_sendout.clear();
 	}
