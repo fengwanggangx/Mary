@@ -30,7 +30,7 @@ class CHostMgr final : public ISingleton<CHostMgr>
 
 public:
 	std::string Key() const;
-	const std::unordered_map<std::string, CHostInfo>& GetHosts() const;
+	const std::map<std::string, CHostInfo>& GetHosts() const;
 	std::optional<CHostInfo> GetActiveHost() const;
 	// Invalid arguments and persistence failures are reported by exceptions.
 	bool Add(const CHostInfo& value);

@@ -72,7 +72,7 @@ void CHostMgr::Initialize()
 	m_hosts.clear();
 	for (const auto& [k, v] : entries)
 	{
-		if ("connect_fast" == key)
+		if ("connect_fast" == k)
 		{
 			m_bConnectFast = "1" == v;
 		}
@@ -91,6 +91,7 @@ std::string CHostMgr::Key() const
 {
 	return "host" + std::to_string(m_hosts.size());
 }
+
 const std::map<std::string, CHostInfo>& CHostMgr::GetHosts() const
 {
 	return m_hosts;
