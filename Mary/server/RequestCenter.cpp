@@ -28,9 +28,9 @@ namespace request
 		CRequest req;
 		req.SetType(CRequest::Type::HQMARKET);
 		req.SetCmd("subscribe");
-		for (const auto& [strKey, strValue] : param)
+		for (const auto& [k, v] : param)
 		{
-			req.SetExtraData(strKey, strValue);
+			req.SetExtraData(k, v);
 		}
 		return req;
 	}
@@ -40,9 +40,9 @@ namespace request
 		CRequest req;
 		req.SetType(CRequest::Type::HQMARKET);
 		req.SetCmd("unsubscribe");
-		for (const auto& [strKey, strValue] : param)
+		for (const auto& [k, v] : param)
 		{
-			req.SetExtraData(strKey, strValue);
+			req.SetExtraData(k, v);
 		}
 		return req;
 	}
