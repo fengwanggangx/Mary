@@ -65,19 +65,16 @@
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\server">
-      <UniqueIdentifier>{a3820762-49b4-4323-8b51-8aa425aec09c}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="server\CLoginService.cpp">
-      <Filter>Source Files\server</Filter>
+    <ClCompile Include="system\CLoginService.cpp">
+      <Filter>Source Files\system</Filter>
     </ClCompile>
-    <ClCompile Include="server\RequestCenter.cpp">
-      <Filter>Source Files\server</Filter>
+    <ClCompile Include="request\RequestCenter.cpp">
+      <Filter>Source Files\request</Filter>
     </ClCompile>
-    <ClCompile Include="server\CStrategyService.cpp">
-      <Filter>Source Files\server</Filter>
+    <ClCompile Include="system\CStrategyService.cpp">
+      <Filter>Source Files\system</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
@@ -94,8 +91,8 @@
     <ClCompile Include="components\CServerSettingsDialog.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="server\CHostMgr.cpp">
-      <Filter>Source Files\server</Filter>
+    <ClCompile Include="system\CHostMgr.cpp">
+      <Filter>Source Files\system</Filter>
     </ClCompile>
     <ClCompile Include="components\CMainWindow.cpp">
       <Filter>Source Files\components</Filter>
@@ -181,8 +178,8 @@
     <ClCompile Include="system\CBootLoader.cpp">
       <Filter>Source Files\system</Filter>
     </ClCompile>
-    <ClCompile Include="server\CSession.cpp">
-      <Filter>Source Files\server</Filter>
+    <ClCompile Include="system\CSession.cpp">
+      <Filter>Source Files\system</Filter>
     </ClCompile>
     <ClCompile Include="cryption\Cryption.cpp">
       <Filter>Source Files\cryption</Filter>
@@ -294,17 +291,17 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="server\CLoginService.h">
-      <Filter>Source Files\server</Filter>
+    <ClInclude Include="system\CLoginService.h">
+      <Filter>Source Files\system</Filter>
     </ClInclude>
-    <ClInclude Include="server\CSession.h">
-      <Filter>Source Files\server</Filter>
+    <ClInclude Include="system\CSession.h">
+      <Filter>Source Files\system</Filter>
     </ClInclude>
-    <ClInclude Include="server\RequestCenter.h">
-      <Filter>Source Files\server</Filter>
+    <ClInclude Include="request\RequestCenter.h">
+      <Filter>Source Files\request</Filter>
     </ClInclude>
-    <ClInclude Include="server\CStrategyService.h">
-      <Filter>Source Files\server</Filter>
+    <ClInclude Include="system\CStrategyService.h">
+      <Filter>Source Files\system</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
@@ -465,8 +462,8 @@
     <ClInclude Include="components\CViewHQMarket.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
-    <ClInclude Include="server\CHostMgr.h">
-      <Filter>Source Files\server</Filter>
+    <ClInclude Include="system\CHostMgr.h">
+      <Filter>Source Files\system</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,6 @@
 #include "CViewStrategySettings.h"
 
-#include "../server/CStrategyService.h"
+#include "../system/CStrategyService.h"
 #include "CStrategyEditDialog.h"
 #include "ui_CViewStrategySettings.h"
 

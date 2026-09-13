@@ -1,7 +1,7 @@
 #ifndef MARY_COMPONENTS_CSERVERSETTINGSDIALOG_H
 #define MARY_COMPONENTS_CSERVERSETTINGSDIALOG_H
 
-#include "../server/CHostMgr.h"
+#include "../system/CHostMgr.h"
 
 #include <QDialog>
 

@@ -2,7 +2,7 @@
 #include "components/CMainWindow.h"
 #include "log/defines_log.h"
 #include "system/CBootLoader.h"
-#include "server/CSession.h"
+#include "system/CSession.h"
 
 #include <QtWidgets/QApplication>
 

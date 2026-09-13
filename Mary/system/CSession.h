@@ -4,7 +4,7 @@
 #include "../common/ISingleton.h"
 #include "../request/request.pb.h"
 #include "CLoginService.h"
-#include "RequestCenter.h"
+#include "../request/RequestCenter.h"
 
 #include <atomic>
 #include <chrono>

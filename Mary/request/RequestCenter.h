@@ -1,7 +1,7 @@
 #ifndef MARY_SERVER_REQUESTCENTER_H
 #define MARY_SERVER_REQUESTCENTER_H
 
-#include "../request/request.h"
+#include "request.h"
 
 #include <string>
 #include <unordered_map>
