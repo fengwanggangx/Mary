@@ -256,14 +256,13 @@ void CSession::ConnectionLoop()
 		bool bAuthed = IsAuthenticated();
 		m_state.store(SessionState::Disconnected);
 		FailPending("连接已断开");
-		decltype(m_client) closedClient;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_client);
-			closedClient = std::move(m_client);
+			client = std::move(m_client);
 		}
-		if (nullptr != closedClient)
+		if (nullptr != client)
 		{
-			closedClient->Release();
+			client->Release();
 		}
 		if (m_stopping.load())
 		{
