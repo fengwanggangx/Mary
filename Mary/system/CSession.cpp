@@ -103,6 +103,15 @@ void CSession::Stop()
 	{
 		m_thread_conn.join();
 	}
+	decltype(m_client) client;
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_client);
+		client = std::move(m_client);
+	}
+	if (nullptr != client)
+	{
+		client->Release();
+	}
 	FailPending("客户端已关闭");
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
@@ -247,9 +256,14 @@ void CSession::ConnectionLoop()
 		bool bAuthed = IsAuthenticated();
 		m_state.store(SessionState::Disconnected);
 		FailPending("连接已断开");
+		decltype(m_client) closedClient;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_client);
-			m_client.reset();
+			closedClient = std::move(m_client);
+		}
+		if (nullptr != closedClient)
+		{
+			closedClient->Release();
 		}
 		if (m_stopping.load())
 		{
@@ -400,6 +414,13 @@ void CSession::HandleResponse(const CRequest& response)
 				m_loginInfo = std::move(info);
 			}
 			m_state.store(SessionState::Ready);
+			{
+				std::lock_guard<std::mutex> lock(m_mtx_client);
+				if (nullptr != m_client)
+				{
+					m_client->SetReadTimeout(45);
+				}
+			}
 			NotifyState(SessionState::Ready, "已认证");
 			RestoreSubscriptions();
 		}
