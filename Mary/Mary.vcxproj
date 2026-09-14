@@ -126,6 +126,7 @@
     <ClCompile Include="system\CLoginService.cpp" />
     <ClCompile Include="request\RequestCenter.cpp" />
     <ClCompile Include="system\CStrategyService.cpp" />
+    <ClCompile Include="system\CMarketQuoteService.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="components\CRiskSettings.cpp" />
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
+    <ClCompile Include="components\CViewWatchlist.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
     <ClCompile Include="components\CStrategyEditDialog.cpp" />
     <ClCompile Include="system\CHostMgr.cpp" />
@@ -180,12 +182,23 @@
     <QtMoc Include="components\CMainWindow.h" />
     <QtMoc Include="components\CViewStrategySettings.h" />
     <QtMoc Include="components\CStrategyEditDialog.h" />
+    <QtMoc Include="components\CViewWatchlist.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc" />
     <QtRcc Include="Resource.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="images\mary-app-icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="images\mary-app-icon.ico" />
+    <None Include="images\mary-app-icon.png" />
+    <None Include="images\market.png" />
+    <None Include="images\strategy.png" />
+    <None Include="images\risk.png" />
+    <None Include="images\system.png" />
+    <None Include="images\skin.png" />
     <QtUic Include="components\CLoginWindow.ui" />
     <QtUic Include="components\CRegisterDialog.ui" />
     <QtUic Include="components\CServerSiteDialog.ui" />
@@ -194,6 +207,7 @@
     <QtUic Include="components\CRiskSettings.ui" />
     <QtUic Include="components\CSystemSettings.ui" />
     <QtUic Include="components\CViewHQMarket.ui" />
+    <QtUic Include="components\CViewWatchlist.ui" />
     <QtUic Include="components\CViewStrategySettings.ui" />
     <QtUic Include="components\CStrategyEditDialog.ui" />
   </ItemGroup>
@@ -210,6 +224,7 @@
     <ClInclude Include="system\CSession.h" />
     <ClInclude Include="request\RequestCenter.h" />
     <ClInclude Include="system\CStrategyService.h" />
+    <ClInclude Include="system\CMarketQuoteService.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />

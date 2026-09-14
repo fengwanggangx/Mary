@@ -2,5 +2,11 @@
     <qresource prefix="/">
         <file>images/login.jpg</file>
         <file>images/setting.png</file>
+        <file alias="branding/mary-app-icon.png">images/mary-app-icon.png</file>
+        <file alias="navigation/skin.png">images/skin.png</file>
+        <file alias="navigation/market.png">images/market.png</file>
+        <file alias="navigation/strategy.png">images/strategy.png</file>
+        <file alias="navigation/risk.png">images/risk.png</file>
+        <file alias="navigation/system.png">images/system.png</file>
     </qresource>
 </RCC>

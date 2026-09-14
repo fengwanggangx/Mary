@@ -5,12 +5,14 @@
 #include "system/CSession.h"
 
 #include <QtWidgets/QApplication>
+#include <QIcon>
 
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
 	QApplication application(argc, argv);
+	application.setWindowIcon(QIcon(":/branding/mary-app-icon.png"));
 	CBootLoader boot;
 	if (!boot.Initialize())
 	{

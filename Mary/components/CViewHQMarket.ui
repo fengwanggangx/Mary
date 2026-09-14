@@ -1,13 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>CViewHQMarketClass</class>
- <widget class="QWidget" name="CViewHQMarketClass">
-  <property name="windowTitle"><string>市场行情</string></property>
-  <layout class="QVBoxLayout" name="rootLayout">
-   <item><widget class="QLabel" name="titleLabel"><property name="font"><font><pointsize>14</pointsize><bold>true</bold></font></property><property name="text"><string>市场行情</string></property></widget></item>
-   <item><spacer name="contentSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
-</ui>
+<ui version="4.0"><class>CViewHQMarketClass</class><widget class="QWidget" name="CViewHQMarketClass"><layout class="QVBoxLayout" name="rootLayout"><property name="spacing"><number>0</number></property><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property><item><widget class="QTabBar" name="marketTabBar"><property name="minimumSize"><size><width>0</width><height>38</height></size></property><property name="drawBase"><bool>false</bool></property><property name="expanding"><bool>false</bool></property></widget></item><item><widget class="QStackedWidget" name="marketStack"/></item></layout></widget><resources/><connections/></ui>
