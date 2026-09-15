@@ -126,7 +126,7 @@
     <ClCompile Include="system\CLoginService.cpp" />
     <ClCompile Include="request\RequestCenter.cpp" />
     <ClCompile Include="system\CStrategyService.cpp" />
-    <ClCompile Include="system\CMarketQuoteService.cpp" />
+    <ClCompile Include="system\CHQMarketService.cpp" />
     <ClCompile Include="common\datetime.cpp" />
     <ClCompile Include="common\modules.cpp" />
     <ClCompile Include="common\utility.cpp" />
@@ -245,7 +245,7 @@
     <ClInclude Include="system\CSession.h" />
     <ClInclude Include="request\RequestCenter.h" />
     <ClInclude Include="system\CStrategyService.h" />
-    <ClInclude Include="system\CMarketQuoteService.h" />
+    <ClInclude Include="system\CHQMarketService.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />

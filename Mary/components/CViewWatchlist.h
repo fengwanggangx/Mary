@@ -3,7 +3,7 @@
 
 #include <QWidget>
 
-struct CMarketQuoteSnapshot;
+struct CQuote;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class CViewWatchlistClass; }
@@ -25,7 +25,7 @@ private:
 	void InitializeUI();
 	void InitializeWatchlist();
 	void BindService();
-	void HandleQuote(const CMarketQuoteSnapshot& snapshot);
+	void HandleQuote(const CQuote& quote);
 	int FindSecurityRow(const QString& strSecurity) const;
 
 private:

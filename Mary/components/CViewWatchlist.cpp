@@ -1,6 +1,6 @@
 #include "CViewWatchlist.h"
 
-#include "../system/CMarketQuoteService.h"
+#include "../system/CHQMarketService.h"
 #include "ui_CViewWatchlist.h"
 
 #include <QHeaderView>
@@ -39,10 +39,10 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), ui(new Ui::
 
 CViewWatchlist::~CViewWatchlist()
 {
-	CMarketQuoteService::InstanceRef().SetQuoteHandler({ });
+	CHQMarketService::InstanceRef().SetQuoteHandler({ });
 	for (const auto& item : s_watchlist)
 	{
-		CMarketQuoteService::InstanceRef().UnsubscribeQuote(item.m_pSecurity);
+		CHQMarketService::InstanceRef().UnsubscribeQuote(item.m_pSecurity);
 	}
 	delete ui;
 }
@@ -89,16 +89,16 @@ void CViewWatchlist::InitializeWatchlist()
 
 void CViewWatchlist::BindService()
 {
-	CMarketQuoteService& service = CMarketQuoteService::InstanceRef();
+	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewWatchlist> safeThis(this);
-	service.SetQuoteHandler([safeThis](const CMarketQuoteSnapshot& snapshot)
+	service.SetQuoteHandler([safeThis](const CQuote& quote)
 	{
-		QMetaObject::invokeMethod(safeThis.data(), [safeThis, snapshot]()
+		QMetaObject::invokeMethod(safeThis.data(), [safeThis, quote]()
 		{
 			if (!safeThis.isNull())
 			{
-				safeThis->HandleQuote(snapshot);
+				safeThis->HandleQuote(quote);
 			}
 		}, Qt::QueuedConnection);
 	});
@@ -108,20 +108,20 @@ void CViewWatchlist::BindService()
 	}
 }
 
-void CViewWatchlist::HandleQuote(const CMarketQuoteSnapshot& snapshot)
+void CViewWatchlist::HandleQuote(const CQuote& quote)
 {
-	int nRow = FindSecurityRow(QString::fromStdString(snapshot.m_strSecurity));
+	int nRow = FindSecurityRow(QString::fromStdString(quote.m_strSecurity));
 	if (0 > nRow)
 	{
 		return;
 	}
-	double fChange = snapshot.m_fLastPrice - snapshot.m_fPreClose;
-	double fPercent = 0.0 != snapshot.m_fPreClose ? fChange * 100.0 / snapshot.m_fPreClose : 0.0;
-	ui->watchlistTable->item(nRow, 2)->setText(QString::number(snapshot.m_fLastPrice, 'f', 2));
+	double fChange = quote.m_fLastPrice - quote.m_fPreClose;
+	double fPercent = 0.0 != quote.m_fPreClose ? fChange * 100.0 / quote.m_fPreClose : 0.0;
+	ui->watchlistTable->item(nRow, 2)->setText(QString::number(quote.m_fLastPrice, 'f', 2));
 	ui->watchlistTable->item(nRow, 3)->setText(QString("%1%2").arg(0.0 <= fChange ? "+" : "").arg(fChange, 0, 'f', 2));
 	ui->watchlistTable->item(nRow, 4)->setText(QString("%1%2%").arg(0.0 <= fPercent ? "+" : "").arg(fPercent, 0, 'f', 2));
-	ui->watchlistTable->item(nRow, 5)->setText(QString::number(snapshot.m_nVolume));
-	ui->watchlistTable->item(nRow, 6)->setText(snapshot.m_bStale ? "已延迟" : "交易中");
+	ui->watchlistTable->item(nRow, 5)->setText(QString::number(quote.m_nVolume));
+	ui->watchlistTable->item(nRow, 6)->setText(quote.m_bStale ? "已延迟" : "交易中");
 	QColor color = 0.0 <= fChange ? QColor("#f04455") : QColor("#00b987");
 	for (int nColumn = 2; 5 > nColumn; ++nColumn)
 	{

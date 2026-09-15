@@ -76,7 +76,7 @@
     <ClCompile Include="system\CStrategyService.cpp">
       <Filter>Source Files\system</Filter>
     </ClCompile>
-    <ClCompile Include="system\CMarketQuoteService.cpp">
+    <ClCompile Include="system\CHQMarketService.cpp">
       <Filter>system</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -315,7 +315,7 @@
     <ClInclude Include="system\CStrategyService.h">
       <Filter>Source Files\system</Filter>
     </ClInclude>
-    <ClInclude Include="system\CMarketQuoteService.h">
+    <ClInclude Include="system\CHQMarketService.h">
       <Filter>system</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
