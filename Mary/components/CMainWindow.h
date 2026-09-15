@@ -25,12 +25,15 @@ private:
 	void ConnectSlots();
 	void UIInitialized();
 	void ApplyTheme(bool bDark);
+	void UpdateWindowButtonIcons();
 	void UpdateConnectionState(int nState, const QString& strMessage);
+	void changeEvent(QEvent* pEvent) override;
 	bool eventFilter(QObject* pObject, QEvent* pEvent) override;
 
 	Ui::CMainWindowClass* ui{ nullptr };
 	QAction* m_pLightThemeAction{ nullptr };
 	QAction* m_pDarkThemeAction{ nullptr };
 	QPoint m_dragPosition;
+	bool m_bDarkTheme{ false };
 	bool m_bDragging{ false };
 };

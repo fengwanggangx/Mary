@@ -32,10 +32,11 @@ namespace
 
 	const std::vector<CPageInfo> s_pages
 	{
-		CPageInfo{ "hqmarket", "市场行情", ":/navigation/market.png" },
-		CPageInfo{ "strategy_settings", "策略管理", ":/navigation/strategy.png" },
-		CPageInfo{ "risk_settings", "风控设置", ":/navigation/risk.png" },
-		CPageInfo{ "system_settings", "系统设置", ":/navigation/system.png" }
+		CPageInfo{ "hqmarket", "市场行情", ":/navigation/hqmarket-%1.png" },
+		CPageInfo{ "strategy_settings", "策略管理", ":/navigation/strategy-settings-%1.png" },
+		CPageInfo{ "risk_settings", "风控设置", ":/navigation/risk-setting-%1.png" },
+		CPageInfo{ "ai_trade", "智能量化", ":/navigation/ai-trade-%1.png" },
+		CPageInfo{ "system_settings", "系统设置", ":/navigation/system-settings-%1.png" }
 	};
 
 	QWidget* CreateView(const QString& strKey, QWidget* pParent)
@@ -51,6 +52,10 @@ namespace
 		if ("risk_settings" == strKey)
 		{
 			return new CRiskSettings(pParent);
+		}
+		if ("ai_trade" == strKey)
+		{
+			return new QWidget(pParent);
 		}
 		if ("system_settings" == strKey)
 		{
@@ -84,8 +89,8 @@ QLineEdit { background: white; border: 1px solid #dce3ed; border-radius: 5px; pa
 QPushButton { border: 1px solid #dce3ed; border-radius: 5px; background: white; color: #536176; padding: 5px 10px; }
 QPushButton:hover { border-color: #1677ff; color: #1677ff; }
 #addButton { background: #1677ff; color: white; border-color: #1677ff; }
-#skinButton { background: #f7f9fc; color: #536176; border: 1px solid #dce3ed; border-radius: 6px; padding: 0; }
-#skinButton:hover { color: #1677ff; border-color: #1677ff; }
+#skinButton { background: transparent; color: #536176; border: 1px solid transparent; border-radius: 6px; padding: 0; }
+#skinButton:hover, #skinButton:pressed { color: #1677ff; background: #eef3f8; border-color: #dce3ed; }
 #skinButton::menu-indicator { image: none; width: 0; height: 0; }
 #minimizeButton, #maximizeButton, #closeButton { border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 0; font-size: 15px; }
 #minimizeButton:hover, #maximizeButton:hover { background: #eef3f8; border-color: #dce3ed; }
@@ -93,6 +98,11 @@ QPushButton:hover { border-color: #1677ff; color: #1677ff; }
 QMenu { background: white; color: #344258; border: 1px solid #dce3ed; border-radius: 6px; padding: 4px; }
 QMenu::item { min-width: 80px; padding: 6px 16px; border-radius: 4px; }
 QMenu::item:selected { background: #eef6ff; color: #1677ff; }
+QMenu#skinMenu::item { padding: 6px 8px 6px 20px; }
+QMenu#skinMenu::indicator { width: 14px; height: 14px; subcontrol-origin: padding; subcontrol-position: left center; left: 4px; }
+QMenu#skinMenu::indicator:checked { image: url(:/navigation/check-white.png); }
+QMenu#skinMenu::indicator:exclusive:checked { image: url(:/navigation/check-white.png); }
+QMenu#skinMenu::indicator:unchecked { image: none; }
 #globalStatusBar { background: white; border-top: 1px solid #e4eaf2; color: #69778b; }
 #connectionDot { color: #18bd8b; font-size: 11px; }
 )";
@@ -123,8 +133,8 @@ QLineEdit { background: #0f1e2d; border: 1px solid #203b52; border-radius: 5px; 
 QPushButton { border: 1px solid #203b52; border-radius: 5px; background: #122130; color: #a9bdd0; padding: 5px 10px; }
 QPushButton:hover { border-color: #1683ff; color: white; }
 #addButton { background: #1683ff; color: white; border-color: #1683ff; }
-#skinButton { background: #122130; color: #b8cad9; border: 1px solid #203b52; border-radius: 6px; padding: 0; }
-#skinButton:hover { color: white; border-color: #1683ff; }
+#skinButton { background: transparent; color: #b8cad9; border: 1px solid transparent; border-radius: 6px; padding: 0; }
+#skinButton:hover, #skinButton:pressed { color: white; background: #14283a; border-color: #203b52; }
 #skinButton::menu-indicator { image: none; width: 0; height: 0; }
 #minimizeButton, #maximizeButton, #closeButton { border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 0; color: #b8cad9; font-size: 15px; }
 #minimizeButton:hover, #maximizeButton:hover { background: #14283a; border-color: #203b52; }
@@ -132,6 +142,11 @@ QPushButton:hover { border-color: #1683ff; color: white; }
 QMenu { background: #122130; color: #c8d8e7; border: 1px solid #203b52; border-radius: 6px; padding: 4px; }
 QMenu::item { min-width: 80px; padding: 6px 16px; border-radius: 4px; }
 QMenu::item:selected { background: #0d4d83; color: white; }
+QMenu#skinMenu::item { padding: 6px 8px 6px 20px; }
+QMenu#skinMenu::indicator { width: 14px; height: 14px; subcontrol-origin: padding; subcontrol-position: left center; left: 4px; }
+QMenu#skinMenu::indicator:checked { image: url(:/navigation/check-black.png); }
+QMenu#skinMenu::indicator:exclusive:checked { image: url(:/navigation/check-black.png); }
+QMenu#skinMenu::indicator:unchecked { image: none; }
 #globalStatusBar { background: #0f1e2d; border-top: 1px solid #203b52; color: #8fa8bc; }
 #connectionDot { color: #20d39b; font-size: 11px; }
 )";
@@ -158,20 +173,28 @@ void CMainWindow::UIInitialized()
 	ui->titleBar->installEventFilter(this);
 	ui->appIconLabel->setPixmap(QPixmap(":/branding/mary-app-icon.png").scaled(24, 24, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	QMenu* pSkinMenu = new QMenu(ui->skinButton);
+	pSkinMenu->setObjectName("skinMenu");
 	QActionGroup* pThemeGroup = new QActionGroup(pSkinMenu);
 	pThemeGroup->setExclusive(true);
-	m_pLightThemeAction = pSkinMenu->addAction("浅色");
-	m_pDarkThemeAction = pSkinMenu->addAction("深色");
+	m_pLightThemeAction = pSkinMenu->addAction("浅色模式");
+	m_pDarkThemeAction = pSkinMenu->addAction("深色模式");
 	m_pLightThemeAction->setCheckable(true);
 	m_pDarkThemeAction->setCheckable(true);
+	m_pLightThemeAction->setIconVisibleInMenu(false);
+	m_pDarkThemeAction->setIconVisibleInMenu(false);
 	pThemeGroup->addAction(m_pLightThemeAction);
 	pThemeGroup->addAction(m_pDarkThemeAction);
 	ui->skinButton->setMenu(pSkinMenu);
 	ui->skinButton->setPopupMode(QToolButton::InstantPopup);
-	ui->skinButton->setIcon(QIcon(":/navigation/skin.png"));
 	ui->skinButton->setIconSize(QSize(18, 18));
 	ui->skinButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
 	ui->skinButton->setToolTip("皮肤");
+	ui->minimizeButton->setIconSize(QSize(16, 16));
+	ui->minimizeButton->setToolTip("最小化");
+	ui->maximizeButton->setIconSize(QSize(16, 16));
+	ui->closeButton->setIconSize(QSize(16, 16));
+	ui->closeButton->setToolTip("关闭");
+	UpdateWindowButtonIcons();
 	ui->treeWidget->clear();
 	ui->treeWidget->setIndentation(0);
 	ui->treeWidget->setIconSize(QSize(20, 20));
@@ -186,7 +209,6 @@ void CMainWindow::UIInitialized()
 		ui->stackedWidget->addWidget(pView);
 		QTreeWidgetItem* pItem = new QTreeWidgetItem(ui->treeWidget);
 		pItem->setText(0, info.m_title);
-		pItem->setIcon(0, QIcon(info.m_icon));
 		pItem->setData(0, Qt::UserRole, static_cast<int>(nIndex));
 	}
 	QTreeWidgetItem* pFirstItem = ui->treeWidget->topLevelItem(0);
@@ -254,14 +276,37 @@ void CMainWindow::OnDarkTheme()
 
 void CMainWindow::ApplyTheme(bool bDark)
 {
+	m_bDarkTheme = bDark;
 	qApp->setStyleSheet(bDark ? DarkStyle() : LightStyle());
 	m_pLightThemeAction->setChecked(!bDark);
 	m_pDarkThemeAction->setChecked(bDark);
+	UpdateWindowButtonIcons();
+	QString strTheme = bDark ? "black" : "white";
+	for (int nItem = 0; nItem < ui->treeWidget->topLevelItemCount(); ++nItem)
+	{
+		QTreeWidgetItem* pItem = ui->treeWidget->topLevelItem(nItem);
+		int nIndex = pItem->data(0, Qt::UserRole).toInt();
+		if ((0 <= nIndex) && (static_cast<std::size_t>(nIndex) < s_pages.size()))
+		{
+			pItem->setIcon(0, QIcon(s_pages[nIndex].m_icon.arg(strTheme)));
+		}
+	}
 }
 
 void CMainWindow::UpdateClock()
 {
 	ui->clockLabel->setText(QDateTime::currentDateTime().toString("HH:mm:ss"));
+}
+
+void CMainWindow::UpdateWindowButtonIcons()
+{
+	bool bMaximized = isMaximized();
+	QString strTheme = m_bDarkTheme ? "black" : "white";
+	ui->skinButton->setIcon(QIcon(QString(":/navigation/skin-setting-%1.png").arg(strTheme)));
+	ui->minimizeButton->setIcon(QIcon(QString(":/window/min-%1.png").arg(strTheme)));
+	ui->maximizeButton->setIcon(QIcon(QString(bMaximized ? ":/window/restore-%1.png" : ":/window/max-%1.png").arg(strTheme)));
+	ui->closeButton->setIcon(QIcon(QString(":/window/close-%1.png").arg(strTheme)));
+	ui->maximizeButton->setToolTip(bMaximized ? "还原" : "最大化");
 }
 
 void CMainWindow::UpdateConnectionState(int nState, const QString& strMessage)
@@ -275,6 +320,15 @@ void CMainWindow::UpdateConnectionState(int nState, const QString& strMessage)
 		return;
 	}
 	ui->connectionLabel->setText(strMessage.isEmpty() ? "交易连接中断" : strMessage);
+}
+
+void CMainWindow::changeEvent(QEvent* pEvent)
+{
+	QMainWindow::changeEvent(pEvent);
+	if (QEvent::WindowStateChange == pEvent->type())
+	{
+		UpdateWindowButtonIcons();
+	}
 }
 
 bool CMainWindow::eventFilter(QObject* pObject, QEvent* pEvent)

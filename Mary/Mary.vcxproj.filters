@@ -490,22 +490,85 @@
     <None Include="images\mary-app-icon.ico">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="images\ai-trade-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\ai-trade-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-white-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-white-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-black-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-black-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\check-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\check-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="images\mary-app-icon.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="images\market.png">
+    <None Include="images\hqmarket-white.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="images\strategy.png">
+    <None Include="images\hqmarket-black.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="images\risk.png">
+    <None Include="images\strategy-settings-white.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="images\system.png">
+    <None Include="images\strategy-settings-black.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="images\skin.png">
+    <None Include="images\risk-setting-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\risk-setting-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\system-settings-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\system-settings-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-setting-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\skin-setting-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-min-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-max-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-restore-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-close-white.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-min-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-max-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-restore-black.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="images\window-close-black.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="request\request.proto">

@@ -1,12 +1,32 @@
 <RCC>
     <qresource prefix="/">
         <file>images/login.jpg</file>
-        <file>images/setting.png</file>
+        <file alias="navigation/ai-trade-white.png">images/ai-trade-white.png</file>
+        <file alias="navigation/ai-trade-black.png">images/ai-trade-black.png</file>
+        <file alias="navigation/skin-white-white.png">images/skin-white-white.png</file>
+        <file alias="navigation/skin-white-black.png">images/skin-white-black.png</file>
+        <file alias="navigation/skin-black-white.png">images/skin-black-white.png</file>
+        <file alias="navigation/skin-black-black.png">images/skin-black-black.png</file>
+        <file alias="navigation/check-white.png">images/check-white.png</file>
+        <file alias="navigation/check-black.png">images/check-black.png</file>
         <file alias="branding/mary-app-icon.png">images/mary-app-icon.png</file>
-        <file alias="navigation/skin.png">images/skin.png</file>
-        <file alias="navigation/market.png">images/market.png</file>
-        <file alias="navigation/strategy.png">images/strategy.png</file>
-        <file alias="navigation/risk.png">images/risk.png</file>
-        <file alias="navigation/system.png">images/system.png</file>
+        <file alias="navigation/skin-setting-white.png">images/skin-setting-white.png</file>
+        <file alias="navigation/skin-setting-black.png">images/skin-setting-black.png</file>
+        <file alias="navigation/hqmarket-white.png">images/hqmarket-white.png</file>
+        <file alias="navigation/hqmarket-black.png">images/hqmarket-black.png</file>
+        <file alias="navigation/strategy-settings-white.png">images/strategy-settings-white.png</file>
+        <file alias="navigation/strategy-settings-black.png">images/strategy-settings-black.png</file>
+        <file alias="navigation/risk-setting-white.png">images/risk-setting-white.png</file>
+        <file alias="navigation/risk-setting-black.png">images/risk-setting-black.png</file>
+        <file alias="navigation/system-settings-white.png">images/system-settings-white.png</file>
+        <file alias="navigation/system-settings-black.png">images/system-settings-black.png</file>
+        <file alias="window/min-white.png">images/window-min-white.png</file>
+        <file alias="window/max-white.png">images/window-max-white.png</file>
+        <file alias="window/restore-white.png">images/window-restore-white.png</file>
+        <file alias="window/close-white.png">images/window-close-white.png</file>
+        <file alias="window/min-black.png">images/window-min-black.png</file>
+        <file alias="window/max-black.png">images/window-max-black.png</file>
+        <file alias="window/restore-black.png">images/window-restore-black.png</file>
+        <file alias="window/close-black.png">images/window-close-black.png</file>
     </qresource>
 </RCC>
