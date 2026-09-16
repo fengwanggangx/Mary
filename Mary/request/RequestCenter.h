@@ -2,13 +2,14 @@
 #define MARY_SERVER_REQUESTCENTER_H
 
 #include "request.h"
+#include "MarketTypes.h"
 
 #include <string>
 #include <unordered_map>
 
 namespace request
 {
-	using RequestParameters = std::unordered_map<std::string, std::string>;
+	using _TyParams = std::unordered_map<std::string, std::string>;
 
 	enum class AuthAction
 	{
@@ -18,9 +19,9 @@ namespace request
 
 	CRequest Auth(AuthAction action, const std::string& strAccount, const std::string& strPassword);
 	CRequest Auth(const std::string& strToken);
-	CRequest Subscription(const RequestParameters& param);
-	CRequest UnSubscription(const RequestParameters& param);
-	CRequest QueryMarketBars(const std::string& strSecurity, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime);
+	CRequest Subscription(const _TyParams& param);
+	CRequest UnSubscription(const _TyParams& param);
+	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime);
 	CRequest QueryMarketInstruments();
 	CRequest AddStrategy(const _TyStrategyInfo& strategy);
 	CRequest ModifyStrategy(const _TyStrategyInfo& strategy);

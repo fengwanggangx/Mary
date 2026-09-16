@@ -510,6 +510,9 @@
     <ClInclude Include="system\CHQMarketService.h">
       <Filter>Source Files\system</Filter>
     </ClInclude>
+    <ClInclude Include="system\defines_hqmarket.h">
+      <Filter>Source Files\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="images\mary-app-icon.rc">

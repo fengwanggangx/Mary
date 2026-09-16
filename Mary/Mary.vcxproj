@@ -254,6 +254,7 @@
     <ClInclude Include="request\MarketTypes.h" />
     <ClInclude Include="system\CStrategyService.h" />
     <ClInclude Include="system\CHQMarketService.h" />
+    <ClInclude Include="system\defines_hqmarket.h" />
     <ClInclude Include="common\ISingleton.h" />
     <ClInclude Include="common\container.h" />
     <ClInclude Include="common\container_traits.h" />

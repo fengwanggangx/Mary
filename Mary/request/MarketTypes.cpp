@@ -149,6 +149,16 @@ MarketState ParseMarketState(const std::string& strStatus)
 	return MarketState::unknown;
 }
 
+CSecurity ParseSecurity(const std::string& strSecurity)
+{
+	std::size_t nSeparator = strSecurity.rfind('.');
+	if (std::string::npos == nSeparator)
+	{
+		return { };
+	}
+	return CSecurity(strSecurity.substr(0, nSeparator), ParseMarket(strSecurity.substr(nSeparator + 1)));
+}
+
 std::string FmtSecurityString(const std::string& strCode, Exchange mk)
 {
 	std::string strMarket = GetMarketString(mk);

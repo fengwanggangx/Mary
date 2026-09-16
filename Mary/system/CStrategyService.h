@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+class CRequest;
+
 class CStrategyService final : public ISingleton<CStrategyService>
 {
 	DECLARE_SINGLE_DFAULT(CStrategyService)
@@ -27,7 +29,7 @@ class CStrategyService final : public ISingleton<CStrategyService>
 	bool DeleteStrategy(std::uint64_t id);
 
   private:
-	void OnResponse(const struct SessionResponse& response);
+	void OnResponse(const CRequest& response);
 
   private:
 	bool m_bInitialized{ false };

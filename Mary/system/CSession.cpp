@@ -257,14 +257,19 @@ void CSession::MaintenanceLoop()
 			SendRequest(request::HeartBeat());
 			nextHeartbeat = now + std::chrono::seconds(m_heartbeatSeconds);
 		}
-		std::vector<SessionResponse> expired;
+		std::vector<CRequest> expired;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pending);
 			for (auto mIter = m_reqs_sendout.begin(); m_reqs_sendout.end() != mIter;)
 			{
 				if (mIter->second.m_deadline <= now)
 				{
-					expired.push_back({ mIter->first, mIter->second.m_cmd, {}, "请求超时" });
+					CRequest response;
+					response.SetId(mIter->first);
+					response.SetCmd(mIter->second.m_cmd);
+					response.SetReturnData("error_code", "-1");
+					response.SetReturnData("error_message", "请求超时");
+					expired.emplace_back(std::move(response));
 					mIter = m_reqs_sendout.erase(mIter);
 				}
 				else
@@ -273,9 +278,9 @@ void CSession::MaintenanceLoop()
 				}
 			}
 		}
-		for (SessionResponse& response : expired)
+		for (const CRequest& response : expired)
 		{
-			NotifyResponse(std::move(response));
+			NotifyResponse(response);
 		}
 	}
 }
@@ -395,10 +400,7 @@ void CSession::HandleResponse(const CRequest& response)
 		return;
 	}
 
-	request::RequestParameters ret = response.GetReturnData();
-	SessionResponse sessionResponse{ id, std::move(strCmd), std::move(ret), std::move(strError) };
-	sessionResponse.m_message.CopyFrom(response.GetData());
-	NotifyResponse(std::move(sessionResponse));
+	NotifyResponse(response);
 }
 
 void CSession::SendAuthentication()
@@ -487,19 +489,24 @@ bool CSession::SendRequest(const CRequest& req)
 
 void CSession::FailPending(const std::string& strReson)
 {
-	std::vector<SessionResponse> failed;
+	std::vector<CRequest> failed;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
 		failed.reserve(m_reqs_sendout.size());
 		for (const auto& [id, pending] : m_reqs_sendout)
 		{
-			failed.push_back({ id, pending.m_cmd, {}, strReson });
+			CRequest response;
+			response.SetId(id);
+			response.SetCmd(pending.m_cmd);
+			response.SetReturnData("error_code", "-1");
+			response.SetReturnData("error_message", strReson);
+			failed.emplace_back(std::move(response));
 		}
 		m_reqs_sendout.clear();
 	}
-	for (auto& response : failed)
+	for (const CRequest& response : failed)
 	{
-		NotifyResponse(std::move(response));
+		NotifyResponse(response);
 	}
 }
 
@@ -550,7 +557,7 @@ void CSession::NotifyState(SessionState state, const std::string& message)
 	}
 }
 
-void CSession::NotifyResponse(SessionResponse response)
+void CSession::NotifyResponse(const CRequest& response)
 {
 	std::vector<ResponseCallback> callbacks;
 	{

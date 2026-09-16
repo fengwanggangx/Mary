@@ -250,7 +250,7 @@ void CUITable::BindService()
 
 void CUITable::HandleDepth(const CMarketDepth& depth)
 {
-	if (GetSecurity(m_pWatchlistTable->currentIndex()) != QString::fromStdString(depth.m_strSecurity))
+	if (!(GetSecurity(m_pWatchlistTable->currentIndex()) == depth.m_security))
 	{
 		return;
 	}
@@ -277,7 +277,7 @@ void CUITable::HandleDepth(const CMarketDepth& depth)
 void CUITable::HandleHistory(const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
 {
 	Q_UNUSED(period);
-	if (GetSecurity(m_pWatchlistTable->currentIndex()) != QString::fromStdString(strSecurity))
+	if (GetSecurity(m_pWatchlistTable->currentIndex()).String() != strSecurity)
 	{
 		return;
 	}
@@ -298,9 +298,15 @@ void CUITable::HandleQuoteTable(const CDataSnapshot& snapshot, const CDataChange
 	}
 }
 
-QString CUITable::GetSecurity(const QModelIndex& index) const
+CSecurity CUITable::GetSecurity(const QModelIndex& index) const
 {
-	return index.isValid() ? m_pWatchlistProxy->index(index.row(), 0).data().toString() : QString();
+	if (!index.isValid())
+	{
+		return { };
+	}
+	CSecurity security = ParseSecurity(m_pWatchlistProxy->index(index.row(), 0).data().toString().toStdString());
+	security.m_strName = GetName(index).toStdString();
+	return security;
 }
 
 QString CUITable::GetName(const QModelIndex& index) const
@@ -310,21 +316,21 @@ QString CUITable::GetName(const QModelIndex& index) const
 
 void CUITable::OnCurrentRowChanged(const QModelIndex& current, const QModelIndex& previous)
 {
-	QString strSecurity = GetSecurity(current);
-	if (strSecurity.isEmpty())
+	CSecurity security = GetSecurity(current);
+	if (!security.IsValid())
 	{
 		return;
 	}
 	QString strName = GetName(current);
-	ui->chartTitle->setText(strName + "  " + strSecurity);
+	ui->chartTitle->setText(strName + "  " + QString::fromStdString(security.String()));
 	m_pCurve->Clear();
 	CHQMarketService& service = CHQMarketService::InstanceRef();
-	QString strPreviousSecurity = GetSecurity(previous);
-	if (!strPreviousSecurity.isEmpty())
+	CSecurity previousSecurity = GetSecurity(previous);
+	if (previousSecurity.IsValid())
 	{
-		service.UnsubscribeDepth(strPreviousSecurity.toStdString());
+		service.UnsubscribeDepth(previousSecurity);
 	}
-	service.SubscribeDepth(strSecurity.toStdString());
+	service.SubscribeDepth(security);
 	RequestHistory(m_pCurve->GetMode());
 }
 
@@ -345,8 +351,8 @@ void CUITable::OnStatusFilterChanged(int nIndex)
 
 void CUITable::RequestHistory(CurveMode mode)
 {
-	QString strSecurity = GetSecurity(m_pWatchlistTable->currentIndex());
-	if (strSecurity.isEmpty())
+	CSecurity security = GetSecurity(m_pWatchlistTable->currentIndex());
+	if (!security.IsValid())
 	{
 		return;
 	}
@@ -362,5 +368,5 @@ void CUITable::RequestHistory(CurveMode mode)
 	{
 		nBeginTime = QDateTime::currentDateTime().addYears(-10).toMSecsSinceEpoch();
 	}
-	CHQMarketService::InstanceRef().QueryHistory(strSecurity.toStdString(), period, nBeginTime, nEndTime);
+	CHQMarketService::InstanceRef().QueryHistory(security, period, nBeginTime, nEndTime);
 }

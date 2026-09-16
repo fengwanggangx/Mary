@@ -15,7 +15,7 @@ void CStrategyService::Initialize()
 		return;
 	}
 	m_bInitialized = true;
-	CSession::InstanceRef().RegisterResponseHandler([this](const SessionResponse& response)
+	CSession::InstanceRef().RegisterResponseHandler([this](const CRequest& response)
 	{
 		OnResponse(response);
 	});
@@ -53,15 +53,19 @@ bool CStrategyService::DeleteStrategy(std::uint64_t id)
 	return CSession::InstanceRef().SendRequest(request::DeleteStrategy(id));
 }
 
-void CStrategyService::OnResponse(const SessionResponse& response)
+void CStrategyService::OnResponse(const CRequest& response)
 {
-	if ("strategy_query" == response.m_cmd)
+	std::string strCmd = response.GetCmd();
+	std::optional<std::pair<int, std::string>> errorInfo = response.GetErrorInfo();
+	std::string strError = errorInfo.has_value() ? errorInfo->second : std::string();
+	const _TyReqData& message = response.GetData();
+	if ("strategy_query" == strCmd)
 	{
 		StrategyList strategies;
-		if (response.m_error.empty() && response.m_message.has_strategy_list())
+		if (strError.empty() && message.has_strategy_list())
 		{
-			strategies.reserve(response.m_message.strategy_list().strategies_size());
-			for (const request::StrategyInfo& strategy : response.m_message.strategy_list().strategies())
+			strategies.reserve(message.strategy_list().strategies_size());
+			for (const request::StrategyInfo& strategy : message.strategy_list().strategies())
 			{
 				strategies.emplace_back(strategy);
 			}
@@ -73,19 +77,19 @@ void CStrategyService::OnResponse(const SessionResponse& response)
 		}
 		if (nullptr != handler)
 		{
-			handler(strategies, response.m_error);
+			handler(strategies, strError);
 		}
 		return;
 	}
 
-	if (("strategy_add" != response.m_cmd) && ("strategy_modify" != response.m_cmd) && ("strategy_delete" != response.m_cmd))
+	if (("strategy_add" != strCmd) && ("strategy_modify" != strCmd) && ("strategy_delete" != strCmd))
 	{
 		return;
 	}
 	request::StrategyInfo strategy;
-	if (response.m_message.has_strategy())
+	if (message.has_strategy())
 	{
-		strategy.CopyFrom(response.m_message.strategy());
+		strategy.CopyFrom(message.strategy());
 	}
 	OperationHandler handler;
 	{
@@ -94,6 +98,6 @@ void CStrategyService::OnResponse(const SessionResponse& response)
 	}
 	if (nullptr != handler)
 	{
-		handler(response.m_cmd, response.m_error.empty(), strategy, response.m_error);
+		handler(strCmd, strError.empty(), strategy, strError);
 	}
 }

@@ -36,15 +36,6 @@ enum class SessionState
 	Stopping
 };
 
-struct SessionResponse
-{
-	std::uint64_t m_id{ 0 };
-	std::string m_cmd;
-	request::RequestParameters m_result;
-	std::string m_error;
-	_TyReqData m_message;
-};
-
 class CSession final : public ISingleton<CSession>
 {
 	DECLARE_SINGLE_DFAULT(CSession)
@@ -52,7 +43,7 @@ class CSession final : public ISingleton<CSession>
   public:
 	using AuthCallback = std::function<void(const AuthEvent&)>;
 	using StateCallback = std::function<void(SessionState, const std::string&)>;
-	using ResponseCallback = std::function<void(const SessionResponse&)>;
+	using ResponseCallback = std::function<void(const CRequest&)>;
 	using ErrorCallback = std::function<void(const std::string&)>;
 
 	void Authenticate(const CAuthParam& param, AuthCallback&& cb);
@@ -90,7 +81,7 @@ class CSession final : public ISingleton<CSession>
 	void FailPending(const std::string& reason);
 	void NotifyAuthentication(AuthEvent ev);
 	void NotifyState(SessionState state, const std::string& message);
-	void NotifyResponse(SessionResponse response);
+	void NotifyResponse(const CRequest& response);
 	void NotifyError(const std::string& error);
 
   private:

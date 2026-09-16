@@ -8,6 +8,7 @@
 #include <vector>
 
 struct CQuote;
+struct CSecurity;
 struct CMarketDepth;
 struct CMarketBar;
 struct CDataChangeSet;
@@ -44,7 +45,7 @@ private:
 	void HandleHistory(const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
 	void HandleQuoteTable(const CDataSnapshot& snapshot, const CDataChangeSet& changes);
 	void OnCurrentRowChanged(const QModelIndex& current, const QModelIndex& previous);
-	QString GetSecurity(const QModelIndex& index) const;
+	CSecurity GetSecurity(const QModelIndex& index) const;
 	QString GetName(const QModelIndex& index) const;
 	void RequestHistory(CurveMode mode);
 

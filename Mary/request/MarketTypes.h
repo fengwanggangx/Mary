@@ -63,6 +63,7 @@ std::string GetMarketStateString(MarketState status);
 Exchange ParseMarket(const std::string& strExchange);
 Channel ParseChannel(const std::string& strChannel);
 MarketState ParseMarketState(const std::string& strStatus);
+CSecurity ParseSecurity(const std::string& strSecurity);
 std::string FmtSecurityString(const std::string& strCode, Exchange mk);
 
 struct CQuoteInfo

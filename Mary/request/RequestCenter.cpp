@@ -24,7 +24,7 @@ namespace request
 		return req;
 	}
 
-	CRequest Subscription(const RequestParameters& param)
+	CRequest Subscription(const _TyParams& param)
 	{
 		CRequest req;
 		req.SetType(CRequest::Type::HQMARKET);
@@ -36,7 +36,7 @@ namespace request
 		return req;
 	}
 
-	CRequest UnSubscription(const RequestParameters& param)
+	CRequest UnSubscription(const _TyParams& param)
 	{
 		CRequest req;
 		req.SetType(CRequest::Type::HQMARKET);
@@ -48,12 +48,12 @@ namespace request
 		return req;
 	}
 
-	CRequest QueryMarketBars(const std::string& strSecurity, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime)
+	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime)
 	{
 		CRequest req;
 		req.SetType(CRequest::Type::HQMARKET);
 		req.SetCmd("query_bars");
-		req.SetExtraData("security", strSecurity);
+		req.SetExtraData("security", info.String());
 		req.SetExtraData("channel", strChannel);
 		req.SetExtraData("begin_time_ms", std::to_string(nBeginTime));
 		req.SetExtraData("end_time_ms", std::to_string(nEndTime));
