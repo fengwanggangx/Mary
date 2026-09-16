@@ -71,7 +71,7 @@ struct CIntradayPoint
 
 需要实现交易时段横轴、午休时间压缩/隐藏、实时点追加、自动滚动、成交量、十字光标和区间缩放。
 
-K 线和分时图共用 `CMarketChartWidget`，只替换数据系列，统一主题、坐标轴、十字光标和交互。
+K 线和分时图共用 `CUICurve`，只替换数据系列，统一主题、坐标轴、十字光标和交互。
 
 ## 4. 表格
 
@@ -99,18 +99,19 @@ CMarketItemDelegate
 
 ## 5. 数据服务拆分
 
-`CSession` 已经实现连接、认证、token、心跳、自动重连、订阅恢复和响应分发。重构时直接复用现有 `CSession`，不新增或修改其连接生命周期逻辑；`CHQMarketService` 只负责行情业务协议、数据转换、缓存和事件分发。
+`CSession` 负责连接、认证、token、心跳、自动重连、通用请求发送和响应分发，不持有行情订阅或查询等具体业务状态。`CHQMarketService` 负责行情业务协议、订阅恢复、历史查询、数据转换、缓存和事件分发。
 
-图表和表格不得直接调用 HQMarket，统一通过服务和模型获取数据：
+图表和表格不得直接调用 HQMarket，统一通过 `CHQMarketService` 和模型获取数据。历史行情、五档盘口和指标计算不再拆成独立 Service，全部作为 `CHQMarketService` 的内部能力：
 
 ```text
-CMarketQuoteService       实时行情
-CMarketHistoryService     K 线/分时历史
-CMarketDepthService       五档盘口
-CMarketIndicatorService   指标计算
+CHQMarketService
+ ├── 实时行情订阅、快照缓存和事件分发
+ ├── K 线/分时历史请求与缓存
+ ├── 五档盘口订阅与缓存
+ └── 指标计算
 ```
 
-当前已有 `CMarketQuoteService`，负责订阅实时行情、接收最新价/昨收/成交量/延迟状态，并投递到 UI 线程。
+当前已有 `CHQMarketService`，负责订阅实时行情、接收最新价/昨收/成交量/延迟状态，并投递到 UI 线程。
 
 ## 6. 性能策略
 
@@ -128,17 +129,17 @@ CMarketIndicatorService   指标计算
 ### 第一阶段：基础功能
 
 - 引入 QWT
-- 新建 `CMarketChartWidget`
+- 新建 `CUICurve`
 - 实现分时图、日/周/月 K 线和成交量
 - 将自选列表、五档行情改为 `QTableView`
-- 保持现有 `CMarketQuoteService`
+- 保持并扩展现有 `CHQMarketService`
 
 ### 第二阶段：行情完整化
 
-- 增加 `CMarketHistoryService`
+- 在 `CHQMarketService` 中增加历史行情能力
 - 接入历史 K 线和分时接口
-- 增加 `CMarketDepthService`
-- 增加指标计算和买卖点
+- 在 `CHQMarketService` 中增加五档盘口能力
+- 在 `CHQMarketService` 中增加指标计算和买卖点
 
 ### 第三阶段：性能优化
 
@@ -174,6 +175,6 @@ Mary 采用：
 K 线图：QWT QwtPlotTradingCurve
 分时图：QWT QwtPlotCurve + Volume
 行情表格：QTableView + QAbstractTableModel
-数据层：CMarketQuoteService + CMarketHistoryService
+数据层：CHQMarketService（统一承载实时、历史、盘口和指标）
 极限性能：后续按 benchmark 决定 QOpenGLWidget/QRhi
 ```

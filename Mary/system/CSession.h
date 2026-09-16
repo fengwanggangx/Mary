@@ -58,13 +58,9 @@ class CSession final : public ISingleton<CSession>
 	void Authenticate(const CAuthParam& param, AuthCallback&& cb);
 	void CancelAuthentication();
 	void Stop();
-	bool Subscribe(const std::string& strKey, const request::RequestParameters& param);
-	bool Unsubscribe(const std::string& strKey, const request::RequestParameters& param);
-	bool AddStrategy(const _TyStrategyInfo& strategy);
-	bool ModifyStrategy(const _TyStrategyInfo& strategy);
-	bool QueryStrategies();
-	bool DeleteStrategy(std::uint64_t id);
+	bool SendRequest(const CRequest& request);
 	void SetStateCallback(StateCallback&& cb);
+	void RegisterStateHandler(StateCallback&& cb);
 	void SetResponseCallback(ResponseCallback&& cb);
 	void RegisterResponseHandler(ResponseCallback&& cb);
 	void SetErrorCallback(ErrorCallback&& cb);
@@ -79,11 +75,6 @@ class CSession final : public ISingleton<CSession>
 		std::chrono::steady_clock::time_point m_deadline;
 	};
 
-	struct Subscription
-	{
-		request::RequestParameters m_param;
-	};
-
 	struct AuthContext
 	{
 		CAuthParam m_param;
@@ -96,8 +87,6 @@ class CSession final : public ISingleton<CSession>
 	int OnNetEvent(const net::CNetEvent& ev);
 	void HandleResponse(const CRequest& response);
 	void SendAuthentication();
-	bool SendRequest(const CRequest& request);
-	void RestoreSubscriptions();
 	void FailPending(const std::string& reason);
 	void NotifyAuthentication(AuthEvent ev);
 	void NotifyState(SessionState state, const std::string& message);
@@ -124,11 +113,9 @@ class CSession final : public ISingleton<CSession>
 
 	std::mutex m_mtx_pending;
 	std::unordered_map<_TyRequestId, PendingRequest> m_reqs_sendout;
-	std::mutex m_mtx_subscriptions;
-	std::unordered_map<std::string, Subscription> m_subscriptions;
-
 	std::mutex m_mtx_callbacks;
 	StateCallback m_stateCallback;
+	std::vector<StateCallback> m_stateHandlers;
 	std::vector<ResponseCallback> m_responseCallbacks;
 	ErrorCallback m_errorCallback;
 

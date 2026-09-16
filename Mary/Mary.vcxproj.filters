@@ -17,6 +17,12 @@
       <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
       <Extensions>ui</Extensions>
     </Filter>
+    <Filter Include="Source Files\thirty">
+      <UniqueIdentifier>{5CB15E1A-D37D-489D-A254-F9F48F696E9A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\thirty\qwt">
+      <UniqueIdentifier>{C447270F-7949-40AA-A918-8AD60BFE2EC2}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Form Files\components">
       <UniqueIdentifier>{c9d83bcd-903d-485e-825e-839ef52a53fd}</UniqueIdentifier>
     </Filter>
@@ -73,11 +79,11 @@
     <ClCompile Include="request\RequestCenter.cpp">
       <Filter>Source Files\request</Filter>
     </ClCompile>
+    <ClCompile Include="request\MarketTypes.cpp">
+      <Filter>Source Files\request</Filter>
+    </ClCompile>
     <ClCompile Include="system\CStrategyService.cpp">
       <Filter>Source Files\system</Filter>
-    </ClCompile>
-    <ClCompile Include="system\CHQMarketService.cpp">
-      <Filter>system</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
@@ -109,8 +115,8 @@
     <ClCompile Include="components\CViewHQMarket.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="components\CViewWatchlist.cpp">
-      <Filter>components</Filter>
+    <ClCompile Include="components\CDataTableModel.cpp">
+      <Filter>Source Files\components</Filter>
     </ClCompile>
     <ClCompile Include="components\CViewStrategySettings.cpp">
       <Filter>Source Files\components</Filter>
@@ -238,6 +244,18 @@
     <ClCompile Include="defines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="system\CHQMarketService.cpp">
+      <Filter>Source Files\system</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CUITable.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CUICurve.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="thirty\qwt\QwtPlot.cpp">
+      <Filter>Source Files\thirty\qwt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h">
@@ -255,8 +273,11 @@
     <QtMoc Include="components\CStrategyEditDialog.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
-    <QtMoc Include="components\CViewWatchlist.h">
+    <QtMoc Include="components\CUITable.h">
       <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="thirty\qwt\QwtPlot.h">
+      <Filter>Source Files\thirty\qwt</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -292,13 +313,13 @@
     <QtUic Include="components\CViewHQMarket.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
-    <QtUic Include="components\CViewWatchlist.ui">
-      <Filter>components</Filter>
-    </QtUic>
     <QtUic Include="components\CViewStrategySettings.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
     <QtUic Include="components\CStrategyEditDialog.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CUITable.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
   </ItemGroup>
@@ -312,11 +333,11 @@
     <ClInclude Include="request\RequestCenter.h">
       <Filter>Source Files\request</Filter>
     </ClInclude>
+    <ClInclude Include="request\MarketTypes.h">
+      <Filter>Source Files\request</Filter>
+    </ClInclude>
     <ClInclude Include="system\CStrategyService.h">
       <Filter>Source Files\system</Filter>
-    </ClInclude>
-    <ClInclude Include="system\CHQMarketService.h">
-      <Filter>system</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
@@ -477,7 +498,16 @@
     <ClInclude Include="components\CViewHQMarket.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
+    <ClInclude Include="components\CUICurve.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CDataTableModel.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
     <ClInclude Include="system\CHostMgr.h">
+      <Filter>Source Files\system</Filter>
+    </ClInclude>
+    <ClInclude Include="system\CHQMarketService.h">
       <Filter>Source Files\system</Filter>
     </ClInclude>
   </ItemGroup>

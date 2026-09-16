@@ -20,6 +20,8 @@ namespace request
 	CRequest Auth(const std::string& strToken);
 	CRequest Subscription(const RequestParameters& param);
 	CRequest UnSubscription(const RequestParameters& param);
+	CRequest QueryMarketBars(const std::string& strSecurity, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime);
+	CRequest QueryMarketInstruments();
 	CRequest AddStrategy(const _TyStrategyInfo& strategy);
 	CRequest ModifyStrategy(const _TyStrategyInfo& strategy);
 	CRequest QueryStrategies();

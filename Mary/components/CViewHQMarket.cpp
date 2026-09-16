@@ -1,5 +1,5 @@
 #include "CViewHQMarket.h"
-#include "CViewWatchlist.h"
+#include "CUITable.h"
 #include "ui_CViewHQMarket.h"
 
 #include <QLabel>
@@ -12,7 +12,7 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), ui(new Ui::CV
 	ui->marketTabBar->addTab("A股");
 	ui->marketTabBar->addTab("港股");
 	ui->marketTabBar->addTab("美股");
-	ui->marketStack->addWidget(new CViewWatchlist(ui->marketStack));
+	ui->marketStack->addWidget(new CUITable(ui->marketStack));
 	for (int nIndex = 1; 5 > nIndex; ++nIndex)
 	{
 		QLabel* pPlaceholder = new QLabel("该市场数据页将在后续阶段接入", ui->marketStack);

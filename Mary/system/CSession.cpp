@@ -137,55 +137,16 @@ std::optional<CLoginInfo> CSession::GetLoginInfo() const
 	return m_loginInfo;
 }
 
-bool CSession::Subscribe(const std::string& strKey, const request::RequestParameters& param)
-{
-	if (strKey.empty())
-	{
-		return false;
-	}
-	{
-		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		m_subscriptions.insert_or_assign(strKey, Subscription{ param });
-	}
-	return SendRequest(request::Subscription(param));
-}
-
-bool CSession::Unsubscribe(const std::string& strKey, const request::RequestParameters& param)
-{
-	{
-		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		if (0 == m_subscriptions.erase(strKey))
-		{
-			return false;
-		}
-	}
-	return SendRequest(request::UnSubscription(param));
-}
-
-bool CSession::AddStrategy(const _TyStrategyInfo& strategy)
-{
-	return SendRequest(request::AddStrategy(strategy));
-}
-
-bool CSession::ModifyStrategy(const _TyStrategyInfo& strategy)
-{
-	return SendRequest(request::ModifyStrategy(strategy));
-}
-
-bool CSession::QueryStrategies()
-{
-	return SendRequest(request::QueryStrategies());
-}
-
-bool CSession::DeleteStrategy(std::uint64_t id)
-{
-	return SendRequest(request::DeleteStrategy(id));
-}
-
 void CSession::SetStateCallback(StateCallback&& cb)
 {
 	std::lock_guard<std::mutex> lock(m_mtx_callbacks);
 	m_stateCallback = std::move(cb);
+}
+
+void CSession::RegisterStateHandler(StateCallback&& cb)
+{
+	std::lock_guard<std::mutex> lock(m_mtx_callbacks);
+	m_stateHandlers.emplace_back(std::move(cb));
 }
 
 void CSession::SetResponseCallback(ResponseCallback&& cb)
@@ -421,7 +382,6 @@ void CSession::HandleResponse(const CRequest& response)
 				}
 			}
 			NotifyState(SessionState::Ready, "已认证");
-			RestoreSubscriptions();
 		}
 		else
 		{
@@ -525,19 +485,6 @@ bool CSession::SendRequest(const CRequest& req)
 	return bRet;
 }
 
-void CSession::RestoreSubscriptions()
-{
-	decltype(m_subscriptions) sub;
-	{
-		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		sub = m_subscriptions;
-	}
-	for (const auto& [k, v] : sub)
-	{
-		SendRequest(request::Subscription(v.m_param));
-	}
-}
-
 void CSession::FailPending(const std::string& strReson)
 {
 	std::vector<SessionResponse> failed;
@@ -584,13 +531,22 @@ void CSession::NotifyAuthentication(AuthEvent ev)
 void CSession::NotifyState(SessionState state, const std::string& message)
 {
 	StateCallback cb;
+	std::vector<StateCallback> handlers;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_callbacks);
 		cb = m_stateCallback;
+		handlers = m_stateHandlers;
 	}
 	if (nullptr != cb)
 	{
 		cb(state, message);
+	}
+	for (const StateCallback& handler : handlers)
+	{
+		if (nullptr != handler)
+		{
+			handler(state, message);
+		}
 	}
 }
 

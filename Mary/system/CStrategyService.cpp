@@ -35,22 +35,22 @@ void CStrategyService::SetOperationHandler(OperationHandler&& handler)
 
 bool CStrategyService::QueryStrategies()
 {
-	return CSession::InstanceRef().QueryStrategies();
+	return CSession::InstanceRef().SendRequest(request::QueryStrategies());
 }
 
 bool CStrategyService::AddStrategy(const request::StrategyInfo& strategy)
 {
-	return CSession::InstanceRef().AddStrategy(strategy);
+	return CSession::InstanceRef().SendRequest(request::AddStrategy(strategy));
 }
 
 bool CStrategyService::ModifyStrategy(const request::StrategyInfo& strategy)
 {
-	return CSession::InstanceRef().ModifyStrategy(strategy);
+	return CSession::InstanceRef().SendRequest(request::ModifyStrategy(strategy));
 }
 
 bool CStrategyService::DeleteStrategy(std::uint64_t id)
 {
-	return CSession::InstanceRef().DeleteStrategy(id);
+	return CSession::InstanceRef().SendRequest(request::DeleteStrategy(id));
 }
 
 void CStrategyService::OnResponse(const SessionResponse& response)

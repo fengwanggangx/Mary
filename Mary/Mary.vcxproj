@@ -37,12 +37,12 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>Qt 6.11.2 MSVC 2022 64-bit</QtInstall>
-    <QtModules>core;gui;widgets;network</QtModules>
+    <QtModules>core;gui;widgets;network;svg;concurrent;opengl;openglwidgets;printsupport</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>Qt 6.11.2 MSVC 2022 64-bit</QtInstall>
-    <QtModules>core;gui;widgets;network</QtModules>
+    <QtModules>core;gui;widgets;network;svg;concurrent;opengl;openglwidgets;printsupport</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -69,26 +69,28 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\debug\libevent;include\debug\libevent\event2;include\debug\sqlite;include\debug\spdlog;include\debug\botan-3;include\debug\rapidjson;include\debug\rapidxml;include\debug\protobuf;include\debug\ini;include\debug\lua;include\debug\mysql;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>request;include\debug\libevent;include\debug\libevent\event2;include\debug\sqlite;include\debug\spdlog;include\debug\botan-3;include\debug\rapidjson;include\debug\rapidxml;include\debug\protobuf;include\debug\ini;include\debug\lua;include\debug\mysql;thirty\qwt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;QT_NO_DEPRECATED_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lited.lib;libprotobufd.lib;libprotocd.lib;utf8_range.lib;utf8_validity.lib;libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;opengl32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lited.lib;libprotobufd.lib;libprotocd.lib;utf8_range.lib;utf8_validity.lib;libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>include\release\libevent;include\release\libevent\event2;include\release\sqlite;include\release\spdlog;include\release\botan-3;include\release\rapidjson;include\release\rapidxml;include\release\protobuf;include\release\ini;include\release\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>request;include\release\libevent;include\release\libevent\event2;include\release\sqlite;include\release\spdlog;include\release\botan-3;include\release\rapidjson;include\release\rapidxml;include\release\protobuf;include\release\ini;include\release\lua;thirty\qwt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PreprocessorDefinitions>_UNICODE;UNICODE;PROTOBUF_USE_DLLS;QT_NO_DEPRECATED_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>libs\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;wsock32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lite.lib;libprotobuf.lib;libprotoc.lib;utf8_range.lib;utf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;wsock32.lib;opengl32.lib;event.lib;event_core.lib;event_extra.lib;event_openssl.lib;sqlite3.lib;spdlog.lib;botan-3.lib;abseil_dll.lib;absl_decode_rust_punycode.lib;absl_demangle_rust.lib;absl_flags_commandlineflag.lib;absl_flags_commandlineflag_internal.lib;absl_flags_config.lib;absl_flags_internal.lib;absl_flags_marshalling.lib;absl_flags_parse.lib;absl_flags_private_handle_accessor.lib;absl_flags_program_name.lib;absl_flags_reflection.lib;absl_flags_usage.lib;absl_flags_usage_internal.lib;absl_log_flags.lib;absl_log_internal_structured_proto.lib;absl_poison.lib;absl_tracing_internal.lib;absl_utf8_for_code_point.lib;libprotobuf-lite.lib;libprotobuf.lib;libprotoc.lib;utf8_range.lib;utf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -125,6 +127,7 @@
     <ClCompile Include="system\CSession.cpp" />
     <ClCompile Include="system\CLoginService.cpp" />
     <ClCompile Include="request\RequestCenter.cpp" />
+    <ClCompile Include="request\MarketTypes.cpp" />
     <ClCompile Include="system\CStrategyService.cpp" />
     <ClCompile Include="system\CHQMarketService.cpp" />
     <ClCompile Include="common\datetime.cpp" />
@@ -138,7 +141,9 @@
     <ClCompile Include="components\CRiskSettings.cpp" />
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
-    <ClCompile Include="components\CViewWatchlist.cpp" />
+    <ClCompile Include="components\CUITable.cpp" />
+    <ClCompile Include="components\CDataTableModel.cpp" />
+    <ClCompile Include="components\CUICurve.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
     <ClCompile Include="components\CStrategyEditDialog.cpp" />
     <ClCompile Include="system\CHostMgr.cpp" />
@@ -177,12 +182,14 @@
     <ClCompile Include="xml\XmlAttribute.cpp" />
     <ClCompile Include="xml\XmlDocument.cpp" />
     <ClCompile Include="xml\XmlNode.cpp" />
+    <ClCompile Include="thirty\qwt\QwtPlot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CMainWindow.h" />
     <QtMoc Include="components\CViewStrategySettings.h" />
     <QtMoc Include="components\CStrategyEditDialog.h" />
-    <QtMoc Include="components\CViewWatchlist.h" />
+    <QtMoc Include="components\CUITable.h" />
+    <QtMoc Include="thirty\qwt\QwtPlot.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="components\CMainWindow.qrc" />
@@ -228,7 +235,7 @@
     <QtUic Include="components\CRiskSettings.ui" />
     <QtUic Include="components\CSystemSettings.ui" />
     <QtUic Include="components\CViewHQMarket.ui" />
-    <QtUic Include="components\CViewWatchlist.ui" />
+    <QtUic Include="components\CUITable.ui" />
     <QtUic Include="components\CViewStrategySettings.ui" />
     <QtUic Include="components\CStrategyEditDialog.ui" />
   </ItemGroup>
@@ -244,6 +251,7 @@
     <ClInclude Include="system\CLoginService.h" />
     <ClInclude Include="system\CSession.h" />
     <ClInclude Include="request\RequestCenter.h" />
+    <ClInclude Include="request\MarketTypes.h" />
     <ClInclude Include="system\CStrategyService.h" />
     <ClInclude Include="system\CHQMarketService.h" />
     <ClInclude Include="common\ISingleton.h" />
@@ -259,6 +267,8 @@
     <ClInclude Include="components\CRiskSettings.h" />
     <ClInclude Include="components\CSystemSettings.h" />
     <ClInclude Include="components\CViewHQMarket.h" />
+    <ClInclude Include="components\CUICurve.h" />
+    <ClInclude Include="components\CDataTableModel.h" />
     <ClInclude Include="system\CHostMgr.h" />
     <ClInclude Include="cryption\Cryption.h" />
     <ClInclude Include="database\CDBEngine.h" />

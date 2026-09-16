@@ -1,4 +1,5 @@
 #include "RequestCenter.h"
+#include "v1/market.pb.h"
 
 #include <chrono>
 
@@ -44,6 +45,28 @@ namespace request
 		{
 			req.SetExtraData(k, v);
 		}
+		return req;
+	}
+
+	CRequest QueryMarketBars(const std::string& strSecurity, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::HQMARKET);
+		req.SetCmd("query_bars");
+		req.SetExtraData("security", strSecurity);
+		req.SetExtraData("channel", strChannel);
+		req.SetExtraData("begin_time_ms", std::to_string(nBeginTime));
+		req.SetExtraData("end_time_ms", std::to_string(nEndTime));
+		return req;
+	}
+
+	CRequest QueryMarketInstruments()
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::HQMARKET);
+		req.SetCmd("query_instruments");
+		hqmarket::market::v1::InstrumentListRequest value;
+		req.SetData(value);
 		return req;
 	}
 

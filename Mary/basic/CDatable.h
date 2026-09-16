@@ -1,421 +1,155 @@
-#ifndef __CDataTable_H__
-#define __CDataTable_H__
+#ifndef MARY_BASIC_CDATATABLE_H
+#define MARY_BASIC_CDATATABLE_H
 
-#include <algorithm>
+#include <atomic>
 #include <cstdint>
-#include <stdexcept>
+#include <memory>
+#include <mutex>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
-#include <utility>
 #include <variant>
 #include <vector>
 
-using _TyCellData = std::variant<std::int32_t, std::int64_t, double, bool, char, std::string>;
-using _TyColumnData = std::variant<std::vector<std::int32_t>, std::vector<std::int64_t>, std::vector<double>, std::vector<bool>, std::vector<char>, std::vector<std::string>>;
+using _TyDataRowId = std::uint64_t;
+using _TyDataColumnId = std::uint32_t;
+using _TyDataVersion = std::uint64_t;
+using _TyDataRowIndex = std::size_t;
 
-struct CColumnInfo
+enum class DataType
 {
-	CColumnInfo(unsigned int nID, const std::string& strColName) : m_id(nID), m_strName(strColName), m_tHash(std::hash<std::string>{}(GetColumnDataType()))
-	{
-	}
-
-	CColumnInfo(unsigned int nID, const std::string& strColName, _TyColumnData&& data) : m_id(nID), m_strName(strColName), m_data(std::move(data)), m_tHash(std::hash<std::string>{}(GetColumnDataType()))
-	{
-	}
-
-	std::string GetColumnDataType() const
-	{
-		return std::visit([](const auto& vec)
-						  {
-			using _Ty = typename std::decay_t<decltype(vec)>::value_type;
-			if constexpr (std::is_same_v<_Ty, std::int32_t>)
-			{
-				return "int32";
-			}
-			else if constexpr (std::is_same_v<_Ty, std::int64_t>)
-			{
-				return "int64";
-			}
-			else if constexpr (std::is_same_v<_Ty, double>)
-			{
-				return "double";
-			}
-			else if constexpr (std::is_same_v<_Ty, bool>)
-			{
-				return "bool";
-			}
-			else if constexpr (std::is_same_v<_Ty, char>)
-			{
-				return "char";
-			}
-			else if constexpr (std::is_same_v<_Ty, std::string>)
-			{
-				return "string";
-			}
-			else
-			{
-				return "unknown";
-			} }, m_data);
-	}
-
-	std::size_t GetDataCount() const
-	{
-		return std::visit([](const auto& vec)
-						  { return vec.size(); }, m_data);
-	}
-
-	template <typename _Ty>
-	bool IsType() const
-	{
-		using _TyVec = std::vector<_Ty>;
-		return std::holds_alternative<_TyVec>(m_data);
-	}
-
-	unsigned int m_id{0};
-	std::string m_strName;
-	_TyColumnData m_data;
-	std::size_t m_tHash{0};
+	Int64,
+	UInt64,
+	Double,
+	Bool,
+	String,
+	Timestamp
 };
 
-class CDataTable
+using _TyDataValue = std::variant<std::int64_t, std::uint64_t, double, bool, std::string>;
+using _TyDataColumnStorage = std::variant<std::vector<std::int64_t>, std::vector<std::uint64_t>, std::vector<double>, std::vector<bool>, std::vector<std::uint32_t>>;
+
+struct CDataColumnSchema
 {
-  public:
-	CDataTable() = default;
+	_TyDataColumnId m_id{ 0 };
+	std::string m_strName;
+	DataType m_type{ DataType::String };
+};
+
+struct CDataCellChange
+{
+	_TyDataRowId m_rowId{ 0 };
+	_TyDataColumnId m_columnId{ 0 };
+	bool operator<(const CDataCellChange& arg) const noexcept;
+	bool operator==(const CDataCellChange& arg) const noexcept;
+};
+
+struct CDataChangeSet
+{
+	_TyDataVersion m_version{ 0 };
+	bool m_bStructureChanged{ false };
+	std::vector<_TyDataRowId> m_insertedRows;
+	std::vector<_TyDataRowId> m_deletedRows;
+	std::vector<CDataCellChange> m_changedCells;
+};
+
+struct CDataTableStorage
+{
+	_TyDataVersion m_version{ 0 };
+	std::vector<CDataColumnSchema> m_schema;
+	std::vector<std::shared_ptr<_TyDataColumnStorage>> m_columns;
+	std::unordered_map<_TyDataColumnId, std::size_t> m_columnIndexes;
+	std::unordered_map<std::string, _TyDataColumnId> m_columnNames;
+
+	struct CRowStorage
+	{
+		std::vector<_TyDataRowId> m_rowIds;
+		std::unordered_map<_TyDataRowId, _TyDataRowIndex> m_rowIndexes;
+	};
+
+	struct CStringStorage
+	{
+		std::vector<std::string> m_strings{ std::string() };
+		std::unordered_map<std::string, std::uint32_t> m_stringIndexes{ { std::string(), 0 } };
+	};
+
+	std::shared_ptr<CRowStorage> m_rows{ std::make_shared<CRowStorage>() };
+	std::shared_ptr<CStringStorage> m_stringStorage{ std::make_shared<CStringStorage>() };
+};
+
+class CDataSnapshot final
+{
+public:
+	CDataSnapshot() = default;
+	bool IsValid() const noexcept;
+	_TyDataVersion GetVersion() const noexcept;
+	std::size_t GetRowCount() const noexcept;
+	std::size_t GetColumnCount() const noexcept;
+	const std::vector<CDataColumnSchema>& GetSchema() const noexcept;
+	const std::vector<_TyDataRowId>& GetRowIds() const noexcept;
+	bool FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const;
+	bool GetValue(_TyDataRowIndex row, _TyDataColumnId columnId, _TyDataValue& result) const;
+	bool GetValueById(_TyDataRowId rowId, _TyDataColumnId columnId, _TyDataValue& result) const;
+
+private:
+	explicit CDataSnapshot(std::shared_ptr<const CDataTableStorage> storage);
+	std::shared_ptr<const CDataTableStorage> m_storage;
+	friend class CDataTable;
+	friend class CDataWriteBatch;
+};
+
+class CDataTable;
+
+class CDataWriteBatch final
+{
+public:
+	CDataWriteBatch(CDataWriteBatch&& arg) noexcept;
+	CDataWriteBatch& operator=(CDataWriteBatch&& arg) noexcept;
+	~CDataWriteBatch();
+	CDataWriteBatch(const CDataWriteBatch&) = delete;
+	CDataWriteBatch& operator=(const CDataWriteBatch&) = delete;
+
+	bool ReserveRows(std::size_t count);
+	bool AddRow(_TyDataRowId rowId, const std::vector<_TyDataValue>& values);
+	bool DeleteRow(_TyDataRowId rowId);
+	bool SetValue(_TyDataRowId rowId, _TyDataColumnId columnId, const _TyDataValue& value);
+	CDataSnapshot Commit();
+	void Cancel() noexcept;
+
+private:
+	CDataWriteBatch(CDataTable& table, std::unique_lock<std::mutex>&& writerLock, std::shared_ptr<CDataTableStorage>&& storage);
+	void EnsureRowsWritable();
+	void EnsureColumnWritable(std::size_t column);
+	void EnsureStringsWritable();
+	bool StoreValue(_TyDataRowIndex row, std::size_t column, const _TyDataValue& value, bool bAppend);
+	std::uint32_t InternString(const std::string& value);
+
+	CDataTable* m_pTable{ nullptr };
+	std::unique_lock<std::mutex> m_writerLock;
+	std::shared_ptr<CDataTableStorage> m_storage;
+	CDataChangeSet m_changes;
+	bool m_bFinished{ false };
+	friend class CDataTable;
+};
+
+class CDataTable final
+{
+public:
+	CDataTable();
 	CDataTable(const CDataTable&) = delete;
 	CDataTable& operator=(const CDataTable&) = delete;
-	CDataTable(CDataTable&&) = default;
-	CDataTable& operator=(CDataTable&&) = default;
+	bool AddColumn(const CDataColumnSchema& schema);
+	CDataWriteBatch BeginWrite();
+	CDataSnapshot GetSnapshot() const;
+	CDataChangeSet GetLastChanges() const;
+	bool FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const;
 
-	template <typename _Ty>
-	bool AddColumn(unsigned int nId, const std::string& strColName, std::vector<_Ty>&& data)
-	{
-		if ((0 < m_name_idx.count(strColName)) || (0 < m_id_idx.count(nId)))
-		{
-			return false;
-		}
-
-		if (!CheckColDataSize(data.size()))
-		{
-			return false;
-		}
-
-		m_columns.emplace_back(nId, strColName, _TyColumnData(std::move(data)));
-		m_name_idx[strColName] = m_columns.size() - 1;
-		m_id_idx[nId] = m_columns.size() - 1;
-		return true;
-	}
-
-	bool CheckColDataSize(std::size_t sz)
-	{
-		if (!m_isRowCountInitialized)
-		{
-			m_nRowCount = sz;
-			m_isRowCountInitialized = true;
-			for (CColumnInfo& column : m_columns)
-			{
-				std::visit([sz](auto& values)
-						   { values.resize(sz); }, column.m_data);
-			}
-		}
-		else
-		{
-			if (m_nRowCount != sz)
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	bool AddColumn(unsigned int nId, const std::string& strColName)
-	{
-		if ((0 < m_name_idx.count(strColName)) || (0 < m_id_idx.count(nId)))
-		{
-			return false;
-		}
-
-		m_columns.emplace_back(nId, strColName);
-		if (m_isRowCountInitialized)
-		{
-			std::get<std::vector<std::int32_t>>(m_columns.back().m_data).resize(m_nRowCount);
-		}
-		m_name_idx[strColName] = m_columns.size() - 1;
-		m_id_idx[nId] = m_columns.size() - 1;
-		return true;
-	}
-
-	template <typename _Ty>
-	bool SetIdxColumnData(std::size_t nIdx, std::vector<_Ty>&& data)
-	{
-		if (m_columns.size() <= nIdx)
-		{
-			return false;
-		}
-
-		if (!CheckColDataSize(data.size()))
-		{
-			return false;
-		}
-
-		m_columns[nIdx].m_data = std::move(data);
-		m_columns[nIdx].m_tHash = std::hash<std::string>{}(m_columns[nIdx].GetColumnDataType());
-		return true;
-	}
-
-	template <typename _Ty>
-	bool SetColumnData(std::size_t nId, std::vector<_Ty>&& data)
-	{
-		auto it = m_id_idx.find(nId);
-		if (m_id_idx.end() == it)
-		{
-			return false;
-		}
-		return SetIdxColumnData(it->second, std::move(data));
-	}
-
-	template <typename _Ty>
-	bool SetColumnData(const std::string& strColName, std::vector<_Ty>&& data)
-	{
-		auto it = m_name_idx.find(strColName);
-		if (m_name_idx.end() == it)
-		{
-			return false;
-		}
-		return SetIdxColumnData(it->second, std::move(data));
-	}
-
-	std::size_t GetColumnCount() const
-	{
-		return m_columns.size();
-	}
-
-	std::size_t GetRowCount() const
-	{
-		return m_nRowCount;
-	}
-
-	void ReserveRows(std::size_t rowCount)
-	{
-		for (CColumnInfo& column : m_columns)
-		{
-			std::visit([rowCount](auto& values)
-					   { values.reserve(rowCount); }, column.m_data);
-		}
-	}
-
-	bool IsHasColumn(const std::string& strName) const
-	{
-		return 0 < m_name_idx.count(strName);
-	}
-
-	bool IsHasColumn(unsigned int nId) const
-	{
-		return 0 < m_id_idx.count(nId);
-	}
-
-	std::vector<std::string> GetColumnNames() const
-	{
-		std::vector<std::string> names;
-		names.reserve(m_columns.size());
-		for (const auto& col : m_columns)
-		{
-			names.emplace_back(col.m_strName);
-		}
-		return names;
-	}
-
-	std::vector<unsigned int> GetColumnIds() const
-	{
-		std::vector<unsigned int> ids;
-		ids.reserve(m_columns.size());
-		for (const auto& col : m_columns)
-		{
-			ids.emplace_back(col.m_id);
-		}
-		return ids;
-	}
-
-	template <typename _Ty>
-	std::vector<_Ty>& GetColumnData(const std::string& strName)
-	{
-		auto it = m_name_idx.find(strName);
-		if (m_name_idx.end() == it)
-		{
-			throw std::out_of_range("CDataTable column does not exist: " + strName);
-		}
-
-		CColumnInfo& column = m_columns[it->second];
-		if (!column.IsType<_Ty>())
-		{
-			throw std::bad_variant_access();
-		}
-
-		return std::get<std::vector<_Ty>>(column.m_data);
-	}
-
-	template <typename _Ty>
-	const std::vector<_Ty>& GetColumnData(const std::string& strName) const
-	{
-		auto it = m_name_idx.find(strName);
-		if (m_name_idx.end() == it)
-		{
-			throw std::out_of_range("CDataTable column does not exist: " + strName);
-		}
-
-		const CColumnInfo& column = m_columns[it->second];
-		if (!column.IsType<_Ty>())
-		{
-			throw std::bad_variant_access();
-		}
-
-		return std::get<std::vector<_Ty>>(column.m_data);
-	}
-
-	std::vector<_TyCellData> GetRowData(std::size_t nIdx) const
-	{
-		if (nIdx >= m_nRowCount)
-		{
-			return {};
-		}
-
-		std::vector<_TyCellData> row;
-		row.reserve(m_columns.size());
-		for (const auto& col : m_columns)
-		{
-			std::visit([&](const auto& vec)
-					   { row.emplace_back(vec[nIdx]); }, col.m_data);
-		}
-		return row;
-	}
-
-	bool AddRow(const std::vector<_TyCellData>& row)
-	{
-		std::size_t nColCount = m_columns.size();
-		if ((0 == nColCount) || (row.size() != nColCount))
-		{
-			return false;
-		}
-
-		for (std::size_t i = 0; i < nColCount; ++i)
-		{
-			bool isTypeMatched = std::visit([&](const auto& value)
-											{
-				using _Ty = std::decay_t<decltype(value)>;
-				return m_columns[i].IsType<_Ty>(); }, row[i]);
-			if (!isTypeMatched)
-			{
-				return false;
-			}
-		}
-
-		std::size_t appendedCount = 0;
-		try
-		{
-			for (; appendedCount < nColCount; ++appendedCount)
-			{
-				std::visit([&](const auto& value)
-						   {
-					using _Ty = std::decay_t<decltype(value)>;
-					std::get<std::vector<_Ty>>(m_columns[appendedCount].m_data).emplace_back(value); }, row[appendedCount]);
-			}
-		}
-		catch (...)
-		{
-			for (std::size_t i = 0; i < appendedCount; ++i)
-			{
-				std::visit([](auto& values)
-						   { values.pop_back(); }, m_columns[i].m_data);
-			}
-			throw;
-		}
-
-		++m_nRowCount;
-		m_isRowCountInitialized = true;
-		return true;
-	}
-
-	template <typename _Ty>
-	void SortByColumn(const std::string& strColName, bool bAsc)
-	{
-		std::vector<_Ty>& columnData = GetColumnData<_Ty>(strColName);
-		std::vector<std::size_t> indices(m_nRowCount);
-
-		for (std::size_t i = 0; i < m_nRowCount; ++i)
-		{
-			indices[i] = i;
-		}
-
-		if (bAsc)
-		{
-			std::sort(
-				indices.begin(),
-				indices.end(),
-				[&](std::size_t a, std::size_t b)
-				{
-					return columnData[a] < columnData[b];
-				});
-		}
-		else
-		{
-			std::sort(
-				indices.begin(),
-				indices.end(),
-				[&](std::size_t a, std::size_t b)
-				{
-					return columnData[a] > columnData[b];
-				});
-		}
-
-		ReorderRows(indices);
-	}
-
-	void Clear()
-	{
-		m_columns.clear();
-		m_name_idx.clear();
-		m_id_idx.clear();
-		m_nRowCount = 0;
-		m_isRowCountInitialized = false;
-	}
-
-  private:
-	void ReorderRows(const std::vector<std::size_t>& order)
-	{
-		if (order.size() != m_nRowCount)
-		{
-			return;
-		}
-
-		for (CColumnInfo& column : m_columns)
-		{
-			std::visit([&](auto& values)
-					   {
-				using _Ty = typename std::decay_t<decltype(values)>::value_type;
-				std::vector<_Ty> newData;
-				newData.reserve(m_nRowCount);
-
-				for (std::size_t i = 0; i < m_nRowCount; ++i)
-				{
-					if constexpr (std::is_same_v<_Ty, std::string>)
-					{
-						newData.emplace_back(std::move(values[order[i]]));
-					}
-					else
-					{
-						newData.emplace_back(values[order[i]]);
-					}
-				}
-
-				values = std::move(newData); }, column.m_data);
-		}
-	}
-
-  private:
-	std::vector<CColumnInfo> m_columns;
-	std::unordered_map<std::string, std::size_t> m_name_idx;
-	std::unordered_map<unsigned int, std::size_t> m_id_idx;
-	std::size_t m_nRowCount = 0;
-	bool m_isRowCountInitialized{false};
+private:
+	void Publish(std::shared_ptr<CDataTableStorage>&& storage, CDataChangeSet&& changes);
+	mutable std::mutex m_mtx_writer;
+	mutable std::mutex m_mtx_changes;
+	std::atomic<std::shared_ptr<const CDataTableStorage>> m_snapshot;
+	CDataChangeSet m_lastChanges;
+	friend class CDataWriteBatch;
 };
+
 #endif
