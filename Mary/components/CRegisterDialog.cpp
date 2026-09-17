@@ -24,11 +24,13 @@ CRegisterDialog::CRegisterDialog(QWidget* parent) : QDialog(parent)
 		{
 			if (AuthState::Success == event.m_state)
 			{
+				m_registrationPending = false;
 				QMessageBox::information(this, "注册成功", QString::fromStdString(event.m_message));
 				accept();
 			}
 			else if (AuthState::Failed == event.m_state)
 			{
+				m_registrationPending = false;
 				m_ui.registerButton->setEnabled(true);
 				QMessageBox::warning(this, "注册失败", QString::fromStdString(event.m_message));
 			}
@@ -39,6 +41,10 @@ CRegisterDialog::CRegisterDialog(QWidget* parent) : QDialog(parent)
 CRegisterDialog::~CRegisterDialog()
 {
 	CLoginService::InstanceRef().Unsubscribe(m_callbackId);
+	if (m_registrationPending)
+	{
+		CLoginService::InstanceRef().Cancel();
+	}
 }
 
 void CRegisterDialog::SetAccount(const QString& account)
@@ -79,5 +85,5 @@ void CRegisterDialog::Register()
 	param.m_strAccount = account.toStdString();
 	param.m_strPassword = password.toStdString();
 	param.m_host = std::move(*site);
-	CLoginService::InstanceRef().Authenticate(param);
+	m_registrationPending = CLoginService::InstanceRef().Authenticate(param);
 }

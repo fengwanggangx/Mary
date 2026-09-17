@@ -236,13 +236,13 @@ void CUITable::BindService()
 			}
 		}, Qt::QueuedConnection);
 	});
-	m_historyHandlerToken = service.AddHistoryHandler([safeThis](const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
+	m_historyHandlerToken = service.AddHistoryHandler([safeThis](std::uint64_t requestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
 	{
-		QMetaObject::invokeMethod(safeThis.data(), [safeThis, strSecurity, period, bars, strError]()
+		QMetaObject::invokeMethod(safeThis.data(), [safeThis, requestId, strSecurity, period, bars, strError]()
 		{
 			if (!safeThis.isNull())
 			{
-				safeThis->HandleHistory(strSecurity, period, bars, strError);
+				safeThis->HandleHistory(requestId, strSecurity, period, bars, strError);
 			}
 		}, Qt::QueuedConnection);
 	});
@@ -274,10 +274,10 @@ void CUITable::HandleDepth(const CMarketDepth& depth)
 	}
 }
 
-void CUITable::HandleHistory(const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
+void CUITable::HandleHistory(std::uint64_t requestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
 {
-	Q_UNUSED(period);
-	if (GetSecurity(m_pWatchlistTable->currentIndex()).String() != strSecurity)
+	MarketBarPeriod expectedPeriod = CurveMode::Intraday == m_pCurve->GetMode() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
+	if ((requestId != m_historyRequestId) || (expectedPeriod != period) || (GetSecurity(m_pWatchlistTable->currentIndex()).String() != strSecurity))
 	{
 		return;
 	}
@@ -351,12 +351,14 @@ void CUITable::OnStatusFilterChanged(int nIndex)
 
 void CUITable::RequestHistory(CurveMode mode)
 {
+	m_historyRequestId = 0;
 	CSecurity security = GetSecurity(m_pWatchlistTable->currentIndex());
 	if (!security.IsValid())
 	{
 		return;
 	}
 	m_pCurve->SetMode(mode);
+	m_pCurve->Clear();
 	std::int64_t nEndTime = QDateTime::currentMSecsSinceEpoch();
 	MarketBarPeriod period = CurveMode::Intraday == mode ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
 	std::int64_t nBeginTime = 0;
@@ -368,5 +370,5 @@ void CUITable::RequestHistory(CurveMode mode)
 	{
 		nBeginTime = QDateTime::currentDateTime().addYears(-10).toMSecsSinceEpoch();
 	}
-	CHQMarketService::InstanceRef().QueryHistory(security, period, nBeginTime, nEndTime);
+	CHQMarketService::InstanceRef().QueryHistory(security, period, nBeginTime, nEndTime, &m_historyRequestId);
 }

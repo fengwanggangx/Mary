@@ -23,13 +23,14 @@ class CRequest;
 
 class CHQMarketService final : public ISingleton<CHQMarketService>
 {
+	friend class CReviewRegressionTests;
 	DECLARE_SINGLE_DFAULT(CHQMarketService)
 
 public:
 	using _TyHandlerToken = _TyCallbackId;
 	using _TyQuoteHandler = std::function<void(const CQuote&)>;
 	using _TyDepthHandler = std::function<void(const CMarketDepth&)>;
-	using _TyHistoryHandler = std::function<void(const std::string&, MarketBarPeriod, const std::vector<CMarketBar>&, const std::string&)>;
+	using _TyHistoryHandler = std::function<void(_TyRequestId, const std::string&, MarketBarPeriod, const std::vector<CMarketBar>&, const std::string&)>;
 	using _TyQuoteTableHandler = std::function<void(const CDataTableView&, const CDataChangeSet&)>;
 	using _TySecurityListHandler = std::function<void(const CSecurityListEvent&)>;
 
@@ -52,7 +53,7 @@ public:
 	bool SubscribeDepth(const CSecurity& info);
 	bool UnsubscribeDepth(const CSecurity& info);
 
-	bool QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime);
+	bool QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime, _TyRequestId* requestId = nullptr);
 	bool QuerySecurities();
 
 	bool FindQuote(const CSecurity& info, CQuote& result) const;
@@ -91,6 +92,8 @@ private:
 
 	mutable std::shared_mutex m_mtx_history;
 	std::unordered_map<std::string, std::vector<CMarketBar>> m_history; // 各证券历史 K 线
+	std::mutex m_mtx_historyRequests;
+	std::unordered_map<_TyRequestId, CMarketHistoryEvent> m_historyRequests;
 
 	std::mutex m_mtx_subscriptions;
 	std::unordered_map<std::string, request::_TyParams> m_subscriptions; // 当前有效订阅

@@ -25,34 +25,34 @@ bool CLoginInfo::Valid() const noexcept
 	return !m_strAccount.empty() && !m_strToken.empty() && m_host.Valid();
 }
 
-void CLoginService::Authenticate(const CAuthParam& param)
+bool CLoginService::Authenticate(const CAuthParam& param)
 {
-	if (m_busy)
-	{
-		return;
-	}
-
 	if (param.m_strAccount.empty() || param.m_strPassword.empty())
 	{
 		m_dispatcher_auth.Notify({ param.m_operation, AuthState::Failed, AuthError::InvalidInput, false, "账号和密码不能为空" });
-		return;
+		return false;
 	}
 
 	if (!param.m_host.Valid())
 	{
 		m_dispatcher_auth.Notify({ param.m_operation, AuthState::Failed, AuthError::InvalidSite, false, "当前站点配置无效" });
-		return;
+		return false;
 	}
 
-	m_busy = true;
+	if (m_busy.exchange(true))
+	{
+		m_dispatcher_auth.Notify({ param.m_operation, AuthState::Failed, AuthError::InvalidInput, false, "已有认证请求正在处理，请稍后重试" });
+		return false;
+	}
 	CSession::InstanceRef().Authenticate(param, [this](const AuthEvent& event)
 	{
-		m_dispatcher_auth.Notify(event);
 		if (AuthState::Success == event.m_state || AuthState::Failed == event.m_state || AuthState::Cancelled == event.m_state)
 		{
 			m_busy = false;
 		}
+		m_dispatcher_auth.Notify(event);
 	});
+	return true;
 }
 
 void CLoginService::Cancel()

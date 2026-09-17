@@ -70,7 +70,7 @@ public:
 
 	_TyCallbackId Subscribe(_TyCallback&& callback);
 	void Unsubscribe(_TyCallbackId id);
-	void Authenticate(const CAuthParam& param);
+	bool Authenticate(const CAuthParam& param);
 	void Cancel();
 	bool IsBusy() const noexcept;
 

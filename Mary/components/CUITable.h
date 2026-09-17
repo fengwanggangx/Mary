@@ -42,7 +42,7 @@ private:
 	void InitializeUI();
 	void BindService();
 	void HandleDepth(const CMarketDepth& depth);
-	void HandleHistory(const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
+	void HandleHistory(std::uint64_t requestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
 	void HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes);
 	void OnCurrentRowChanged(const QModelIndex& current, const QModelIndex& previous);
 	CSecurity GetSecurity(const QModelIndex& index) const;
@@ -58,6 +58,7 @@ private:
 	std::uint64_t m_quoteTableHandlerToken{ 0 };
 	std::uint64_t m_depthHandlerToken{ 0 };
 	std::uint64_t m_historyHandlerToken{ 0 };
+	std::uint64_t m_historyRequestId{ 0 };
 };
 
 #endif

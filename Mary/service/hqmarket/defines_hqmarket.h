@@ -86,6 +86,7 @@ struct CIndicatorPoint
 // 历史行情查询完成事件
 struct CMarketHistoryEvent
 {
+	std::uint64_t m_requestId{ 0 };
 	std::string m_strSecurity; // 证券代码
 	MarketBarPeriod m_period{ MarketBarPeriod::Day }; // K 线周期
 	std::vector<CMarketBar> m_bars; // 历史 K 线数据

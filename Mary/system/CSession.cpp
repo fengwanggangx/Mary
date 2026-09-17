@@ -37,6 +37,7 @@ void CSession::Authenticate(const CAuthParam& param, AuthCallback&& cb)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
 		m_loginInfo.reset();
+		m_authRequest.reset();
 		m_authContext.emplace(AuthContext{ param, std::move(cb) });
 	}
 
@@ -64,6 +65,7 @@ void CSession::CancelAuthentication()
 		ev = { m_authContext->m_param.m_operation, AuthState::Cancelled, AuthError::Cancelled, false, "认证已取消" };
 		cb = std::move(m_authContext->m_callback);
 		m_authContext.reset();
+		m_authRequest.reset();
 	}
 	if (nullptr != cb)
 	{
@@ -117,6 +119,7 @@ void CSession::Stop()
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
 		m_authContext.reset();
 		m_loginInfo.reset();
+		m_authRequest.reset();
 	}
 	m_state.store(SessionState::Disconnected);
 }
@@ -252,6 +255,18 @@ void CSession::MaintenanceLoop()
 		}
 
 		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+		_TyRequestId expiredAuthId = 0;
+		{
+			std::lock_guard<std::mutex> lock(m_mtx_auth);
+			if (m_authRequest.has_value() && (m_authRequest->m_deadline <= now))
+			{
+				expiredAuthId = m_authRequest->m_id;
+			}
+		}
+		if (0 != expiredAuthId)
+		{
+			FailAuthentication(expiredAuthId, "认证请求超时，请重试");
+		}
 		if (IsAuthenticated() && (nextHeartbeat <= now))
 		{
 			SendRequest(request::HeartBeat());
@@ -341,20 +356,32 @@ void CSession::HandleResponse(const CRequest& response)
 	{
 		AuthOperation op = CRequest::Type::QUERY_AUTH == t ? AuthOperation::Login : AuthOperation::Register;
 		std::optional<CAuthParam> authParam;
+		AuthCallback authCallback;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_auth);
+			if (!m_authRequest.has_value() || (id != m_authRequest->m_id))
+			{
+				return;
+			}
+			m_authRequest.reset();
 			if (m_authContext.has_value())
 			{
 				authParam = m_authContext->m_param;
 				op = authParam->m_operation;
+				authCallback = std::move(m_authContext->m_callback);
+				m_authContext.reset();
 			}
 		}
-		if (errorInfo.has_value())
+		if (errorInfo.has_value() && (0 != errorInfo->first))
 		{
-			m_state.store(SessionState::Connected);
+			SessionState expected = SessionState::Authenticating;
+			m_state.compare_exchange_strong(expected, SessionState::Connected);
 			if (authParam.has_value())
 			{
-				NotifyAuthentication({ op, AuthState::Failed, AuthError::AuthenticationFailed, false, strError });
+				if (nullptr != authCallback)
+				{
+					authCallback({ op, AuthState::Failed, AuthError::AuthenticationFailed, false, strError });
+				}
 			}
 			else
 			{
@@ -392,9 +419,9 @@ void CSession::HandleResponse(const CRequest& response)
 		{
 			m_state.store(SessionState::Connected);
 		}
-		if (authParam.has_value())
+		if (nullptr != authCallback)
 		{
-			NotifyAuthentication({ op, AuthState::Success, AuthError::None, true, AuthOperation::Login == op ? "登录成功" : "注册成功" });
+			authCallback({ op, AuthState::Success, AuthError::None, true, AuthOperation::Login == op ? "登录成功" : "注册成功" });
 		}
 
 		return;
@@ -405,51 +432,56 @@ void CSession::HandleResponse(const CRequest& response)
 
 void CSession::SendAuthentication()
 {
-	std::optional<CAuthParam> auth_param;
-	std::optional<CLoginInfo> login_info;
+	CRequest request;
+	AuthOperation operation = AuthOperation::Login;
+	bool hasAuthContext = false;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_auth);
+		if (m_authRequest.has_value())
+		{
+			return;
+		}
 		if (m_authContext.has_value())
 		{
-			auth_param = m_authContext->m_param;
+			hasAuthContext = true;
+			operation = m_authContext->m_param.m_operation;
+			request::AuthAction action = AuthOperation::Login == operation ? request::AuthAction::Login : request::AuthAction::Register;
+			request = request::Auth(action, m_authContext->m_param.m_strAccount, m_authContext->m_param.m_strPassword);
 		}
-		else if (m_loginInfo.has_value())
+		else if (m_loginInfo.has_value() && m_loginInfo->Valid())
 		{
-			login_info = m_loginInfo;
+			request = request::Auth(m_loginInfo->m_strToken);
 		}
-	}
-
-	if (auth_param.has_value())
-	{
-		AuthOperation op = auth_param->m_operation;
-		m_state.store(SessionState::Authenticating);
-		NotifyAuthentication({ op, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == op ? "正在认证" : "正在注册" });
-
-		request::AuthAction action = AuthOperation::Login == op ? request::AuthAction::Login : request::AuthAction::Register;
-		if (!SendRequest(request::Auth(action, auth_param->m_strAccount, auth_param->m_strPassword)))
+		else
 		{
-			NotifyAuthentication({ op, AuthState::Failed, AuthError::NetworkError, false, "认证请求发送失败" });
+			return;
 		}
-		return;
+		m_authRequest.emplace(AuthRequest{ request.GetId(), std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
 	}
-
-	if (!login_info.has_value())
-	{
-		return;
-	}
-	if (!login_info->Valid())
-	{
-		NotifyError("登录信息中没有有效 token，无法重新认证");
-		return;
-	}
-
 	m_state.store(SessionState::Authenticating);
-	NotifyState(SessionState::Authenticating, "正在重新认证");
-	if (!SendRequest(request::Auth(login_info->m_strToken)))
+	if (hasAuthContext)
 	{
-		m_state.store(SessionState::Connected);
-		NotifyError("重新认证请求发送失败");
+		NotifyAuthentication({ operation, AuthState::Authenticating, AuthError::None, false, AuthOperation::Login == operation ? "正在认证" : "正在注册" });
 	}
+	else
+	{
+		NotifyState(SessionState::Authenticating, "正在重新认证");
+	}
+	if (!SendRequest(request))
+	{
+		FailAuthentication(request.GetId(), "认证请求发送失败");
+	}
+}
+
+void CSession::FailAuthentication(_TyRequestId id, const std::string& message)
+{
+	CRequest response;
+	response.SetId(id);
+	response.SetType(CRequest::Type::QUERY_AUTH);
+	response.SetCmd("auth");
+	response.SetReturnData("error_code", "-1");
+	response.SetReturnData("error_message", message);
+	HandleResponse(response);
 }
 
 bool CSession::SendRequest(const CRequest& req)
@@ -489,6 +521,18 @@ bool CSession::SendRequest(const CRequest& req)
 
 void CSession::FailPending(const std::string& strReson)
 {
+	_TyRequestId authId = 0;
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_auth);
+		if (m_authRequest.has_value())
+		{
+			authId = m_authRequest->m_id;
+		}
+	}
+	if (0 != authId)
+	{
+		FailAuthentication(authId, strReson);
+	}
 	std::vector<CRequest> failed;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);

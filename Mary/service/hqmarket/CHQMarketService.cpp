@@ -164,7 +164,7 @@ CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistory
 {
 	return m_dispatcher_history.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
 	{
-		handler(event.m_strSecurity, event.m_period, event.m_bars, event.m_strError);
+		handler(event.m_requestId, event.m_strSecurity, event.m_period, event.m_bars, event.m_strError);
 	});
 }
 
@@ -282,9 +282,25 @@ bool CHQMarketService::UnsubscribeDepth(const CSecurity& info)
 	return Unsubscribe("depth:" + strSecurity, parameters);
 }
 
-bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime)
+bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime, _TyRequestId* requestId)
 {
-	return CSession::InstanceRef().SendRequest(request::QueryMarketBars(info, ChannelName(period), nBeginTime, nEndTime));
+	CRequest request = request::QueryMarketBars(info, ChannelName(period), nBeginTime, nEndTime);
+	if (nullptr != requestId)
+	{
+		*requestId = request.GetId();
+	}
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_historyRequests);
+		m_historyRequests.emplace(request.GetId(), CMarketHistoryEvent{ request.GetId(), info.String(), period });
+	}
+	if (CSession::InstanceRef().SendRequest(request))
+	{
+		return true;
+	}
+	request.SetReturnData("error_code", "-1");
+	request.SetReturnData("error_message", "历史行情请求发送失败");
+	OnResponse(request);
+	return false;
 }
 
 bool CHQMarketService::QuerySecurities()
@@ -634,23 +650,48 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		return;
 	}
 
-	if (("query_response" == strCmd) && message.has_query_response())
+	if (("query_response" == strCmd) || ("query_bars" == strCmd))
 	{
-		const _TyQueryResponse& data = message.query_response();
-		MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == data.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
-		std::string strSecurity = SecurityName(data.security());
-		std::vector<CMarketBar> bars;
-		bars.reserve(data.bars_size());
-		for (const _TyBarData& bar : data.bars())
+		CMarketHistoryEvent event;
 		{
-			bars.emplace_back(CMarketBar{ bar.begin_time_ms(), ScaledPrice(bar.open_price(), bar.price_scale()), ScaledPrice(bar.high_price(), bar.price_scale()), ScaledPrice(bar.low_price(), bar.price_scale()), ScaledPrice(bar.close_price(), bar.price_scale()), bar.volume(), bar.turnover() });
-		}
-		{
-			std::unique_lock lock(m_mtx_history);
-			m_history.insert_or_assign(HistoryKey(strSecurity, period), bars);
+			std::lock_guard<std::mutex> lock(m_mtx_historyRequests);
+			auto requestIter = m_historyRequests.find(req.GetId());
+			if (m_historyRequests.end() == requestIter)
+			{
+				return;
+			}
+			event = std::move(requestIter->second);
+			m_historyRequests.erase(requestIter);
 		}
 		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
-		m_dispatcher_history.Notify(CMarketHistoryEvent{ strSecurity, period, bars, errorInfo.has_value() ? errorInfo->second : std::string() });
+		if (errorInfo.has_value() && (0 != errorInfo->first))
+		{
+			event.m_strError = errorInfo->second.empty() ? "历史行情查询失败" : errorInfo->second;
+		}
+		else if (!message.has_query_response())
+		{
+			event.m_strError = "历史行情响应缺少数据";
+		}
+		else
+		{
+			const _TyQueryResponse& data = message.query_response();
+			MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == data.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
+			if ((event.m_strSecurity != SecurityName(data.security())) || (event.m_period != period))
+			{
+				event.m_strError = "历史行情响应与请求不匹配";
+			}
+			else
+			{
+				event.m_bars.reserve(data.bars_size());
+				for (const auto& bar : data.bars())
+				{
+					event.m_bars.emplace_back(CMarketBar{ bar.begin_time_ms(), ScaledPrice(bar.open_price(), bar.price_scale()), ScaledPrice(bar.high_price(), bar.price_scale()), ScaledPrice(bar.low_price(), bar.price_scale()), ScaledPrice(bar.close_price(), bar.price_scale()), bar.volume(), bar.turnover() });
+				}
+				std::unique_lock lock(m_mtx_history);
+				m_history.insert_or_assign(HistoryKey(event.m_strSecurity, event.m_period), event.m_bars);
+			}
+		}
+		m_dispatcher_history.Notify(event);
 		return;
 	}
 

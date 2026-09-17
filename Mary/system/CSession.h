@@ -38,6 +38,7 @@ enum class SessionState
 
 class CSession final : public ISingleton<CSession>
 {
+	friend class CReviewRegressionTests;
 	DECLARE_SINGLE_DFAULT(CSession)
 
   public:
@@ -72,12 +73,19 @@ class CSession final : public ISingleton<CSession>
 		AuthCallback m_callback;
 	};
 
+	struct AuthRequest
+	{
+		_TyRequestId m_id{ 0 };
+		std::chrono::steady_clock::time_point m_deadline;
+	};
+
 	void StartConnection();
 	void ConnectionLoop();
 	void MaintenanceLoop();
 	int OnNetEvent(const net::CNetEvent& ev);
 	void HandleResponse(const CRequest& response);
 	void SendAuthentication();
+	void FailAuthentication(_TyRequestId id, const std::string& message);
 	void FailPending(const std::string& reason);
 	void NotifyAuthentication(AuthEvent ev);
 	void NotifyState(SessionState state, const std::string& message);
@@ -100,6 +108,7 @@ class CSession final : public ISingleton<CSession>
 
 	mutable std::mutex m_mtx_auth;
 	std::optional<AuthContext> m_authContext;
+	std::optional<AuthRequest> m_authRequest;
 	std::optional<CLoginInfo> m_loginInfo;
 
 	std::mutex m_mtx_pending;

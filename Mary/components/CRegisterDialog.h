@@ -22,4 +22,5 @@ private slots:
 private:
 	Ui::CRegisterDialogClass m_ui;
 	_TyCallbackId m_callbackId{ 0 };
+	bool m_registrationPending{ false };
 };
