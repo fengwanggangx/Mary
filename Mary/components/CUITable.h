@@ -12,7 +12,7 @@ struct CSecurity;
 struct CMarketDepth;
 struct CMarketBar;
 struct CDataChangeSet;
-class CDataSnapshot;
+class CDataTableView;
 enum class MarketBarPeriod;
 enum class CurveMode;
 class CUICurve;
@@ -43,7 +43,7 @@ private:
 	void BindService();
 	void HandleDepth(const CMarketDepth& depth);
 	void HandleHistory(const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
-	void HandleQuoteTable(const CDataSnapshot& snapshot, const CDataChangeSet& changes);
+	void HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes);
 	void OnCurrentRowChanged(const QModelIndex& current, const QModelIndex& previous);
 	CSecurity GetSecurity(const QModelIndex& index) const;
 	QString GetName(const QModelIndex& index) const;

@@ -215,14 +215,14 @@ void CUITable::BindService()
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
 	QPointer<CUITable> safeThis(this);
-	m_pWatchlistModel->SetSnapshot(service.GetQuoteTableSnapshot(), CDataChangeSet{ });
-	m_quoteTableHandlerToken = service.AddQuoteTableHandler([safeThis](const CDataSnapshot& snapshot, const CDataChangeSet& changes)
+	m_pWatchlistModel->SetView(service.GetQuoteTableView(), CDataChangeSet{ });
+	m_quoteTableHandlerToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet& changes)
 	{
-		QMetaObject::invokeMethod(safeThis.data(), [safeThis, snapshot, changes]()
+		QMetaObject::invokeMethod(safeThis.data(), [safeThis, view, changes]()
 		{
 			if (!safeThis.isNull())
 			{
-				safeThis->HandleQuoteTable(snapshot, changes);
+				safeThis->HandleQuoteTable(view, changes);
 			}
 		}, Qt::QueuedConnection);
 	});
@@ -289,9 +289,9 @@ void CUITable::HandleHistory(const std::string& strSecurity, MarketBarPeriod per
 	m_pCurve->SetBars(bars);
 }
 
-void CUITable::HandleQuoteTable(const CDataSnapshot& snapshot, const CDataChangeSet& changes)
+void CUITable::HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes)
 {
-	m_pWatchlistModel->SetSnapshot(snapshot, changes);
+	m_pWatchlistModel->SetView(view, changes);
 	if (!m_pWatchlistTable->currentIndex().isValid() && (0 < m_pWatchlistProxy->rowCount()))
 	{
 		m_pWatchlistTable->selectRow(0);

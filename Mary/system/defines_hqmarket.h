@@ -95,7 +95,7 @@ struct CMarketHistoryEvent
 // 行情表提交后的快照和变更事件
 struct CQuoteTableEvent
 {
-	CDataSnapshot m_snapshot; // 行情表快照
+	CDataTableView m_view; // 行情表视图
 	CDataChangeSet m_changes; // 本次变更集合
 };
 

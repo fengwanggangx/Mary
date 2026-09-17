@@ -15,14 +15,14 @@ public:
 	QVariant data(const QModelIndex& index, int nRole = Qt::DisplayRole) const override;
 	QVariant headerData(int nSection, Qt::Orientation orientation, int nRole = Qt::DisplayRole) const override;
 	_TyDataRowId GetRowId(int nRow) const;
-	const CDataSnapshot& GetSnapshot() const noexcept;
-	void SetSnapshot(CDataSnapshot snapshot, const CDataChangeSet& changes);
+	const CDataTableView& GetView() const noexcept;
+	void SetView(CDataTableView view, const CDataChangeSet& changes);
 
 private:
 	QVariant ToVariant(const _TyDataValue& value) const;
 
 private:
-	CDataSnapshot m_snapshot;
+	CDataTableView m_view;
 };
 
 #endif

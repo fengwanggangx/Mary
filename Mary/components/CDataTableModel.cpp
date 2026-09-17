@@ -12,12 +12,12 @@ CDataTableModel::CDataTableModel(QObject* pParent) : QAbstractTableModel(pParent
 
 int CDataTableModel::rowCount(const QModelIndex& parent) const
 {
-	return parent.isValid() ? 0 : static_cast<int>(m_snapshot.GetRowCount());
+	return parent.isValid() ? 0 : static_cast<int>(m_view.GetRowCount());
 }
 
 int CDataTableModel::columnCount(const QModelIndex& parent) const
 {
-	return parent.isValid() ? 0 : static_cast<int>(m_snapshot.GetColumnCount());
+	return parent.isValid() ? 0 : static_cast<int>(m_view.GetColumnCount());
 }
 
 QVariant CDataTableModel::data(const QModelIndex& index, int nRole) const
@@ -26,13 +26,13 @@ QVariant CDataTableModel::data(const QModelIndex& index, int nRole) const
 	{
 		return QVariant();
 	}
-	const std::vector<CDataColumnSchema>& schema = m_snapshot.GetSchema();
-	if ((m_snapshot.GetRowCount() <= static_cast<std::size_t>(index.row())) || (schema.size() <= static_cast<std::size_t>(index.column())))
+	const std::vector<CDataColumnSchema>& schema = m_view.GetSchema();
+	if ((m_view.GetRowCount() <= static_cast<std::size_t>(index.row())) || (schema.size() <= static_cast<std::size_t>(index.column())))
 	{
 		return QVariant();
 	}
 	_TyDataValue value;
-	if (!m_snapshot.GetValue(static_cast<_TyDataRowIndex>(index.row()), schema[static_cast<std::size_t>(index.column())].m_id, value))
+	if (!m_view.GetValue(static_cast<_TyDataRowIndex>(index.row()), schema[static_cast<std::size_t>(index.column())].m_id, value))
 	{
 		return QVariant();
 	}
@@ -45,31 +45,31 @@ QVariant CDataTableModel::headerData(int nSection, Qt::Orientation orientation, 
 	{
 		return QVariant();
 	}
-	const std::vector<CDataColumnSchema>& schema = m_snapshot.GetSchema();
+	const std::vector<CDataColumnSchema>& schema = m_view.GetSchema();
 	return schema.size() <= static_cast<std::size_t>(nSection) ? QVariant() : QVariant(QString::fromStdString(schema[static_cast<std::size_t>(nSection)].m_strName));
 }
 
 _TyDataRowId CDataTableModel::GetRowId(int nRow) const
 {
-	const std::vector<_TyDataRowId>& rowIds = m_snapshot.GetRowIds();
+	const std::vector<_TyDataRowId>& rowIds = m_view.GetRowIds();
 	return (0 > nRow) || (rowIds.size() <= static_cast<std::size_t>(nRow)) ? 0 : rowIds[static_cast<std::size_t>(nRow)];
 }
 
-const CDataSnapshot& CDataTableModel::GetSnapshot() const noexcept
+const CDataTableView& CDataTableModel::GetView() const noexcept
 {
-	return m_snapshot;
+	return m_view;
 }
 
-void CDataTableModel::SetSnapshot(CDataSnapshot snapshot, const CDataChangeSet& changes)
+void CDataTableModel::SetView(CDataTableView view, const CDataChangeSet& changes)
 {
-	if (!m_snapshot.IsValid() || changes.m_bStructureChanged || (m_snapshot.GetColumnCount() != snapshot.GetColumnCount()) || (m_snapshot.GetRowCount() != snapshot.GetRowCount()))
+	if (!m_view.IsValid() || changes.m_bStructureChanged || (m_view.GetColumnCount() != view.GetColumnCount()) || (m_view.GetRowCount() != view.GetRowCount()))
 	{
 		beginResetModel();
-		m_snapshot = std::move(snapshot);
+		m_view = std::move(view);
 		endResetModel();
 		return;
 	}
-	m_snapshot = std::move(snapshot);
+	m_view = std::move(view);
 	if (changes.m_changedCells.empty())
 	{
 		return;
@@ -78,11 +78,11 @@ void CDataTableModel::SetSnapshot(CDataSnapshot snapshot, const CDataChangeSet& 
 	int nMaxRow = -1;
 	int nMinColumn = (std::numeric_limits<int>::max)();
 	int nMaxColumn = -1;
-	const std::vector<CDataColumnSchema>& schema = m_snapshot.GetSchema();
+	const std::vector<CDataColumnSchema>& schema = m_view.GetSchema();
 	for (const CDataCellChange& change : changes.m_changedCells)
 	{
 		_TyDataRowIndex row = 0;
-		if (!m_snapshot.FindRow(change.m_rowId, row))
+		if (!m_view.FindRow(change.m_rowId, row))
 		{
 			continue;
 		}

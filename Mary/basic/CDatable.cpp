@@ -66,43 +66,43 @@ bool CDataCellChange::operator==(const CDataCellChange& arg) const noexcept
 	return (m_rowId == arg.m_rowId) && (m_columnId == arg.m_columnId);
 }
 
-CDataSnapshot::CDataSnapshot(std::shared_ptr<const CDataTableStorage> storage) : m_storage(std::move(storage))
+CDataTableView::CDataTableView(std::shared_ptr<const CDataTableStorage> storage) : m_storage(std::move(storage))
 {
 }
 
-bool CDataSnapshot::IsValid() const noexcept
+bool CDataTableView::IsValid() const noexcept
 {
 	return nullptr != m_storage;
 }
 
-_TyDataVersion CDataSnapshot::GetVersion() const noexcept
+_TyDataVersion CDataTableView::GetVersion() const noexcept
 {
 	return nullptr == m_storage ? 0 : m_storage->m_version;
 }
 
-std::size_t CDataSnapshot::GetRowCount() const noexcept
+std::size_t CDataTableView::GetRowCount() const noexcept
 {
 	return nullptr == m_storage ? 0 : m_storage->m_rows->m_rowIds.size();
 }
 
-std::size_t CDataSnapshot::GetColumnCount() const noexcept
+std::size_t CDataTableView::GetColumnCount() const noexcept
 {
 	return nullptr == m_storage ? 0 : m_storage->m_schema.size();
 }
 
-const std::vector<CDataColumnSchema>& CDataSnapshot::GetSchema() const noexcept
+const std::vector<CDataColumnSchema>& CDataTableView::GetSchema() const noexcept
 {
 	static const std::vector<CDataColumnSchema> empty;
 	return nullptr == m_storage ? empty : m_storage->m_schema;
 }
 
-const std::vector<_TyDataRowId>& CDataSnapshot::GetRowIds() const noexcept
+const std::vector<_TyDataRowId>& CDataTableView::GetRowIds() const noexcept
 {
 	static const std::vector<_TyDataRowId> empty;
 	return nullptr == m_storage ? empty : m_storage->m_rows->m_rowIds;
 }
 
-bool CDataSnapshot::FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const
+bool CDataTableView::FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const
 {
 	if (nullptr == m_storage)
 	{
@@ -117,7 +117,7 @@ bool CDataSnapshot::FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const
 	return true;
 }
 
-bool CDataSnapshot::GetValue(_TyDataRowIndex row, _TyDataColumnId columnId, _TyDataValue& result) const
+bool CDataTableView::GetValue(_TyDataRowIndex row, _TyDataColumnId columnId, _TyDataValue& result) const
 {
 	if ((nullptr == m_storage) || (m_storage->m_rows->m_rowIds.size() <= row))
 	{
@@ -151,24 +151,24 @@ bool CDataSnapshot::GetValue(_TyDataRowIndex row, _TyDataColumnId columnId, _TyD
 	return false;
 }
 
-bool CDataSnapshot::GetValueById(_TyDataRowId rowId, _TyDataColumnId columnId, _TyDataValue& result) const
+bool CDataTableView::GetValueById(_TyDataRowId rowId, _TyDataColumnId columnId, _TyDataValue& result) const
 {
 	_TyDataRowIndex row = 0;
 	return FindRow(rowId, row) && GetValue(row, columnId, result);
 }
 
-CDataWriteBatch::CDataWriteBatch(CDataTable& table, std::unique_lock<std::mutex>&& writerLock, std::shared_ptr<CDataTableStorage>&& storage) : m_pTable(&table), m_writerLock(std::move(writerLock)), m_storage(std::move(storage))
+CDataTableWriter::CDataTableWriter(CDataTable& table, std::unique_lock<std::mutex>&& writerLock, std::shared_ptr<CDataTableStorage>&& storage) : m_pTable(&table), m_writerLock(std::move(writerLock)), m_storage(std::move(storage))
 {
 }
 
-CDataWriteBatch::CDataWriteBatch(CDataWriteBatch&& arg) noexcept = default;
-CDataWriteBatch& CDataWriteBatch::operator=(CDataWriteBatch&& arg) noexcept = default;
-CDataWriteBatch::~CDataWriteBatch()
+CDataTableWriter::CDataTableWriter(CDataTableWriter&& arg) noexcept = default;
+CDataTableWriter& CDataTableWriter::operator=(CDataTableWriter&& arg) noexcept = default;
+CDataTableWriter::~CDataTableWriter()
 {
 	Cancel();
 }
 
-bool CDataWriteBatch::ReserveRows(std::size_t count)
+bool CDataTableWriter::ReserveRows(std::size_t count)
 {
 	if (m_bFinished || (nullptr == m_storage))
 	{
@@ -185,7 +185,7 @@ bool CDataWriteBatch::ReserveRows(std::size_t count)
 	return true;
 }
 
-bool CDataWriteBatch::AddRow(_TyDataRowId rowId, const std::vector<_TyDataValue>& values)
+bool CDataTableWriter::AddRow(_TyDataRowId rowId, const std::vector<_TyDataValue>& values)
 {
 	if (m_bFinished || (nullptr == m_storage) || (0 == rowId) || (values.size() != m_storage->m_columns.size()) || m_storage->m_rows->m_rowIndexes.contains(rowId))
 	{
@@ -211,7 +211,7 @@ bool CDataWriteBatch::AddRow(_TyDataRowId rowId, const std::vector<_TyDataValue>
 	return true;
 }
 
-bool CDataWriteBatch::DeleteRow(_TyDataRowId rowId)
+bool CDataTableWriter::DeleteRow(_TyDataRowId rowId)
 {
 	if (m_bFinished || (nullptr == m_storage))
 	{
@@ -244,7 +244,7 @@ bool CDataWriteBatch::DeleteRow(_TyDataRowId rowId)
 	return true;
 }
 
-bool CDataWriteBatch::SetValue(_TyDataRowId rowId, _TyDataColumnId columnId, const _TyDataValue& value)
+bool CDataTableWriter::SetValue(_TyDataRowId rowId, _TyDataColumnId columnId, const _TyDataValue& value)
 {
 	if (m_bFinished || (nullptr == m_storage))
 	{
@@ -260,25 +260,25 @@ bool CDataWriteBatch::SetValue(_TyDataRowId rowId, _TyDataColumnId columnId, con
 	return true;
 }
 
-CDataSnapshot CDataWriteBatch::Commit()
+std::pair<CDataTableView, CDataChangeSet> CDataTableWriter::Commit()
 {
 	if (m_bFinished || (nullptr == m_pTable) || (nullptr == m_storage))
 	{
-		return CDataSnapshot();
+		return { CDataTableView(), CDataChangeSet() };
 	}
 	std::sort(m_changes.m_changedCells.begin(), m_changes.m_changedCells.end());
 	m_changes.m_changedCells.erase(std::unique(m_changes.m_changedCells.begin(), m_changes.m_changedCells.end()), m_changes.m_changedCells.end());
 	++m_storage->m_version;
 	m_changes.m_version = m_storage->m_version;
-	CDataSnapshot snapshot{ std::shared_ptr<const CDataTableStorage>(m_storage) };
-	m_pTable->Publish(std::move(m_storage), std::move(m_changes));
+	CDataTableView view{ std::shared_ptr<const CDataTableStorage>(m_storage) };
+	m_pTable->Publish(std::move(m_storage));
 	m_bFinished = true;
 	m_pTable = nullptr;
 	m_writerLock.unlock();
-	return snapshot;
+	return { std::move(view), std::move(m_changes) };
 }
 
-void CDataWriteBatch::Cancel() noexcept
+void CDataTableWriter::Cancel() noexcept
 {
 	if (!m_bFinished)
 	{
@@ -292,7 +292,7 @@ void CDataWriteBatch::Cancel() noexcept
 	}
 }
 
-void CDataWriteBatch::EnsureRowsWritable()
+void CDataTableWriter::EnsureRowsWritable()
 {
 	if (1 != m_storage->m_rows.use_count())
 	{
@@ -300,7 +300,7 @@ void CDataWriteBatch::EnsureRowsWritable()
 	}
 }
 
-void CDataWriteBatch::EnsureColumnWritable(std::size_t column)
+void CDataTableWriter::EnsureColumnWritable(std::size_t column)
 {
 	if (1 != m_storage->m_columns[column].use_count())
 	{
@@ -308,7 +308,7 @@ void CDataWriteBatch::EnsureColumnWritable(std::size_t column)
 	}
 }
 
-void CDataWriteBatch::EnsureStringsWritable()
+void CDataTableWriter::EnsureStringsWritable()
 {
 	if (1 != m_storage->m_stringStorage.use_count())
 	{
@@ -316,7 +316,7 @@ void CDataWriteBatch::EnsureStringsWritable()
 	}
 }
 
-bool CDataWriteBatch::StoreValue(_TyDataRowIndex row, std::size_t columnIndex, const _TyDataValue& value, bool bAppend)
+bool CDataTableWriter::StoreValue(_TyDataRowIndex row, std::size_t columnIndex, const _TyDataValue& value, bool bAppend)
 {
 	DataType t = m_storage->m_schema[columnIndex].m_type;
 	EnsureColumnWritable(columnIndex);
@@ -354,7 +354,7 @@ bool CDataWriteBatch::StoreValue(_TyDataRowIndex row, std::size_t columnIndex, c
 	return false;
 }
 
-std::uint32_t CDataWriteBatch::InternString(const std::string& value)
+std::uint32_t CDataTableWriter::InternString(const std::string& value)
 {
 	const auto mIter = m_storage->m_stringStorage->m_stringIndexes.find(value);
 	if (m_storage->m_stringStorage->m_stringIndexes.end() != mIter)
@@ -370,7 +370,7 @@ std::uint32_t CDataWriteBatch::InternString(const std::string& value)
 
 CDataTable::CDataTable()
 {
-	m_snapshot.store(std::make_shared<const CDataTableStorage>());
+	m_currentStorage.store(std::make_shared<const CDataTableStorage>());
 }
 
 bool CDataTable::AddColumn(const CDataColumnSchema& schema)
@@ -380,7 +380,7 @@ bool CDataTable::AddColumn(const CDataColumnSchema& schema)
 		return false;
 	}
 	std::lock_guard<std::mutex> writerLock(m_mtx_writer);
-	std::shared_ptr<const CDataTableStorage> current = m_snapshot.load();
+	std::shared_ptr<const CDataTableStorage> current = m_currentStorage.load();
 	if (current->m_columnIndexes.contains(schema.m_id) || current->m_columnNames.contains(schema.m_strName))
 	{
 		return false;
@@ -398,38 +398,27 @@ bool CDataTable::AddColumn(const CDataColumnSchema& schema)
 	storage->m_columnIndexes.emplace(schema.m_id, index);
 	storage->m_columnNames.emplace(schema.m_strName, schema.m_id);
 	++storage->m_version;
-	CDataChangeSet changes;
-	changes.m_version = storage->m_version;
-	changes.m_bStructureChanged = true;
-	Publish(std::move(storage), std::move(changes));
+	Publish(std::move(storage));
 	return true;
 }
 
-CDataWriteBatch CDataTable::BeginWrite()
+CDataTableWriter CDataTable::BeginWrite()
 {
 	std::unique_lock<std::mutex> writerLock(m_mtx_writer);
-	return CDataWriteBatch(*this, std::move(writerLock), std::make_shared<CDataTableStorage>(*m_snapshot.load()));
+	return CDataTableWriter(*this, std::move(writerLock), std::make_shared<CDataTableStorage>(*m_currentStorage.load()));
 }
 
-CDataSnapshot CDataTable::GetSnapshot() const
+CDataTableView CDataTable::GetView() const
 {
-	return CDataSnapshot(m_snapshot.load());
-}
-
-CDataChangeSet CDataTable::GetLastChanges() const
-{
-	std::lock_guard<std::mutex> lock(m_mtx_changes);
-	return m_lastChanges;
+	return CDataTableView(m_currentStorage.load());
 }
 
 bool CDataTable::FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const
 {
-	return GetSnapshot().FindRow(rowId, result);
+	return GetView().FindRow(rowId, result);
 }
 
-void CDataTable::Publish(std::shared_ptr<CDataTableStorage>&& storage, CDataChangeSet&& changes)
+void CDataTable::Publish(std::shared_ptr<CDataTableStorage>&& storage)
 {
-	m_snapshot.store(std::shared_ptr<const CDataTableStorage>(std::move(storage)));
-	std::lock_guard<std::mutex> lock(m_mtx_changes);
-	m_lastChanges = std::move(changes);
+	m_currentStorage.store(std::shared_ptr<const CDataTableStorage>(std::move(storage)));
 }

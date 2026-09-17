@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../basic/CallbackRegistry.h"
+#include "../basic/EventDispatcher.h"
 #include "../common/ISingleton.h"
 #include "CHostMgr.h"
 
@@ -75,6 +75,6 @@ public:
 	bool IsBusy() const noexcept;
 
 private:
-	CallbackRegistry<AuthEvent> m_events;
+	EventPump<AuthEvent> m_dispatcher_auth;
 	std::atomic_bool m_busy{ false };
 };

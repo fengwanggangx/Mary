@@ -2,7 +2,7 @@
 #define MARY_SYSTEM_CHQMARKETSERVICE_H
 
 #include "../common/ISingleton.h"
-#include "../basic/CallbackRegistry.h"
+#include "../basic/EventDispatcher.h"
 #include "../basic/CDatable.h"
 #include "../request/RequestCenter.h"
 #include "defines_hqmarket.h"
@@ -30,7 +30,7 @@ public:
 	using _TyQuoteHandler = std::function<void(const CQuote&)>;
 	using _TyDepthHandler = std::function<void(const CMarketDepth&)>;
 	using _TyHistoryHandler = std::function<void(const std::string&, MarketBarPeriod, const std::vector<CMarketBar>&, const std::string&)>;
-	using _TyQuoteTableHandler = std::function<void(const CDataSnapshot&, const CDataChangeSet&)>;
+	using _TyQuoteTableHandler = std::function<void(const CDataTableView&, const CDataChangeSet&)>;
 	using _TySecurityListHandler = std::function<void(const CSecurityListEvent&)>;
 
 	void Initialize();
@@ -61,7 +61,7 @@ public:
 
 	std::vector<CIndicatorPoint> CalculateMovingAverage(const std::vector<CMarketBar>& bars, std::size_t nPeriod) const;
 
-	CDataSnapshot GetQuoteTableSnapshot() const;
+	CDataTableView GetQuoteTableView() const;
 	std::vector<CSecurity> GetSecurities() const;
 	CMarketRuntimeMetrics GetRuntimeMetrics() const;
 
@@ -95,12 +95,6 @@ private:
 	std::mutex m_mtx_subscriptions;
 	std::unordered_map<std::string, request::_TyParams> m_subscriptions; // 当前有效订阅
 
-	CallbackRegistry<CQuote> m_quoteHandlers; // 最新行情回调注册表
-	CallbackRegistry<CMarketDepth> m_depthHandlers; // 盘口深度回调注册表
-	CallbackRegistry<CMarketHistoryEvent> m_historyHandlers; // 历史行情回调注册表
-	CallbackRegistry<CQuoteTableEvent> m_quoteTableHandlers; // 行情表变更回调注册表
-	CallbackRegistry<CSecurityListEvent> m_securityListHandlers; // 证券列表回调注册表
-
 	mutable std::shared_mutex m_mtx_securities;
 	std::vector<CSecurity> m_securities; // 当前证券列表
 
@@ -121,6 +115,13 @@ private:
 	CAtomMarketRuntimeMetrics m_runtimeMetrics; // 线程安全的行情运行统计
 
 	_TyDataRowId m_nextQuoteRowId{ 1 }; // 下一个行情表行号
+
+private:
+	EventPump<CQuote> m_dispatcher_quote; // 最新行情事件分发器
+	EventPump<CMarketDepth> m_dispatcher_depth; // 盘口深度事件分发器
+	EventPump<CMarketHistoryEvent> m_dispatcher_history; // 历史行情事件分发器
+	EventPump<CQuoteTableEvent> m_dispatcher_quote_table; // 行情表变更事件分发器
+	EventPump<CSecurityListEvent> m_dispatcher_security_list; // 证券列表事件分发器
 };
 
 #endif

@@ -142,27 +142,27 @@ void CHQMarketService::Initialize()
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteHandler(_TyQuoteHandler&& handler)
 {
-	return m_quoteHandlers.Subscribe(std::move(handler));
+	return m_dispatcher_quote.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveQuoteHandler(_TyHandlerToken token)
 {
-	m_quoteHandlers.Unsubscribe(token);
+	m_dispatcher_quote.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddDepthHandler(_TyDepthHandler&& handler)
 {
-	return m_depthHandlers.Subscribe(std::move(handler));
+	return m_dispatcher_depth.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveDepthHandler(_TyHandlerToken token)
 {
-	m_depthHandlers.Unsubscribe(token);
+	m_dispatcher_depth.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistoryHandler&& handler)
 {
-	return m_historyHandlers.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
+	return m_dispatcher_history.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
 	{
 		handler(event.m_strSecurity, event.m_period, event.m_bars, event.m_strError);
 	});
@@ -170,30 +170,30 @@ CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistory
 
 void CHQMarketService::RemoveHistoryHandler(_TyHandlerToken token)
 {
-	m_historyHandlers.Unsubscribe(token);
+	m_dispatcher_history.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteTableHandler(_TyQuoteTableHandler&& handler)
 {
-	return m_quoteTableHandlers.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
+	return m_dispatcher_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
 	{
-		handler(event.m_snapshot, event.m_changes);
+		handler(event.m_view, event.m_changes);
 	});
 }
 
 void CHQMarketService::RemoveQuoteTableHandler(_TyHandlerToken token)
 {
-	m_quoteTableHandlers.Unsubscribe(token);
+	m_dispatcher_quote_table.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddSecurityListHandler(_TySecurityListHandler&& handler)
 {
-	return m_securityListHandlers.Subscribe(std::move(handler));
+	return m_dispatcher_security_list.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveSecurityListHandler(_TyHandlerToken token)
 {
-	m_securityListHandlers.Unsubscribe(token);
+	m_dispatcher_security_list.Unsubscribe(token);
 }
 
 void CHQMarketService::RegisterSecurity(const CSecurity& info)
@@ -392,9 +392,9 @@ std::vector<CIndicatorPoint> CHQMarketService::CalculateMovingAverage(const std:
 	return values;
 }
 
-CDataSnapshot CHQMarketService::GetQuoteTableSnapshot() const
+CDataTableView CHQMarketService::GetQuoteTableView() const
 {
-	return m_quoteTable.GetSnapshot();
+	return m_quoteTable.GetView();
 }
 
 std::vector<CSecurity> CHQMarketService::GetSecurities() const
@@ -505,12 +505,12 @@ void CHQMarketService::QuoteWorkerLoop()
 
 void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quotes)
 {
-	CDataWriteBatch batch = m_quoteTable.BeginWrite();
+	CDataTableWriter writer = m_quoteTable.BeginWrite();
 	for (const auto& item : quotes)
 	{
 		const CQuote& quote = item.second;
 		const std::string& strSecurity = item.first;
-		auto rowIter = m_quoteRowIds.find(strSecurity);
+		const auto rowIter = m_quoteRowIds.find(strSecurity);
 		if (m_quoteRowIds.end() == rowIter)
 		{
 			_TyDataRowId rowId = m_nextQuoteRowId++;
@@ -533,7 +533,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			}
 			double fChange = quote.m_fLastPrice - quote.m_fPreClose;
 			double fPercent = 0.0 == quote.m_fPreClose ? 0.0 : fChange * 100.0 / quote.m_fPreClose;
-			batch.AddRow(rowId, { strSecurity, strName, quote.m_fLastPrice, fChange, fPercent, quote.m_fPreClose, quote.m_nVolume, std::string(quote.m_bStale ? "已延迟" : "交易中"), quote.m_nSequence, strListingStatus, MarketCategory(strSecurity) });
+			writer.AddRow(rowId, { strSecurity, strName, quote.m_fLastPrice, fChange, fPercent, quote.m_fPreClose, quote.m_nVolume, std::string(quote.m_bStale ? "已延迟" : "交易中"), quote.m_nSequence, strListingStatus, MarketCategory(strSecurity) });
 			continue;
 		}
 		_TyDataRowId rowId = rowIter->second;
@@ -561,21 +561,21 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 		double fPercent = 0.0 == quote.m_fPreClose ? 0.0 : fChange * 100.0 / quote.m_fPreClose;
 		if (bMetadataChanged)
 		{
-			batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), strName);
-			batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::ListingStatus), strListingStatus);
-			batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Market), MarketCategory(strSecurity));
+			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), strName);
+			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::ListingStatus), strListingStatus);
+			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Market), MarketCategory(strSecurity));
 		}
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::LastPrice), quote.m_fLastPrice);
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Change), fChange);
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Percent), fPercent);
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::PreClose), quote.m_fPreClose);
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Volume), quote.m_nVolume);
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Status), std::string(quote.m_bStale ? "已延迟" : "交易中"));
-		batch.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Sequence), quote.m_nSequence);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::LastPrice), quote.m_fLastPrice);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Change), fChange);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Percent), fPercent);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::PreClose), quote.m_fPreClose);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Volume), quote.m_nVolume);
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Status), std::string(quote.m_bStale ? "已延迟" : "交易中"));
+		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Sequence), quote.m_nSequence);
 	}
-	CDataSnapshot snapshot = batch.Commit();
-	CDataChangeSet changes = m_quoteTable.GetLastChanges();
-	m_quoteTableHandlers.Notify(CQuoteTableEvent{ snapshot, changes });
+
+	auto [view, changes] = writer.Commit();
+	m_dispatcher_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes)});
 }
 
 void CHQMarketService::OnResponse(const CRequest& req)
@@ -605,7 +605,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		{
 			RegisterSecurity(security);
 		}
-		m_securityListHandlers.Notify(ev);
+		m_dispatcher_security_list.Notify(ev);
 		return;
 	}
 
@@ -630,7 +630,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 			std::unique_lock lock(m_mtx_depths);
 			m_depths.insert_or_assign(value.m_security.String(), value);
 		}
-		m_depthHandlers.Notify(value);
+		m_dispatcher_depth.Notify(value);
 		return;
 	}
 
@@ -650,7 +650,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 			m_history.insert_or_assign(HistoryKey(strSecurity, period), bars);
 		}
 		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
-		m_historyHandlers.Notify(CMarketHistoryEvent{ strSecurity, period, bars, errorInfo.has_value() ? errorInfo->second : std::string() });
+		m_dispatcher_history.Notify(CMarketHistoryEvent{ strSecurity, period, bars, errorInfo.has_value() ? errorInfo->second : std::string() });
 		return;
 	}
 
@@ -686,5 +686,5 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		m_quotes.insert_or_assign(value.m_security.String(), value);
 	}
 
-	m_quoteHandlers.Notify(value);
+	m_dispatcher_quote.Notify(value);
 }

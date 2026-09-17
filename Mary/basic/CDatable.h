@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -76,10 +77,10 @@ struct CDataTableStorage
 	std::shared_ptr<CStringStorage> m_stringStorage{ std::make_shared<CStringStorage>() };
 };
 
-class CDataSnapshot final
+class CDataTableView final
 {
 public:
-	CDataSnapshot() = default;
+	CDataTableView() = default;
 	bool IsValid() const noexcept;
 	_TyDataVersion GetVersion() const noexcept;
 	std::size_t GetRowCount() const noexcept;
@@ -91,32 +92,32 @@ public:
 	bool GetValueById(_TyDataRowId rowId, _TyDataColumnId columnId, _TyDataValue& result) const;
 
 private:
-	explicit CDataSnapshot(std::shared_ptr<const CDataTableStorage> storage);
+	explicit CDataTableView(std::shared_ptr<const CDataTableStorage> storage);
 	std::shared_ptr<const CDataTableStorage> m_storage;
 	friend class CDataTable;
-	friend class CDataWriteBatch;
+	friend class CDataTableWriter;
 };
 
 class CDataTable;
 
-class CDataWriteBatch final
+class CDataTableWriter final
 {
 public:
-	CDataWriteBatch(CDataWriteBatch&& arg) noexcept;
-	CDataWriteBatch& operator=(CDataWriteBatch&& arg) noexcept;
-	~CDataWriteBatch();
-	CDataWriteBatch(const CDataWriteBatch&) = delete;
-	CDataWriteBatch& operator=(const CDataWriteBatch&) = delete;
+	CDataTableWriter(CDataTableWriter&& arg) noexcept;
+	CDataTableWriter& operator=(CDataTableWriter&& arg) noexcept;
+	~CDataTableWriter();
+	CDataTableWriter(const CDataTableWriter&) = delete;
+	CDataTableWriter& operator=(const CDataTableWriter&) = delete;
 
 	bool ReserveRows(std::size_t count);
 	bool AddRow(_TyDataRowId rowId, const std::vector<_TyDataValue>& values);
 	bool DeleteRow(_TyDataRowId rowId);
 	bool SetValue(_TyDataRowId rowId, _TyDataColumnId columnId, const _TyDataValue& value);
-	CDataSnapshot Commit();
+	std::pair<CDataTableView, CDataChangeSet> Commit();
 	void Cancel() noexcept;
 
 private:
-	CDataWriteBatch(CDataTable& table, std::unique_lock<std::mutex>&& writerLock, std::shared_ptr<CDataTableStorage>&& storage);
+	CDataTableWriter(CDataTable& table, std::unique_lock<std::mutex>&& writerLock, std::shared_ptr<CDataTableStorage>&& storage);
 	void EnsureRowsWritable();
 	void EnsureColumnWritable(std::size_t column);
 	void EnsureStringsWritable();
@@ -138,18 +139,15 @@ public:
 	CDataTable(const CDataTable&) = delete;
 	CDataTable& operator=(const CDataTable&) = delete;
 	bool AddColumn(const CDataColumnSchema& schema);
-	CDataWriteBatch BeginWrite();
-	CDataSnapshot GetSnapshot() const;
-	CDataChangeSet GetLastChanges() const;
+	CDataTableWriter BeginWrite();
+	CDataTableView GetView() const;
 	bool FindRow(_TyDataRowId rowId, _TyDataRowIndex& result) const;
 
 private:
-	void Publish(std::shared_ptr<CDataTableStorage>&& storage, CDataChangeSet&& changes);
+	void Publish(std::shared_ptr<CDataTableStorage>&& storage);
 	mutable std::mutex m_mtx_writer;
-	mutable std::mutex m_mtx_changes;
-	std::atomic<std::shared_ptr<const CDataTableStorage>> m_snapshot;
-	CDataChangeSet m_lastChanges;
-	friend class CDataWriteBatch;
+	std::atomic<std::shared_ptr<const CDataTableStorage>> m_currentStorage;
+	friend class CDataTableWriter;
 };
 
 #endif
