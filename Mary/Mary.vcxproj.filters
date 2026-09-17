@@ -447,7 +447,7 @@
     <ClInclude Include="basic\CDistributor.h">
       <Filter>Source Files\basic</Filter>
     </ClInclude>
-    <ClInclude Include="basic\EventDispatcher.h">
+    <ClInclude Include="basic\TMessagePump.h">
       <Filter>Source Files\basic</Filter>
     </ClInclude>
     <ClInclude Include="basic\QtCallbackBridge.h">

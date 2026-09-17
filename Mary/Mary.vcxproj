@@ -246,7 +246,7 @@
   <ItemGroup>
     <ClInclude Include="basic\CDatable.h" />
     <ClInclude Include="basic\CDistributor.h" />
-    <ClInclude Include="basic\EventDispatcher.h" />
+    <ClInclude Include="basic\TMessagePump.h" />
     <ClInclude Include="basic\QtCallbackBridge.h" />
     <ClInclude Include="system\CLoginService.h" />
     <ClInclude Include="system\CSession.h" />

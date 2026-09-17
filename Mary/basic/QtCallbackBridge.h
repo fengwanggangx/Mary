@@ -6,7 +6,7 @@
 #include <QObject>
 
 	template <typename Event, typename Owner>
-	_TyCallbackId BindToQt(EventPump<Event>& dispatcher, Owner* owner, std::function<void(const Event&)> callback)
+	_TyCallbackId BindToQt(MessgePump<Event>& dispatcher, Owner* owner, std::function<void(const Event&)> callback)
 	{
 		QPointer<Owner> safeOwner(owner);
 		return dispatcher.Subscribe([safeOwner, callback = std::move(callback)](const Event& event)

@@ -117,11 +117,11 @@ private:
 	_TyDataRowId m_nextQuoteRowId{ 1 }; // 下一个行情表行号
 
 private:
-	EventPump<CQuote> m_dispatcher_quote; // 最新行情事件分发器
-	EventPump<CMarketDepth> m_dispatcher_depth; // 盘口深度事件分发器
-	EventPump<CMarketHistoryEvent> m_dispatcher_history; // 历史行情事件分发器
-	EventPump<CQuoteTableEvent> m_dispatcher_quote_table; // 行情表变更事件分发器
-	EventPump<CSecurityListEvent> m_dispatcher_security_list; // 证券列表事件分发器
+	TMessagePump<CQuote> m_dispatcher_quote; // 最新行情事件分发器
+	TMessagePump<CMarketDepth> m_dispatcher_depth; // 盘口深度事件分发器
+	TMessagePump<CMarketHistoryEvent> m_dispatcher_history; // 历史行情事件分发器
+	TMessagePump<CQuoteTableEvent> m_dispatcher_quote_table; // 行情表变更事件分发器
+	TMessagePump<CSecurityListEvent> m_dispatcher_security_list; // 证券列表事件分发器
 };
 
 #endif

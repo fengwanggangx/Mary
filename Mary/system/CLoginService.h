@@ -75,6 +75,6 @@ public:
 	bool IsBusy() const noexcept;
 
 private:
-	EventPump<AuthEvent> m_dispatcher_auth;
+	MessgePump<AuthEvent> m_dispatcher_auth;
 	std::atomic_bool m_busy{ false };
 };
