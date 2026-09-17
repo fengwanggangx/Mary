@@ -37,7 +37,7 @@ class CDistributor
 				if constexpr (IsContainer<_Ty>)
 				{
 					{
-						std::unique_lock<std::shared_mutex> lock(m_smtx_data);
+						std::unique_lock<std::shared_mutex> lock(m_mtx_data);
 						m_cache.reserve(m_cache.size() + data.size());
 						m_cache.insert(m_cache.end(), std::make_move_iterator(data.begin()),
 									   std::make_move_iterator(data.end()));
@@ -45,7 +45,7 @@ class CDistributor
 				}
 				else
 				{
-					std::unique_lock<std::shared_mutex> lock(m_smtx_data);
+					std::unique_lock<std::shared_mutex> lock(m_mtx_data);
 					m_cache.emplace_back(std::move(data));
 				}
 				m_tasks.emplace_back(ThreadPoolPtr->PushTask(task_priority::em_normal, 0, [this]()
@@ -61,13 +61,13 @@ class CDistributor
 
 		void RegisterHandler(_TyHandler&& fun)
 		{
-			std::unique_lock<std::shared_mutex> lock(m_smtx_handler);
+			std::unique_lock<std::shared_mutex> lock(m_mtx_handler);
 			m_handler.emplace_back(std::forward<_TyHandler>(fun));
 		}
 
 		void ClearHandlers()
 		{
-			std::unique_lock<std::shared_mutex> lock(m_smtx_handler);
+			std::unique_lock<std::shared_mutex> lock(m_mtx_handler);
 			m_handler.clear();
 		}
 
@@ -102,7 +102,7 @@ class CDistributor
 		{
 			_TyDataContainer data;
 			{
-				std::unique_lock<std::shared_mutex> lock(m_smtx_data);
+				std::unique_lock<std::shared_mutex> lock(m_mtx_data);
 				data.swap(m_cache);
 			}
 
@@ -114,7 +114,7 @@ class CDistributor
 			int ret = 1;
 			if constexpr (IsContainer<_Ty>)
 			{
-				std::shared_lock<std::shared_mutex> lock(m_smtx_handler);
+				std::shared_lock<std::shared_mutex> lock(m_mtx_handler);
 				std::size_t sz = data.size();
 				for (std::size_t i = 0; i < sz; ++i)
 				{
@@ -147,10 +147,10 @@ class CDistributor
 		}
 
 	private:
-		std::shared_mutex m_smtx_data;
+		std::shared_mutex m_mtx_data;
 		_TyDataContainer m_cache;
 
-		std::shared_mutex m_smtx_handler;
+		std::shared_mutex m_mtx_handler;
 		std::vector<_TyHandler> m_handler;
 
 		std::mutex m_mtx_tasks;
