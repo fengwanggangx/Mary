@@ -177,6 +177,11 @@ CSecurity::CSecurity(const std::string& strCode, Exchange mk, MarketState status
 {
 }
 
+CSecurity::CSecurity(const std::string& strCode, const std::string& strName, Exchange mk, MarketState status) : m_strCode(strCode), m_strName(strName), m_market(mk), m_status(status)
+{
+
+}
+
 CSecurity& CSecurity::operator=(const CSecurity& arg)
 {
 	if (this != &arg)

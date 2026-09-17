@@ -22,7 +22,7 @@ namespace request
 	CRequest Subscription(const _TyParams& param);
 	CRequest UnSubscription(const _TyParams& param);
 	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime);
-	CRequest QueryMarketInstruments();
+	CRequest QueryMarketSecurities();
 	CRequest AddStrategy(const _TyStrategyInfo& strategy);
 	CRequest ModifyStrategy(const _TyStrategyInfo& strategy);
 	CRequest QueryStrategies();

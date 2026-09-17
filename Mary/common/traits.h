@@ -2,6 +2,9 @@
 #ifndef _TRAITS_H_
 #define _TRAITS_H_
 
+#include <type_traits>
+#include <utility>
+
 namespace traits
 {
 	template <typename... _Ty>
@@ -17,7 +20,7 @@ namespace traits
 	struct is_invocable : std::false_type {};
 
 	template <typename _Ret, typename _Fn, typename... _Args>
-	struct is_invocable<_Ret, _Fn, void_t<decltype(std::declval<_Fn>()(std::declval<_Args>()...))>, _Args...> : std::is_convertible<typename std::result_of<_Fn(_Args...)>::type, _Ret> {};
+	struct is_invocable<_Ret, _Fn, void_t<decltype(std::declval<_Fn>()(std::declval<_Args>()...))>, _Args...> : std::is_convertible<std::invoke_result_t<_Fn, _Args...>, _Ret> {};
 	
 	template <typename _Ret, typename _Fn, typename... _Args>
 	constexpr bool is_invocable_v = traits::is_invocable<_Ret, _Fn, void, _Args...>::value;

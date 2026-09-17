@@ -1,14 +1,18 @@
 #pragma once
 #ifndef _CONTAINER_TRAITS_H_
 #define _CONTAINER_TRAITS_H_
-#include <set>
+#include <array>
 #include <deque>
-#include <map>
 #include <list>
+#include <map>
+#include <set>
+#include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 /*
-//SFINAE °æ±¾£¬·ÇÕıÊ½µÄ²ÉÓÃ±àÒëÖØÔØ¾öÒéµÄÈ¡ÇÉÊµÏÖ£¬²»Í¬±àÒëÆ÷¿ÉÄÜĞĞÎª±íÏÖ²»Ò»ÖÂ£¬²»ÍÆ¼ö
+//SFINAE ç‰ˆæœ¬ï¼Œéæ­£å¼çš„é‡‡ç”¨ç¼–è¯‘é‡è½½å†³è®®çš„å–å·§å®ç°ï¼Œä¸åŒç¼–è¯‘å™¨å¯èƒ½è¡Œä¸ºè¡¨ç°ä¸ä¸€è‡´ï¼Œä¸æ¨è
 template <class _Ty>
 struct is_container_sfinae
 {

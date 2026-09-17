@@ -31,7 +31,7 @@ public:
 	using _TyDepthHandler = std::function<void(const CMarketDepth&)>;
 	using _TyHistoryHandler = std::function<void(const std::string&, MarketBarPeriod, const std::vector<CMarketBar>&, const std::string&)>;
 	using _TyQuoteTableHandler = std::function<void(const CDataSnapshot&, const CDataChangeSet&)>;
-	using _TyInstrumentListHandler = std::function<void(const CInstrumentListEvent&)>;
+	using _TySecurityListHandler = std::function<void(const CSecurityListEvent&)>;
 
 	void Initialize();
 
@@ -43,17 +43,17 @@ public:
 	void RemoveHistoryHandler(_TyHandlerToken token);
 	_TyHandlerToken AddQuoteTableHandler(_TyQuoteTableHandler&& handler);
 	void RemoveQuoteTableHandler(_TyHandlerToken token);
-	_TyHandlerToken AddInstrumentListHandler(_TyInstrumentListHandler&& handler);
-	void RemoveInstrumentListHandler(_TyHandlerToken token);
+	_TyHandlerToken AddSecurityListHandler(_TySecurityListHandler&& handler);
+	void RemoveSecurityListHandler(_TyHandlerToken token);
 
-	void RegisterInstrument(const CSecurity& info);
+	void RegisterSecurity(const CSecurity& info);
 	bool SubscribeQuote(const CSecurity& info);
 	bool UnsubscribeQuote(const CSecurity& info);
 	bool SubscribeDepth(const CSecurity& info);
 	bool UnsubscribeDepth(const CSecurity& info);
 
 	bool QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime);
-	bool QueryInstruments();
+	bool QuerySecurities();
 
 	bool FindQuote(const CSecurity& info, CQuote& result) const;
 	bool FindDepth(const CSecurity& info, CMarketDepth& result) const;
@@ -62,7 +62,7 @@ public:
 	std::vector<CIndicatorPoint> CalculateMovingAverage(const std::vector<CMarketBar>& bars, std::size_t nPeriod) const;
 
 	CDataSnapshot GetQuoteTableSnapshot() const;
-	std::vector<CSecurity> GetInstruments() const;
+	std::vector<CSecurity> GetSecurities() const;
 	CMarketRuntimeMetrics GetRuntimeMetrics() const;
 
 	void SetPendingQuoteLimit(std::size_t count);
@@ -83,13 +83,13 @@ private:
 private:
 	bool m_bInitialized{ false }; // 服务是否已初始化
 
-	mutable std::shared_mutex m_smtx_quotes;
+	mutable std::shared_mutex m_mtx_quotes;
 	std::unordered_map<std::string, CQuote> m_quotes; // 各证券最新行情
 
-	mutable std::shared_mutex m_smtx_depths;
+	mutable std::shared_mutex m_mtx_depths;
 	std::unordered_map<std::string, CMarketDepth> m_depths; // 各证券最新盘口
 
-	mutable std::shared_mutex m_smtx_history;
+	mutable std::shared_mutex m_mtx_history;
 	std::unordered_map<std::string, std::vector<CMarketBar>> m_history; // 各证券历史 K 线
 
 	std::mutex m_mtx_subscriptions;
@@ -99,10 +99,10 @@ private:
 	CallbackRegistry<CMarketDepth> m_depthHandlers; // 盘口深度回调注册表
 	CallbackRegistry<CMarketHistoryEvent> m_historyHandlers; // 历史行情回调注册表
 	CallbackRegistry<CQuoteTableEvent> m_quoteTableHandlers; // 行情表变更回调注册表
-	CallbackRegistry<CInstrumentListEvent> m_instrumentListHandlers; // 证券列表回调注册表
+	CallbackRegistry<CSecurityListEvent> m_securityListHandlers; // 证券列表回调注册表
 
-	mutable std::shared_mutex m_smtx_instruments;
-	std::vector<CSecurity> m_security; // 当前证券列表
+	mutable std::shared_mutex m_mtx_securities;
+	std::vector<CSecurity> m_securities; // 当前证券列表
 
 	CDataTable m_quoteTable; // 行情展示数据表
 
@@ -110,10 +110,10 @@ private:
 	std::condition_variable m_cv_pendingQuotes; // 行情处理线程唤醒条件
 	std::unordered_map<std::string, CQuote> m_pendingQuotes; // 等待批量刷新的行情
 	std::unordered_map<std::string, _TyDataRowId> m_quoteRowIds; // 证券对应的数据表行号
-	std::unordered_map<std::string, std::string> m_instrumentNames; // 证券名称缓存
-	std::unordered_map<std::string, MarketState> m_instrumentStatuses; // 证券状态缓存
-	std::unordered_set<std::string> m_pendingInstrumentUpdates; // 等待刷新的证券元数据
-	std::unordered_set<std::string> m_registeredInstruments; // 已注册证券集合
+	std::unordered_map<std::string, std::string> m_securityNames; // 证券名称缓存
+	std::unordered_map<std::string, MarketState> m_securityStatuses; // 证券状态缓存
+	std::unordered_set<std::string> m_pendingSecurityUpdates; // 等待刷新的证券元数据
+	std::unordered_set<std::string> m_registeredSecurities; // 已注册证券集合
 
 	std::thread m_quoteWorker; // 行情批量处理线程
 	std::atomic_bool m_bStopping{ false }; // 行情线程停止标志

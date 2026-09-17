@@ -12,6 +12,11 @@
 // 单只证券的最新行情快照
 struct CQuote
 {
+	CQuote() = default;
+	CQuote(const CSecurity& security) : m_security(security)
+	{
+
+	}
 	CSecurity m_security; // 证券信息
 	std::uint64_t m_nSequence{ 0 }; // 行情序列号
 	double m_fLastPrice{ 0.0 }; // 最新成交价
@@ -95,10 +100,10 @@ struct CQuoteTableEvent
 };
 
 // 证券列表查询完成事件
-struct CInstrumentListEvent
+struct CSecurityListEvent
 {
 	std::int64_t m_version{ 0 }; // 证券列表版本号
-	std::vector<CSecurity> m_security; // 证券列表
+	std::vector<CSecurity> m_securities; // 证券列表
 };
 
 // 行情接收和队列处理的运行统计

@@ -2,7 +2,7 @@
 /**********************************************************
 * @Date   : 2025.12.26
 * @Author : fengwanggang
-* @desc   : 主要用于容器操作
+* @desc   : 涓昏鐢ㄤ簬瀹瑰櫒鎿嶄綔
 **********************************************************/
 
 #ifndef _CONTAINER_UTILITY_H_
@@ -11,9 +11,12 @@
 #include "traits.h"
 #include "container_traits.h"
 
+#include <algorithm>
+#include <utility>
+
 namespace container
 {
-	//删除容器索引数据
+	//鍒犻櫎瀹瑰櫒绱㈠紩鏁版嵁
 	template <class _TyContainer, class _TyIdx, typename std::enable_if_t<traits::is_sequence_container<_TyIdx>::value, int> = 0>
 	void remove_idx(_TyContainer& container, const _TyIdx& idx)
 	{
@@ -211,6 +214,30 @@ namespace container
 		for (const auto& v : src)
 		{
 			func(dest, v);
+		}
+	}
+
+	template <class _TyContainer, class... _Args, typename std::enable_if_t<traits::is_sequence_container<_TyContainer>::value, int> = 0>
+	auto& emplace_back(_TyContainer& container, _Args&&... args)
+	{
+		container.emplace_back(std::forward<_Args>(args)...);
+		return container.back();
+	}
+
+	template <class _TyContainer, class... _Args, typename std::enable_if_t<traits::is_associative_container<_TyContainer>::value, int> = 0>
+	decltype(auto) emplace_back(_TyContainer& container, _Args&&... args)
+	{
+		if constexpr (requires { typename _TyContainer::mapped_type; })
+		{
+			return (container.try_emplace(std::forward<_Args>(args)...).first->second);
+		}
+		else if constexpr (requires { container.emplace(std::forward<_Args>(args)...).first; })
+		{
+			return static_cast<const typename _TyContainer::value_type&>(*container.emplace(std::forward<_Args>(args)...).first);
+		}
+		else
+		{
+			return static_cast<const typename _TyContainer::value_type&>(*container.emplace(std::forward<_Args>(args)...));
 		}
 	}
 };

@@ -8,6 +8,7 @@
 #include <chrono>
 #include <deque>
 #include <utility>
+#include <common/container.h>
 
 namespace
 {
@@ -27,7 +28,7 @@ namespace
 		return 0.0 < fScale ? static_cast<double>(nPrice) / fScale : 0.0;
 	}
 
-	std::string ExchangeSuffix(hqmarket::market::v1::Exchange exchange)
+	std::string ExchangeSuffix(_TyMarketExchange exchange)
 	{
 		switch (exchange)
 		{
@@ -39,15 +40,15 @@ namespace
 		}
 	}
 
-	Exchange ToExchange(hqmarket::market::v1::Exchange exchange)
+	Exchange ToExchange(_TyMarketExchange exchange)
 	{
 		return static_cast<Exchange>(static_cast<int>(exchange));
 	}
 
-	std::string SecurityName(const hqmarket::market::v1::Instrument& instrument)
+	std::string SecurityName(const _TySecurity& security)
 	{
-		std::string strExchange = ExchangeSuffix(instrument.exchange());
-		return strExchange.empty() ? instrument.symbol() : instrument.symbol() + "." + strExchange;
+		std::string strExchange = ExchangeSuffix(security.exchange());
+		return strExchange.empty() ? security.symbol() : security.symbol() + "." + strExchange;
 	}
 
 	std::string MarketCategory(const std::string& strSecurity)
@@ -130,12 +131,12 @@ void CHQMarketService::Initialize()
 		{
 			m_runtimeMetrics.m_nLastQuoteSequence.store(0);
 			RestoreSubscriptions();
-			QueryInstruments();
+			QuerySecurities();
 		}
 	});
 	if (CSession::InstanceRef().IsAuthenticated())
 	{
-		QueryInstruments();
+		QuerySecurities();
 	}
 }
 
@@ -185,56 +186,53 @@ void CHQMarketService::RemoveQuoteTableHandler(_TyHandlerToken token)
 	m_quoteTableHandlers.Unsubscribe(token);
 }
 
-CHQMarketService::_TyHandlerToken CHQMarketService::AddInstrumentListHandler(_TyInstrumentListHandler&& handler)
+CHQMarketService::_TyHandlerToken CHQMarketService::AddSecurityListHandler(_TySecurityListHandler&& handler)
 {
-	return m_instrumentListHandlers.Subscribe(std::move(handler));
+	return m_securityListHandlers.Subscribe(std::move(handler));
 }
 
-void CHQMarketService::RemoveInstrumentListHandler(_TyHandlerToken token)
+void CHQMarketService::RemoveSecurityListHandler(_TyHandlerToken token)
 {
-	m_instrumentListHandlers.Unsubscribe(token);
+	m_securityListHandlers.Unsubscribe(token);
 }
 
-void CHQMarketService::RegisterInstrument(const CSecurity& info)
+void CHQMarketService::RegisterSecurity(const CSecurity& info)
 {
-	std::string strSecurity = info.String();
-	if (strSecurity.empty())
+	std::string strKey = info.String();
+	if (strKey.empty())
 	{
 		return;
 	}
 	bool bRegistered = false;
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
-		m_instrumentNames.insert_or_assign(strSecurity, info.m_strName);
-		m_instrumentStatuses.insert_or_assign(strSecurity, info.m_status);
-		m_pendingInstrumentUpdates.emplace(strSecurity);
-		bRegistered = m_registeredInstruments.emplace(strSecurity).second;
+		m_securityNames.insert_or_assign(strKey, info.m_strName);
+		m_securityStatuses.insert_or_assign(strKey, info.m_status);
+		m_pendingSecurityUpdates.emplace(strKey);
+		bRegistered = m_registeredSecurities.emplace(strKey).second;
 		if (bRegistered)
 		{
-			CQuote quote;
-			quote.m_security = info;
+			CQuote& quote = container::emplace_back(m_pendingQuotes, strKey, info);
 			quote.m_bStale = true;
-			m_pendingQuotes.emplace(strSecurity, std::move(quote));
 		}
-		else if (m_pendingQuotes.end() == m_pendingQuotes.find(strSecurity))
+		else if (m_pendingQuotes.end() == m_pendingQuotes.find(strKey))
 		{
-			CQuote quote;
-			bool bFoundQuote = false;
+			CQuote& quote = container::emplace_back(m_pendingQuotes, strKey);
+			bool bFind = false;
 			{
-				std::shared_lock quoteLock(m_smtx_quotes);
-				const auto mIter = m_quotes.find(strSecurity);
+				std::shared_lock quoteLock(m_mtx_quotes);
+				const auto mIter = m_quotes.find(strKey);
 				if (m_quotes.end() != mIter)
 				{
 					quote = mIter->second;
-					bFoundQuote = true;
+					bFind = true;
 				}
 			}
 			quote.m_security = info;
-			if (!bFoundQuote)
+			if (!bFind)
 			{
 				quote.m_bStale = true;
 			}
-			m_pendingQuotes.emplace(strSecurity, std::move(quote));
 		}
 	}
 	m_cv_pendingQuotes.notify_one();
@@ -289,9 +287,9 @@ bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod perio
 	return CSession::InstanceRef().SendRequest(request::QueryMarketBars(info, ChannelName(period), nBeginTime, nEndTime));
 }
 
-bool CHQMarketService::QueryInstruments()
+bool CHQMarketService::QuerySecurities()
 {
-	return CSession::InstanceRef().SendRequest(request::QueryMarketInstruments());
+	return CSession::InstanceRef().SendRequest(request::QueryMarketSecurities());
 }
 
 bool CHQMarketService::Subscribe(const std::string& strKey, const request::_TyParams& param)
@@ -334,7 +332,7 @@ void CHQMarketService::RestoreSubscriptions()
 
 bool CHQMarketService::FindQuote(const CSecurity& info, CQuote& result) const
 {
-	std::shared_lock lock(m_smtx_quotes);
+	std::shared_lock lock(m_mtx_quotes);
 	const auto mIter = m_quotes.find(info.String());
 	if (m_quotes.end() == mIter)
 	{
@@ -346,7 +344,7 @@ bool CHQMarketService::FindQuote(const CSecurity& info, CQuote& result) const
 
 bool CHQMarketService::FindDepth(const CSecurity& info, CMarketDepth& result) const
 {
-	std::shared_lock lock(m_smtx_depths);
+	std::shared_lock lock(m_mtx_depths);
 	const auto mIter = m_depths.find(info.String());
 	if (m_depths.end() == mIter)
 	{
@@ -358,7 +356,7 @@ bool CHQMarketService::FindDepth(const CSecurity& info, CMarketDepth& result) co
 
 bool CHQMarketService::FindHistory(const CSecurity& info, MarketBarPeriod period, std::vector<CMarketBar>& result) const
 {
-	std::shared_lock lock(m_smtx_history);
+	std::shared_lock lock(m_mtx_history);
 	const auto mIter = m_history.find(HistoryKey(info.String(), period));
 	if (m_history.end() == mIter)
 	{
@@ -399,10 +397,10 @@ CDataSnapshot CHQMarketService::GetQuoteTableSnapshot() const
 	return m_quoteTable.GetSnapshot();
 }
 
-std::vector<CSecurity> CHQMarketService::GetInstruments() const
+std::vector<CSecurity> CHQMarketService::GetSecurities() const
 {
-	std::shared_lock lock(m_smtx_instruments);
-	return m_security;
+	std::shared_lock lock(m_mtx_securities);
+	return m_securities;
 }
 
 CMarketRuntimeMetrics CHQMarketService::GetRuntimeMetrics() const
@@ -489,7 +487,7 @@ void CHQMarketService::QuoteWorkerLoop()
 {
 	while (!m_bStopping.load())
 	{
-		std::unordered_map<std::string, CQuote> quotes;
+		decltype(m_pendingQuotes) quotes;
 		{
 			std::unique_lock<std::mutex> lock(m_mtx_pendingQuotes);
 			m_cv_pendingQuotes.wait_for(lock, std::chrono::milliseconds(20), [this]()
@@ -521,14 +519,14 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			std::string strListingStatus;
 			{
 				std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
-				m_pendingInstrumentUpdates.erase(strSecurity);
-				const auto nameIter = m_instrumentNames.find(strSecurity);
-				if (m_instrumentNames.end() != nameIter)
+				m_pendingSecurityUpdates.erase(strSecurity);
+				const auto nameIter = m_securityNames.find(strSecurity);
+				if (m_securityNames.end() != nameIter)
 				{
 					strName = nameIter->second;
 				}
-				const auto statusIter = m_instrumentStatuses.find(strSecurity);
-				if (m_instrumentStatuses.end() != statusIter)
+				const auto statusIter = m_securityStatuses.find(strSecurity);
+				if (m_securityStatuses.end() != statusIter)
 				{
 					strListingStatus = GetMarketStateString(statusIter->second);
 				}
@@ -544,16 +542,16 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 		bool bMetadataChanged = false;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
-			bMetadataChanged = 0 != m_pendingInstrumentUpdates.erase(strSecurity);
+			bMetadataChanged = 0 != m_pendingSecurityUpdates.erase(strSecurity);
 			if (bMetadataChanged)
 			{
-				const auto nameIter = m_instrumentNames.find(strSecurity);
-				if (m_instrumentNames.end() != nameIter)
+				const auto nameIter = m_securityNames.find(strSecurity);
+				if (m_securityNames.end() != nameIter)
 				{
 					strName = nameIter->second;
 				}
-				const auto statusIter = m_instrumentStatuses.find(strSecurity);
-				if (m_instrumentStatuses.end() != statusIter)
+				const auto statusIter = m_securityStatuses.find(strSecurity);
+				if (m_securityStatuses.end() != statusIter)
 				{
 					strListingStatus = GetMarketStateString(statusIter->second);
 				}
@@ -584,54 +582,52 @@ void CHQMarketService::OnResponse(const CRequest& req)
 {
 	std::string strCmd = req.GetCmd();
 	const _TyReqData& message = req.GetData();
-	if (("instrument_list_response" == strCmd) && message.has_instrument_list_response())
+	if (("security_list" == strCmd) && message.has_security_list())
 	{
-		const hqmarket::market::v1::InstrumentListResponse& result = message.instrument_list_response();
-		CInstrumentListEvent event;
-		event.m_version = result.version();
-		event.m_security.reserve(result.instruments_size());
-		for (const hqmarket::market::v1::InstrumentInfo& value : result.instruments())
+		const auto& data = message.security_list();
+		CSecurityListEvent ev;
+		ev.m_version = data.version();
+		ev.m_securities.reserve(data.securities_size());
+		for (const auto& v : data.securities())
 		{
-			std::string strExchange = ExchangeSuffix(value.instrument().exchange());
+			std::string strExchange = ExchangeSuffix(v.security().exchange());
 			if (strExchange.empty())
 			{
 				continue;
 			}
-			CSecurity instrument(value.instrument().symbol(), ToExchange(value.instrument().exchange()), ParseMarketState(value.status()));
-			instrument.m_strName = value.name();
-			event.m_security.emplace_back(std::move(instrument));
+			ev.m_securities.emplace_back(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
 		}
 		{
-			std::unique_lock lock(m_smtx_instruments);
-			m_security = event.m_security;
+			std::unique_lock lock(m_mtx_securities);
+			m_securities = ev.m_securities;
 		}
-		for (const CSecurity& instrument : event.m_security)
+		for (const auto& security : ev.m_securities)
 		{
-			RegisterInstrument(instrument);
+			RegisterSecurity(security);
 		}
-		m_instrumentListHandlers.Notify(event);
+		m_securityListHandlers.Notify(ev);
 		return;
 	}
 
 	if (("depth" == strCmd) && message.has_depth())
 	{
-		const hqmarket::market::v1::DepthData& depth = message.depth();
+		const _TyDepthData& data = message.depth();
 		CMarketDepth value;
-		value.m_security = CSecurity(depth.instrument().symbol(), ToExchange(depth.instrument().exchange()));
-		value.m_nExchangeTime = depth.exchange_time_ms();
-		value.m_bStale = depth.stale();
-		value.m_bids.reserve(depth.bids_size());
-		value.m_asks.reserve(depth.asks_size());
-		for (const hqmarket::market::v1::PriceLevel& level : depth.bids())
+		value.m_security = CSecurity(data.security().symbol(), ToExchange(data.security().exchange()));
+		value.m_nExchangeTime = data.exchange_time_ms();
+		value.m_bStale = data.stale();
+		value.m_bids.reserve(data.bids_size());
+		value.m_asks.reserve(data.asks_size());
+		for (const auto& level : data.bids())
 		{
 			value.m_bids.emplace_back(CPriceLevel{ ScaledPrice(level.price(), level.price_scale()), level.volume() });
 		}
-		for (const hqmarket::market::v1::PriceLevel& level : depth.asks())
+		for (const auto& level : data.asks())
 		{
 			value.m_asks.emplace_back(CPriceLevel{ ScaledPrice(level.price(), level.price_scale()), level.volume() });
 		}
 		{
-			std::unique_lock lock(m_smtx_depths);
+			std::unique_lock lock(m_mtx_depths);
 			m_depths.insert_or_assign(value.m_security.String(), value);
 		}
 		m_depthHandlers.Notify(value);
@@ -640,17 +636,17 @@ void CHQMarketService::OnResponse(const CRequest& req)
 
 	if (("query_response" == strCmd) && message.has_query_response())
 	{
-		const hqmarket::market::v1::QueryResponse& query = message.query_response();
-		MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == query.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
-		std::string strSecurity = SecurityName(query.instrument());
+		const _TyQueryResponse& data = message.query_response();
+		MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == data.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
+		std::string strSecurity = SecurityName(data.security());
 		std::vector<CMarketBar> bars;
-		bars.reserve(query.bars_size());
-		for (const hqmarket::market::v1::BarData& bar : query.bars())
+		bars.reserve(data.bars_size());
+		for (const _TyBarData& bar : data.bars())
 		{
 			bars.emplace_back(CMarketBar{ bar.begin_time_ms(), ScaledPrice(bar.open_price(), bar.price_scale()), ScaledPrice(bar.high_price(), bar.price_scale()), ScaledPrice(bar.low_price(), bar.price_scale()), ScaledPrice(bar.close_price(), bar.price_scale()), bar.volume(), bar.turnover() });
 		}
 		{
-			std::unique_lock lock(m_smtx_history);
+			std::unique_lock lock(m_mtx_history);
 			m_history.insert_or_assign(HistoryKey(strSecurity, period), bars);
 		}
 		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
@@ -663,7 +659,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		return;
 	}
 
-	const hqmarket::market::v1::QuoteData& quote = message.quote();
+	const _TyQuoteData& quote = message.quote();
 	++m_runtimeMetrics.m_nQuoteReceived;
 	std::uint64_t sequence = ParseSequence(req.GetReturnData());
 	if (!AcceptQuoteSequence(sequence))
@@ -677,7 +673,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 	}
 
 	CQuote value;
-	value.m_security = CSecurity(quote.instrument().symbol(), ToExchange(quote.instrument().exchange()));
+	value.m_security = CSecurity(quote.security().symbol(), ToExchange(quote.security().exchange()));
 	value.m_nSequence = sequence;
 	value.m_fLastPrice = static_cast<double>(quote.last_price()) / fScale;
 	value.m_fPreClose = static_cast<double>(quote.pre_close()) / fScale;
@@ -686,7 +682,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 	++m_runtimeMetrics.m_nQuoteAccepted;
 	EnqueueQuote(value);
 	{
-		std::unique_lock lock(m_smtx_quotes);
+		std::unique_lock lock(m_mtx_quotes);
 		m_quotes.insert_or_assign(value.m_security.String(), value);
 	}
 
