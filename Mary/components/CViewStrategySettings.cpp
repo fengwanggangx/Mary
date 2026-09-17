@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QSplitter>
 #include <QTableWidget>
+#include <QTabBar>
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -44,8 +45,12 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 {
 	setObjectName("strategyManagementPage");
 	QVBoxLayout* pRoot = new QVBoxLayout(this);
-	pRoot->setContentsMargins(8, 8, 8, 8);
+	pRoot->setContentsMargins(0, 0, 0, 0);
+	pRoot->setSpacing(0);
 	QTabWidget* pTabs = new QTabWidget(this);
+	pTabs->tabBar()->setMinimumHeight(38);
+	pTabs->tabBar()->setDrawBase(false);
+	pTabs->tabBar()->setExpanding(false);
 	pTabs->addTab(CreateInstancePage(), QStringLiteral("策略实例"));
 	for (const auto& title : QStringList{ "回测分析", "策略模板", "运行日志" })
 	{
@@ -58,19 +63,20 @@ QWidget* CViewStrategySettings::CreateInstancePage()
 {
 	QWidget* pPage = new QWidget(this);
 	QVBoxLayout* pLayout = new QVBoxLayout(pPage);
-	pLayout->setContentsMargins(8, 8, 8, 8);
+	pLayout->setContentsMargins(14, 12, 14, 12);
 	QHBoxLayout* pMetrics = new QHBoxLayout();
+	pMetrics->setSpacing(10);
 	QStringList titles{ "策略数量", "运行中", "总收益", "今日收益" };
 	QStringList values{ "6", "3", "+28,635.80 元", "+1,168.46 元" };
 	for (int index = 0; index < titles.size(); ++index)
 	{
 		QFrame* pCard = new QFrame(pPage);
-		pCard->setFrameShape(QFrame::StyledPanel);
+		pCard->setProperty("summaryCard", true);
 		QVBoxLayout* pCardLayout = new QVBoxLayout(pCard);
 		pCardLayout->addWidget(new QLabel(titles[index], pCard));
 		QLabel* pValue = new QLabel(values[index], pCard);
 		QFont font = pValue->font();
-		font.setPointSize(20);
+		font.setPixelSize(23);
 		font.setBold(true);
 		pValue->setFont(font);
 		if (1 == index)
@@ -83,6 +89,11 @@ QWidget* CViewStrategySettings::CreateInstancePage()
 		}
 		pCardLayout->addWidget(pValue);
 		pCardLayout->addWidget(new QLabel(QStringLiteral("UI 展示数据 · 未接入服务"), pCard));
+		pCard->ensurePolished();
+		int nHeight = qRound(pCard->sizeHint().height() * 0.7);
+		pCardLayout->setContentsMargins(8, 1, 8, 1);
+		pCardLayout->setSpacing(1);
+		pCard->setFixedHeight(nHeight);
 		pMetrics->addWidget(pCard, 1);
 	}
 	pLayout->addLayout(pMetrics);
@@ -123,6 +134,9 @@ QWidget* CViewStrategySettings::CreateInstancePage()
 	m_pDetails->setWordWrap(true);
 	pDetailLayout->addWidget(m_pDetails);
 	QTabWidget* pDetailsTabs = new QTabWidget(pDetailPage);
+	pDetailsTabs->tabBar()->setMinimumHeight(38);
+	pDetailsTabs->tabBar()->setDrawBase(false);
+	pDetailsTabs->tabBar()->setExpanding(false);
 	QWidget* pParameters = new QWidget(pDetailsTabs);
 	QVBoxLayout* pParametersLayout = new QVBoxLayout(pParameters);
 	QLabel* pHint = new QLabel(QStringLiteral("参数预览 · 仅展示结构，实际参数待接入策略服务"), pParameters);

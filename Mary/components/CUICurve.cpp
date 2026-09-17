@@ -4,6 +4,9 @@
 
 #include <QDate>
 #include <QDateTime>
+#include <QApplication>
+#include <QEvent>
+#include <QPalette>
 #include <QPen>
 #include <QVBoxLayout>
 
@@ -207,6 +210,43 @@ void CUICurve::InitializePlots()
 
 	pLayout->addWidget(m_pPricePlot, 4);
 	pLayout->addWidget(m_pVolumePlot, 1);
+	ApplyPalette();
+}
+
+void CUICurve::changeEvent(QEvent* pEvent)
+{
+	QWidget::changeEvent(pEvent);
+	if ((QEvent::PaletteChange == pEvent->type()) || (QEvent::StyleChange == pEvent->type()))
+	{
+		ApplyPalette();
+	}
+}
+
+void CUICurve::ApplyPalette()
+{
+	if ((nullptr == m_pPricePlot) || (nullptr == m_pVolumePlot))
+	{
+		return;
+	}
+	QPalette palette = qApp->palette();
+	QColor background = palette.color(QPalette::Base);
+	QColor foreground = palette.color(QPalette::Text);
+	m_pTradingCurve->setSymbolPen(foreground, 1.0);
+	for (QwtPlot* pPlot : { m_pPricePlot, m_pVolumePlot })
+	{
+		pPlot->setPalette(palette);
+		pPlot->setStyleSheet(QString("QwtPlot, QwtScaleWidget { background-color: %1; color: %2; }").arg(palette.color(QPalette::Window).name(), foreground.name()));
+		pPlot->setAutoFillBackground(true);
+		pPlot->setCanvasBackground(background);
+		pPlot->canvas()->setStyleSheet(QString("background-color: %1;").arg(background.name()));
+		for (int nAxis = 0; nAxis < QwtAxis::AxisPositions; ++nAxis)
+		{
+			QwtScaleWidget* pAxis = pPlot->axisWidget(nAxis);
+			pAxis->setPalette(palette);
+			pAxis->setAutoFillBackground(true);
+		}
+		pPlot->replot();
+	}
 }
 
 void CUICurve::Refresh()

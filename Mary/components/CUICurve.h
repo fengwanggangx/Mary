@@ -32,7 +32,11 @@ public:
 	void SetBars(const std::vector<CMarketBar>& bars);
 	void Clear();
 
+protected:
+	void changeEvent(QEvent* pEvent) override;
+
 private:
+	void ApplyPalette();
 	void InitializePlots();
 	void Refresh();
 	std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;

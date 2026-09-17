@@ -598,7 +598,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 {
 	std::string strCmd = req.GetCmd();
 	const _TyReqData& message = req.GetData();
-	if (("security_list" == strCmd) && message.has_security_list())
+	if (("query_securities" == strCmd) && message.has_security_list())
 	{
 		const auto& data = message.security_list();
 		CSecurityListEvent ev;

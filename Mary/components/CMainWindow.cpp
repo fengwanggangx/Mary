@@ -14,6 +14,8 @@
 #include <QMouseEvent>
 #include <QPointer>
 #include <QPixmap>
+#include <QPalette>
+#include <QStyle>
 #include <QTimer>
 #include <QTreeWidgetItem>
 #include <QToolButton>
@@ -76,14 +78,19 @@ QTreeWidget { background: transparent; border: none; outline: none; color: #5361
 QTreeWidget::item { height: 42px; padding-left: 10px; }
 QTreeWidget::item:selected { background: #4d82f9; color: white; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
 QTabBar { background: #ffffff; border: 0; border-bottom: 1px solid #e6ebf2; padding: 0; margin: 0; }
-QTabBar::tab { min-width: 72px; height: 36px; color: #65748a; background: #ffffff; border: 1px solid #e6ebf2; border-top: 0; margin-left: -1px; padding: 0 8px; }
+QTabBar::tab { min-width: 72px; height: 36px; color: #65748a; background: #ffffff; border: 1px solid #e6ebf2; border-top: 0; border-bottom-width: 2px; margin-left: -1px; margin-bottom: -1px; padding: 0 8px; }
 QTabBar::tab:first { margin-left: 0; }
 QTabBar::tab:selected { color: #1677ff; background: #edf5fd; border-bottom: 2px solid #1677ff; font-weight: 600; }
 QFrame#shanghaiCard, QFrame#shenzhenCard, QFrame#chinextCard, QFrame#chartFrame, QFrame#depthFrame, QFrame#watchlistFrame { background: white; border: 1px solid #e4eaf2; border-radius: 7px; }
+QFrame[summaryCard="true"] { background: white; border: 1px solid #e4eaf2; border-radius: 7px; }
 #shanghaiPrice, #shenzhenPrice, #chinextPrice { color: #f04455; font-size: 23px; font-weight: 700; }
 #chartTitle, #depthTitle, #watchlistTitle { color: #1d2a3c; font-size: 14px; font-weight: 600; }
 #chartPlaceholder { color: #8b98aa; background: #fafcff; border: 1px dashed #dce4ef; }
 QTableWidget { background: white; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; }
+QTableView { background: white; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
+QTabWidget::pane { background: #f4f7fb; border: 1px solid #e4eaf2; top: -1px; }
+QComboBox { background: white; color: #344258; border: 1px solid #dce3ed; border-radius: 5px; padding: 5px 9px; }
+QComboBox QAbstractItemView { background: white; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
 QHeaderView::section { background: #f7f9fc; color: #68778c; border: none; border-bottom: 1px solid #e6ebf2; padding: 6px; }
 QLineEdit { background: white; border: 1px solid #dce3ed; border-radius: 5px; padding: 6px 9px; }
 QPushButton { border: 1px solid #dce3ed; border-radius: 5px; background: white; color: #536176; padding: 5px 10px; }
@@ -120,14 +127,27 @@ QTreeWidget { background: transparent; border: none; outline: none; color: #a9bd
 QTreeWidget::item { height: 42px; padding-left: 10px; }
 QTreeWidget::item:selected { background: #3a6ef7; color: white; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
 QTabBar { background: #0f1e2d; border: 0; border-bottom: 1px solid #203b52; padding: 0; margin: 0; }
-QTabBar::tab { min-width: 72px; height: 36px; color: #9eb3c7; background: #0f1e2d; border: 1px solid #203b52; border-top: 0; margin-left: -1px; padding: 0 8px; }
+QTabBar::tab { min-width: 72px; height: 36px; color: #9eb3c7; background: #0f1e2d; border: 1px solid #203b52; border-top: 0; border-bottom-width: 2px; margin-left: -1px; margin-bottom: -1px; padding: 0 8px; }
 QTabBar::tab:first { margin-left: 0; }
 QTabBar::tab:selected { color: white; background: #1e3e81; border-bottom: 2px solid #1683ff; font-weight: 600; }
 QFrame#shanghaiCard, QFrame#shenzhenCard, QFrame#chinextCard, QFrame#chartFrame, QFrame#depthFrame, QFrame#watchlistFrame { background: #132130; border: 1px solid #203b52; border-radius: 7px; }
+QFrame[summaryCard="true"] { background: #132130; border: 1px solid #203b52; border-radius: 7px; }
 #shanghaiPrice, #shenzhenPrice, #chinextPrice { color: #ff4d61; font-size: 23px; font-weight: 700; }
 #chartTitle, #depthTitle, #watchlistTitle { color: #edf6ff; font-size: 14px; font-weight: 600; }
 #chartPlaceholder { color: #718ba0; background: #12202f; border: 1px dashed #203b52; }
 QTableWidget { background: #0e192b; alternate-background-color: #122130; border: none; gridline-color: #203b52; color: #c8d8e7; }
+QTableView { background: #0e192b; alternate-background-color: #122130; border: none; gridline-color: #203b52; color: #c8d8e7; selection-background-color: #1e3e81; selection-color: white; }
+QLabel { color: #dce8f6; }
+QTabWidget::pane { background: #122130; border: 1px solid #203b52; top: -1px; }
+QComboBox { background: #0f1e2d; color: #dce8f6; border: 1px solid #203b52; border-radius: 5px; padding: 5px 9px; }
+QComboBox QAbstractItemView { background: #0f1e2d; color: #dce8f6; selection-background-color: #1e3e81; selection-color: white; }
+QScrollBar:vertical { background: #0f1e2d; width: 12px; margin: 0; }
+QScrollBar:horizontal { background: #0f1e2d; height: 12px; margin: 0; }
+QScrollBar::handle { background: #37546c; border-radius: 4px; min-width: 12px; min-height: 12px; }
+QScrollBar::handle:hover { background: #526f88; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
+QPushButton:disabled { color: #718ba0; border-color: #203b52; }
 QHeaderView::section { background: #14283a; color: #8fa8bc; border: none; border-bottom: 1px solid #203b52; padding: 6px; }
 QLineEdit { background: #0f1e2d; border: 1px solid #203b52; border-radius: 5px; color: #dce8f6; padding: 6px 9px; }
 QPushButton { border: 1px solid #203b52; border-radius: 5px; background: #122130; color: #a9bdd0; padding: 5px 10px; }
@@ -277,6 +297,25 @@ void CMainWindow::OnDarkTheme()
 void CMainWindow::ApplyTheme(bool bDark)
 {
 	m_bDarkTheme = bDark;
+	QPalette palette = qApp->style()->standardPalette();
+	if (bDark)
+	{
+		palette.setColor(QPalette::Window, QColor("#122130"));
+		palette.setColor(QPalette::WindowText, QColor("#dce8f6"));
+		palette.setColor(QPalette::Base, QColor("#0e192b"));
+		palette.setColor(QPalette::AlternateBase, QColor("#122130"));
+		palette.setColor(QPalette::Text, QColor("#c8d8e7"));
+		palette.setColor(QPalette::Button, QColor("#122130"));
+		palette.setColor(QPalette::ButtonText, QColor("#a9bdd0"));
+		palette.setColor(QPalette::Highlight, QColor("#1e3e81"));
+		palette.setColor(QPalette::HighlightedText, QColor("#ffffff"));
+		palette.setColor(QPalette::ToolTipBase, QColor("#14283a"));
+		palette.setColor(QPalette::ToolTipText, QColor("#dce8f6"));
+		palette.setColor(QPalette::PlaceholderText, QColor("#718ba0"));
+		palette.setColor(QPalette::Disabled, QPalette::Text, QColor("#718ba0"));
+		palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#718ba0"));
+	}
+	qApp->setPalette(palette);
 	qApp->setStyleSheet(bDark ? DarkStyle() : LightStyle());
 	m_pLightThemeAction->setChecked(!bDark);
 	m_pDarkThemeAction->setChecked(bDark);

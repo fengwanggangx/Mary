@@ -116,6 +116,14 @@ namespace
 CUITable::CUITable(QWidget* pParent) : QWidget(pParent), ui(new Ui::CUITableClass())
 {
 	ui->setupUi(this);
+	for (QFrame* pCard : { ui->shanghaiCard, ui->shenzhenCard, ui->chinextCard })
+	{
+		pCard->ensurePolished();
+		int nHeight = qRound(pCard->sizeHint().height() * 0.7);
+		pCard->layout()->setContentsMargins(8, 1, 8, 1);
+		pCard->layout()->setSpacing(1);
+		pCard->setFixedHeight(nHeight);
+	}
 	InitializeUI();
 	BindService();
 }
