@@ -1,7 +1,7 @@
 #ifndef MARY_COMPONENTS_CUICURVE_H
 #define MARY_COMPONENTS_CUICURVE_H
 
-#include "../system/CHQMarketService.h"
+#include "../service/hqmarket/CHQMarketService.h"
 
 #include <QWidget>
 

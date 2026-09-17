@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../basic/EventDispatcher.h"
+#include "../basic/TMessagePump.h"
 #include "../common/ISingleton.h"
 #include "CHostMgr.h"
 
@@ -75,6 +75,6 @@ public:
 	bool IsBusy() const noexcept;
 
 private:
-	MessgePump<AuthEvent> m_dispatcher_auth;
+	TMessagePump<AuthEvent> m_dispatcher_auth;
 	std::atomic_bool m_busy{ false };
 };

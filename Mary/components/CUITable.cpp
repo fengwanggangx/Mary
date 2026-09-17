@@ -1,6 +1,6 @@
 #include "CUITable.h"
 
-#include "../system/CHQMarketService.h"
+#include "../service/hqmarket/CHQMarketService.h"
 #include "CUICurve.h"
 #include "CDataTableModel.h"
 #include "ui_CUITable.h"

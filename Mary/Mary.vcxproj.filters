@@ -71,6 +71,15 @@
     <Filter Include="Source Files\scripts">
       <UniqueIdentifier>{fdc829bd-c412-46e3-b90e-c96a6bcde959}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\service">
+      <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\service\hqmarket">
+      <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa101}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\service\strategy">
+      <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa102}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="system\CLoginService.cpp">
@@ -82,8 +91,8 @@
     <ClCompile Include="request\MarketTypes.cpp">
       <Filter>Source Files\request</Filter>
     </ClCompile>
-    <ClCompile Include="system\CStrategyService.cpp">
-      <Filter>Source Files\system</Filter>
+    <ClCompile Include="service\strategy\CStrategyService.cpp">
+      <Filter>Source Files\service\strategy</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
@@ -244,8 +253,8 @@
     <ClCompile Include="defines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="system\CHQMarketService.cpp">
-      <Filter>Source Files\system</Filter>
+    <ClCompile Include="service\hqmarket\CHQMarketService.cpp">
+      <Filter>Source Files\service\hqmarket</Filter>
     </ClCompile>
     <ClCompile Include="components\CUITable.cpp">
       <Filter>Source Files\components</Filter>
@@ -336,8 +345,8 @@
     <ClInclude Include="request\MarketTypes.h">
       <Filter>Source Files\request</Filter>
     </ClInclude>
-    <ClInclude Include="system\CStrategyService.h">
-      <Filter>Source Files\system</Filter>
+    <ClInclude Include="service\strategy\CStrategyService.h">
+      <Filter>Source Files\service\strategy</Filter>
     </ClInclude>
     <ClInclude Include="network\CNet.h">
       <Filter>Source Files\network</Filter>
@@ -507,11 +516,11 @@
     <ClInclude Include="system\CHostMgr.h">
       <Filter>Source Files\system</Filter>
     </ClInclude>
-    <ClInclude Include="system\CHQMarketService.h">
-      <Filter>Source Files\system</Filter>
+    <ClInclude Include="service\hqmarket\CHQMarketService.h">
+      <Filter>Source Files\service\hqmarket</Filter>
     </ClInclude>
-    <ClInclude Include="system\defines_hqmarket.h">
-      <Filter>Source Files\system</Filter>
+    <ClInclude Include="service\hqmarket\defines_hqmarket.h">
+      <Filter>Source Files\service\hqmarket</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

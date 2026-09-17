@@ -1,8 +1,8 @@
 #ifndef MARY_SYSTEM_DEFINES_HQMARKET_H
 #define MARY_SYSTEM_DEFINES_HQMARKET_H
 
-#include "../basic/CDatable.h"
-#include "../request/MarketTypes.h"
+#include "../../basic/CDatable.h"
+#include "../../request/MarketTypes.h"
 
 #include <atomic>
 #include <cstdint>

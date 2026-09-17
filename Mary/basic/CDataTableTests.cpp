@@ -1,5 +1,5 @@
 #include "CDatable.h"
-#include "EventDispatcher.h"
+#include "TMessagePump.h"
 
 #include <cassert>
 #include <atomic>
@@ -129,9 +129,9 @@ namespace
 		assert(0 < readCount.load());
 	}
 
-	void TestEventDispatcher()
+	void TestMessagePump()
 	{
-		EventDispatcher<int> dispatcher;
+		TMessagePump<int> dispatcher;
 		int nFirstTotal = 0;
 		int nSecondTotal = 0;
 		_TyCallbackId firstId = dispatcher.Subscribe([&nFirstTotal](const int& value)
@@ -183,7 +183,7 @@ int main()
 	TestStableRowId();
 	TestHighCardinalityStrings();
 	TestConcurrentSnapshots();
-	TestEventDispatcher();
+	TestMessagePump();
 	RunBenchmark();
 	return 0;
 }

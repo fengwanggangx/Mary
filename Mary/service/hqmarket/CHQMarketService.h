@@ -1,10 +1,10 @@
 #ifndef MARY_SYSTEM_CHQMARKETSERVICE_H
 #define MARY_SYSTEM_CHQMARKETSERVICE_H
 
-#include "../common/ISingleton.h"
-#include "../basic/EventDispatcher.h"
-#include "../basic/CDatable.h"
-#include "../request/RequestCenter.h"
+#include "../../common/ISingleton.h"
+#include "../../basic/TMessagePump.h"
+#include "../../basic/CDatable.h"
+#include "../../request/RequestCenter.h"
 #include "defines_hqmarket.h"
 
 #include <atomic>
