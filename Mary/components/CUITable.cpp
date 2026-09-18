@@ -216,12 +216,6 @@ void CUITable::InitializeUI()
 	heading->addSpacing(12);
 	heading->addWidget(m_count);
 	heading->addStretch();
-	if (!compact)
-	{
-		QLabel* demo = new QLabel(m_demo ? "示例数据" : "", list);
-		demo->setProperty("marketMuted", true);
-		heading->addWidget(demo);
-	}
 	if (MarketTableMode::Watchlist == m_mode)
 	{
 		QPushButton* add = new QPushButton("＋", list);
@@ -261,22 +255,17 @@ void CUITable::InitializeUI()
 	QLineEdit* search = new QLineEdit(list);
 	search->setPlaceholderText("搜索代码 / 名称");
 	search->setClearButtonEnabled(true);
-	if (compact)
-	{
-		search->setFixedWidth(180);
-		heading->addWidget(search);
-		heading->addSpacing(6);
-		QPushButton* searchButton = new QPushButton("搜索", list);
-		searchButton->setObjectName("marketSearchButton");
-		searchButton->setFixedWidth(52);
-		searchButton->setFixedHeight(search->sizeHint().height());
-		heading->addWidget(searchButton);
-		connect(searchButton, &QPushButton::clicked, search, &QLineEdit::returnPressed);
-	}
-	else
-	{
-		layout->addWidget(search);
-	}
+	search->setFixedWidth(180);
+	search->setFixedHeight(32);
+	heading->addWidget(search);
+	heading->addSpacing(6);
+	QPushButton* searchButton = new QPushButton(QString::fromUtf8("\xF0\x9F\x94\x8D"), list);
+	searchButton->setObjectName("marketSearchButton");
+	searchButton->setToolTip("搜索");
+	searchButton->setAccessibleName("搜索");
+	searchButton->setFixedSize(32, search->height());
+	heading->addWidget(searchButton);
+	connect(searchButton, &QPushButton::clicked, search, &QLineEdit::returnPressed);
 	m_table = new QTableView(list);
 	m_model = new CDataTableModel(m_table);
 	m_proxy = new CMarketFilterProxyModel(m_table);
