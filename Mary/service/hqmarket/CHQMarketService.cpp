@@ -142,27 +142,27 @@ void CHQMarketService::Initialize()
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteHandler(_TyQuoteHandler&& handler)
 {
-	return m_dispatcher_quote.Subscribe(std::move(handler));
+	return m_pump_quote.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveQuoteHandler(_TyHandlerToken token)
 {
-	m_dispatcher_quote.Unsubscribe(token);
+	m_pump_quote.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddDepthHandler(_TyDepthHandler&& handler)
 {
-	return m_dispatcher_depth.Subscribe(std::move(handler));
+	return m_pump_depth.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveDepthHandler(_TyHandlerToken token)
 {
-	m_dispatcher_depth.Unsubscribe(token);
+	m_pump_depth.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistoryHandler&& handler)
 {
-	return m_dispatcher_history.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
+	return m_pump_history.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
 	{
 		handler(event.m_requestId, event.m_strSecurity, event.m_period, event.m_bars, event.m_strError);
 	});
@@ -170,12 +170,12 @@ CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistory
 
 void CHQMarketService::RemoveHistoryHandler(_TyHandlerToken token)
 {
-	m_dispatcher_history.Unsubscribe(token);
+	m_pump_history.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteTableHandler(_TyQuoteTableHandler&& handler)
 {
-	return m_dispatcher_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
+	return m_pump_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
 	{
 		handler(event.m_view, event.m_changes);
 	});
@@ -183,17 +183,17 @@ CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteTableHandler(_TyQuot
 
 void CHQMarketService::RemoveQuoteTableHandler(_TyHandlerToken token)
 {
-	m_dispatcher_quote_table.Unsubscribe(token);
+	m_pump_quote_table.Unsubscribe(token);
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddSecurityListHandler(_TySecurityListHandler&& handler)
 {
-	return m_dispatcher_security_list.Subscribe(std::move(handler));
+	return m_pump_security_list.Subscribe(std::move(handler));
 }
 
 void CHQMarketService::RemoveSecurityListHandler(_TyHandlerToken token)
 {
-	m_dispatcher_security_list.Unsubscribe(token);
+	m_pump_security_list.Unsubscribe(token);
 }
 
 void CHQMarketService::RegisterSecurity(const CSecurity& info)
@@ -591,7 +591,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 	}
 
 	auto [view, changes] = writer.Commit();
-	m_dispatcher_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes)});
+	m_pump_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes)});
 }
 
 void CHQMarketService::OnResponse(const CRequest& req)
@@ -621,7 +621,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		{
 			RegisterSecurity(security);
 		}
-		m_dispatcher_security_list.Notify(ev);
+		m_pump_security_list.Notify(ev);
 		return;
 	}
 
@@ -646,7 +646,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 			std::unique_lock lock(m_mtx_depths);
 			m_depths.insert_or_assign(value.m_security.String(), value);
 		}
-		m_dispatcher_depth.Notify(value);
+		m_pump_depth.Notify(value);
 		return;
 	}
 
@@ -691,7 +691,7 @@ void CHQMarketService::OnResponse(const CRequest& req)
 				m_history.insert_or_assign(HistoryKey(event.m_strSecurity, event.m_period), event.m_bars);
 			}
 		}
-		m_dispatcher_history.Notify(event);
+		m_pump_history.Notify(event);
 		return;
 	}
 
@@ -727,5 +727,5 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		m_quotes.insert_or_assign(value.m_security.String(), value);
 	}
 
-	m_dispatcher_quote.Notify(value);
+	m_pump_quote.Notify(value);
 }
