@@ -47,7 +47,8 @@ namespace
 				fLow = (std::min)(fLow, bar.m_fLow);
 				fHigh = (std::max)(fHigh, bar.m_fHigh);
 			}
-			return QRectF(0.0, fLow, static_cast<double>(m_bars->size() - 1), fHigh - fLow);
+			// Qwt trading data stores the value axis first; vertical candles transpose this rectangle.
+			return QRectF(fLow, 0.0, fHigh - fLow, static_cast<double>(m_bars->size() - 1));
 		}
 
 	private:
@@ -184,6 +185,8 @@ void CUICurve::InitializePlots()
 	m_pVolumePlot->setCanvasBackground(QColor("#0e192b"));
 	m_pVolumePlot->setMinimumHeight(60);
 	m_pVolumePlot->setMaximumHeight(100);
+	m_pVolumePlot->setAxisMaxMajor(QwtAxis::YLeft, 2);
+	m_pVolumePlot->setAxisMaxMinor(QwtAxis::YLeft, 0);
 
 	m_pTradingCurve = new QwtPlotTradingCurve("K线");
 	m_pTradingCurve->setSymbolStyle(QwtPlotTradingCurve::CandleStick);
@@ -263,6 +266,13 @@ void CUICurve::Refresh()
 	m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft);
 	m_pVolumePlot->setAxisAutoScale(QwtAxis::XBottom);
 	m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft);
+	if (!bars->empty())
+	{
+		for (QwtPlot* plot : { m_pPricePlot, m_pVolumePlot })
+		{
+			plot->setAxisScale(QwtAxis::XBottom, -0.5, static_cast<double>(bars->size()) - 0.5);
+		}
+	}
 	m_pPricePlot->replot();
 	m_pVolumePlot->replot();
 }

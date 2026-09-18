@@ -6,6 +6,12 @@
 #include <QMessageBox>
 #include <QMetaObject>
 
+namespace
+{
+	// 界面测试时跳过服务器登录；关闭后恢复正常认证流程。
+	constexpr bool UiTestLogin{ true };
+}
+
 LoginWindow::LoginWindow(QWidget* parent) : QDialog(parent), ui(new Ui::LoginWindowClass())
 {
 	ui->setupUi(this);
@@ -78,6 +84,12 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
+	if (UiTestLogin)
+	{
+		accept();
+		return;
+	}
+
 	std::optional<CHostInfo> site = CHostMgr::InstanceRef().GetActiveHost();
 	if (!site.has_value())
 	{

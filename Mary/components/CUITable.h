@@ -1,64 +1,78 @@
 #ifndef MARY_COMPONENTS_CUITABLE_H
 #define MARY_COMPONENTS_CUITABLE_H
 
+#include "../service/hqmarket/defines_hqmarket.h"
+#include <QString>
 #include <QWidget>
+#include <unordered_set>
 
-#include <cstdint>
-#include <string>
-#include <vector>
-
-struct CQuote;
-struct CSecurity;
-struct CMarketDepth;
-struct CMarketBar;
-struct CDataChangeSet;
-class CDataTableView;
-enum class MarketBarPeriod;
-enum class CurveMode;
 class CUICurve;
 class CDataTableModel;
 class CMarketFilterProxyModel;
 class QTableView;
 class QModelIndex;
+class QLabel;
+class QTabBar;
+class QLineEdit;
+class QSplitter;
+enum class CurveMode;
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class CUITableClass; }
-QT_END_NAMESPACE
+enum class MarketTableMode
+{
+	Watchlist,
+	AShare,
+	Constituents
+};
 
 class CUITable final : public QWidget
 {
 	Q_OBJECT
-
-public:
+	public:
 	explicit CUITable(QWidget* pParent = nullptr);
+	CUITable(MarketTableMode mode, QWidget* pParent);
 	~CUITable() override;
+	void SetSector(const QString& sector);
 
-private slots:
-	void OnFilterChanged(const QString& strText);
-	void OnMarketFilterChanged(int nIndex);
-	void OnStatusFilterChanged(int nIndex);
-
-private:
+	private:
 	void InitializeUI();
 	void BindService();
-	void HandleDepth(const CMarketDepth& depth);
-	void HandleHistory(std::uint64_t requestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
-	void HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes);
-	void OnCurrentRowChanged(const QModelIndex& current, const QModelIndex& previous);
-	CSecurity GetSecurity(const QModelIndex& index) const;
-	QString GetName(const QModelIndex& index) const;
+	void LoadDemoData();
+	void UpdateCount();
+	void EnsureSelection();
+	void RefreshSelection();
+	void ApplyTheme();
+	void SetMarket(int index);
 	void RequestHistory(CurveMode mode);
+	void HandleHistory(std::uint64_t requestId, const std::string& security, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& error);
+	void HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes);
+	CSecurity GetSecurity(const QModelIndex& index) const;
+	void changeEvent(QEvent* event) override;
+	void showEvent(QShowEvent* event) override;
 
-private:
-	Ui::CUITableClass* ui{ nullptr };
-	CUICurve* m_pCurve{ nullptr };
-	QTableView* m_pWatchlistTable{ nullptr };
-	CDataTableModel* m_pWatchlistModel{ nullptr };
-	CMarketFilterProxyModel* m_pWatchlistProxy{ nullptr };
-	std::uint64_t m_quoteTableHandlerToken{ 0 };
-	std::uint64_t m_depthHandlerToken{ 0 };
-	std::uint64_t m_historyHandlerToken{ 0 };
-	std::uint64_t m_historyRequestId{ 0 };
+	MarketTableMode m_mode{ MarketTableMode::Watchlist };
+	bool m_demo{ false };
+	bool m_layoutInitialized{ false };
+	QSplitter* m_splitter{ nullptr };
+	QString m_sector;
+	std::string m_selectedSecurity;
+	CDataTable m_demoTable;
+	std::unordered_set<std::string> m_watchlist;
+	CUICurve* m_intraday{ nullptr };
+	CUICurve* m_candles{ nullptr };
+	QTableView* m_table{ nullptr };
+	CDataTableModel* m_model{ nullptr };
+	CMarketFilterProxyModel* m_proxy{ nullptr };
+	QLabel* m_title{ nullptr };
+	QLabel* m_count{ nullptr };
+	QLabel* m_stockTitle{ nullptr };
+	QLabel* m_price{ nullptr };
+	QLabel* m_chartState{ nullptr };
+	QTabBar* m_marketTabs{ nullptr };
+	QTabBar* m_periodTabs{ nullptr };
+	std::uint64_t m_quoteTableToken{ 0 };
+	std::uint64_t m_historyToken{ 0 };
+	std::uint64_t m_minuteRequestId{ 0 };
+	std::uint64_t m_dayRequestId{ 0 };
 };
 
 #endif
