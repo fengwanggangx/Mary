@@ -1,4 +1,5 @@
 #include "CRegisterDialog.h"
+#include "CUIStyle.h"
 
 #include "../system/CHostMgr.h"
 
@@ -12,6 +13,7 @@
 CRegisterDialog::CRegisterDialog(QWidget* parent) : QDialog(parent)
 {
 	m_ui.setupUi(this);
+	UIStyle::Apply(*this, ":/styles/register.qss");
 	connect(m_ui.registerButton, &QPushButton::clicked, this, &CRegisterDialog::Register);
 	connect(m_ui.cancelButton, &QPushButton::clicked, this, &QDialog::reject);
 	m_callbackId = CLoginService::InstanceRef().Subscribe([this](const AuthEvent& event)

@@ -1,4 +1,6 @@
 #include "CUICurve.h"
+#include "CUIStyle.h"
+#include "ui_CUICurve.h"
 
 #include <QwtPlot.h>
 
@@ -8,7 +10,7 @@
 #include <QEvent>
 #include <QPalette>
 #include <QPen>
-#include <QVBoxLayout>
+#include <QScopedValueRollback>
 
 #include <algorithm>
 #include <limits>
@@ -18,123 +20,124 @@ namespace
 {
 	class CBarCandleSeriesData final : public QwtSeriesData<QwtOHLCSample>
 	{
-	public:
-		explicit CBarCandleSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
-		{
-		}
-
-		std::size_t size() const override
-		{
-			return nullptr == m_bars ? 0 : m_bars->size();
-		}
-
-		QwtOHLCSample sample(std::size_t index) const override
-		{
-			const CMarketBar& bar = (*m_bars)[index];
-			return QwtOHLCSample(static_cast<double>(index), bar.m_fOpen, bar.m_fHigh, bar.m_fLow, bar.m_fClose);
-		}
-
-		QRectF boundingRect() const override
-		{
-			if ((nullptr == m_bars) || m_bars->empty())
+		public:
+			explicit CBarCandleSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
 			{
-				return QRectF(1.0, 1.0, -2.0, -2.0);
 			}
-			double fLow = (std::numeric_limits<double>::max)();
-			double fHigh = (std::numeric_limits<double>::lowest)();
-			for (const CMarketBar& bar : *m_bars)
-			{
-				fLow = (std::min)(fLow, bar.m_fLow);
-				fHigh = (std::max)(fHigh, bar.m_fHigh);
-			}
-			// Qwt trading data stores the value axis first; vertical candles transpose this rectangle.
-			return QRectF(fLow, 0.0, fHigh - fLow, static_cast<double>(m_bars->size() - 1));
-		}
 
-	private:
-		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+			std::size_t size() const override
+			{
+				return nullptr == m_bars ? 0 : m_bars->size();
+			}
+
+			QwtOHLCSample sample(std::size_t index) const override
+			{
+				const CMarketBar& bar = (*m_bars)[index];
+				return QwtOHLCSample(static_cast<double>(index), bar.m_fOpen, bar.m_fHigh, bar.m_fLow, bar.m_fClose);
+			}
+
+			QRectF boundingRect() const override
+			{
+				if ((nullptr == m_bars) || m_bars->empty())
+				{
+					return QRectF(1.0, 1.0, -2.0, -2.0);
+				}
+				double fLow = (std::numeric_limits<double>::max)();
+				double fHigh = (std::numeric_limits<double>::lowest)();
+				for (const CMarketBar& bar : *m_bars)
+				{
+					fLow = (std::min)(fLow, bar.m_fLow);
+					fHigh = (std::max)(fHigh, bar.m_fHigh);
+				}
+				// Qwt trading data stores the value axis first; vertical candles transpose this rectangle.
+				return QRectF(fLow, 0.0, fHigh - fLow, static_cast<double>(m_bars->size() - 1));
+			}
+
+		private:
+			std::shared_ptr<const std::vector<CMarketBar>> m_bars;
 	};
 
 	class CBarLineSeriesData final : public QwtSeriesData<QPointF>
 	{
-	public:
-		explicit CBarLineSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
-		{
-		}
-
-		std::size_t size() const override
-		{
-			return nullptr == m_bars ? 0 : m_bars->size();
-		}
-
-		QPointF sample(std::size_t index) const override
-		{
-			return QPointF(static_cast<double>(index), (*m_bars)[index].m_fClose);
-		}
-
-		QRectF boundingRect() const override
-		{
-			if ((nullptr == m_bars) || m_bars->empty())
+		public:
+			explicit CBarLineSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
 			{
-				return QRectF(1.0, 1.0, -2.0, -2.0);
 			}
-			double fLow = (std::numeric_limits<double>::max)();
-			double fHigh = (std::numeric_limits<double>::lowest)();
-			for (const CMarketBar& bar : *m_bars)
-			{
-				fLow = (std::min)(fLow, bar.m_fClose);
-				fHigh = (std::max)(fHigh, bar.m_fClose);
-			}
-			return QRectF(0.0, fLow, static_cast<double>(m_bars->size() - 1), fHigh - fLow);
-		}
 
-	private:
-		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+			std::size_t size() const override
+			{
+				return nullptr == m_bars ? 0 : m_bars->size();
+			}
+
+			QPointF sample(std::size_t index) const override
+			{
+				return QPointF(static_cast<double>(index), (*m_bars)[index].m_fClose);
+			}
+
+			QRectF boundingRect() const override
+			{
+				if ((nullptr == m_bars) || m_bars->empty())
+				{
+					return QRectF(1.0, 1.0, -2.0, -2.0);
+				}
+				double fLow = (std::numeric_limits<double>::max)();
+				double fHigh = (std::numeric_limits<double>::lowest)();
+				for (const CMarketBar& bar : *m_bars)
+				{
+					fLow = (std::min)(fLow, bar.m_fClose);
+					fHigh = (std::max)(fHigh, bar.m_fClose);
+				}
+				return QRectF(0.0, fLow, static_cast<double>(m_bars->size() - 1), fHigh - fLow);
+			}
+
+		private:
+			std::shared_ptr<const std::vector<CMarketBar>> m_bars;
 	};
 
 	class CBarVolumeSeriesData final : public QwtSeriesData<QwtIntervalSample>
 	{
-	public:
-		explicit CBarVolumeSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
-		{
-		}
-
-		std::size_t size() const override
-		{
-			return nullptr == m_bars ? 0 : m_bars->size();
-		}
-
-		QwtIntervalSample sample(std::size_t index) const override
-		{
-			return QwtIntervalSample(static_cast<double>((*m_bars)[index].m_nVolume), static_cast<double>(index) - 0.35, static_cast<double>(index) + 0.35);
-		}
-
-		QRectF boundingRect() const override
-		{
-			if ((nullptr == m_bars) || m_bars->empty())
+		public:
+			explicit CBarVolumeSeriesData(const std::shared_ptr<const std::vector<CMarketBar>>& bars) : m_bars(bars)
 			{
-				return QRectF(1.0, 1.0, -2.0, -2.0);
 			}
-			std::int64_t nMaximumVolume = 0;
-			for (const CMarketBar& bar : *m_bars)
-			{
-				nMaximumVolume = (std::max)(nMaximumVolume, bar.m_nVolume);
-			}
-			return QRectF(-0.35, 0.0, static_cast<double>(m_bars->size()), static_cast<double>(nMaximumVolume));
-		}
 
-	private:
-		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+			std::size_t size() const override
+			{
+				return nullptr == m_bars ? 0 : m_bars->size();
+			}
+
+			QwtIntervalSample sample(std::size_t index) const override
+			{
+				return QwtIntervalSample(static_cast<double>((*m_bars)[index].m_nVolume), static_cast<double>(index) - 0.35, static_cast<double>(index) + 0.35);
+			}
+
+			QRectF boundingRect() const override
+			{
+				if ((nullptr == m_bars) || m_bars->empty())
+				{
+					return QRectF(1.0, 1.0, -2.0, -2.0);
+				}
+				std::int64_t nMaximumVolume = 0;
+				for (const CMarketBar& bar : *m_bars)
+				{
+					nMaximumVolume = (std::max)(nMaximumVolume, bar.m_nVolume);
+				}
+				return QRectF(-0.35, 0.0, static_cast<double>(m_bars->size()), static_cast<double>(nMaximumVolume));
+			}
+
+		private:
+			std::shared_ptr<const std::vector<CMarketBar>> m_bars;
 	};
 
 	QDate BarDate(const CMarketBar& bar)
 	{
 		return QDateTime::fromMSecsSinceEpoch(bar.m_nBeginTime).date();
 	}
-}
+} // namespace
 
-CUICurve::CUICurve(QWidget* pParent) : QWidget(pParent), m_bars(std::make_shared<const std::vector<CMarketBar>>())
+CUICurve::CUICurve(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CUICurveClass>()), m_bars(std::make_shared<const std::vector<CMarketBar>>())
 {
+	m_ui->setupUi(this);
 	InitializePlots();
 }
 
@@ -174,17 +177,10 @@ void CUICurve::Clear()
 
 void CUICurve::InitializePlots()
 {
-	QVBoxLayout* pLayout = new QVBoxLayout(this);
-	pLayout->setContentsMargins(0, 0, 0, 0);
-	pLayout->setSpacing(2);
-
-	m_pPricePlot = new QwtPlot(this);
-	m_pPricePlot->setCanvasBackground(QColor("#0e192b"));
-	m_pPricePlot->setMinimumHeight(180);
-	m_pVolumePlot = new QwtPlot(this);
-	m_pVolumePlot->setCanvasBackground(QColor("#0e192b"));
-	m_pVolumePlot->setMinimumHeight(60);
-	m_pVolumePlot->setMaximumHeight(100);
+	m_pPricePlot = m_ui->pricePlot;
+	m_pVolumePlot = m_ui->volumePlot;
+	m_pPricePlot->canvas()->setObjectName("curveCanvas");
+	m_pVolumePlot->canvas()->setObjectName("curveCanvas");
 	m_pVolumePlot->setAxisMaxMajor(QwtAxis::YLeft, 2);
 	m_pVolumePlot->setAxisMaxMinor(QwtAxis::YLeft, 0);
 
@@ -211,8 +207,6 @@ void CUICurve::InitializePlots()
 	new QwtPlotPanner(m_pVolumePlot->canvas());
 	new QwtPlotMagnifier(m_pVolumePlot->canvas());
 
-	pLayout->addWidget(m_pPricePlot, 4);
-	pLayout->addWidget(m_pVolumePlot, 1);
 	ApplyPalette();
 }
 
@@ -227,21 +221,25 @@ void CUICurve::changeEvent(QEvent* pEvent)
 
 void CUICurve::ApplyPalette()
 {
-	if ((nullptr == m_pPricePlot) || (nullptr == m_pVolumePlot))
+	if (m_bApplyingPalette || (nullptr == m_pPricePlot) || (nullptr == m_pVolumePlot))
 	{
 		return;
 	}
+	QScopedValueRollback<bool> paletteGuard(m_bApplyingPalette, true);
 	QPalette palette = qApp->palette();
 	QColor background = palette.color(QPalette::Base);
 	QColor foreground = palette.color(QPalette::Text);
 	m_pTradingCurve->setSymbolPen(foreground, 1.0);
+	QString strStyle = UIStyle::Load(":/styles/curve.qss").arg(palette.color(QPalette::Window).name(), foreground.name(), background.name());
+	if (styleSheet() != strStyle)
+	{
+		setStyleSheet(strStyle);
+	}
 	for (QwtPlot* pPlot : { m_pPricePlot, m_pVolumePlot })
 	{
 		pPlot->setPalette(palette);
-		pPlot->setStyleSheet(QString("QwtPlot, QwtScaleWidget { background-color: %1; color: %2; }").arg(palette.color(QPalette::Window).name(), foreground.name()));
 		pPlot->setAutoFillBackground(true);
 		pPlot->setCanvasBackground(background);
-		pPlot->canvas()->setStyleSheet(QString("background-color: %1;").arg(background.name()));
 		for (int nAxis = 0; nAxis < QwtAxis::AxisPositions; ++nAxis)
 		{
 			QwtScaleWidget* pAxis = pPlot->axisWidget(nAxis);

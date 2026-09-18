@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+	<class>CUICurveClass</class>
+	<widget class="QWidget" name="CUICurveClass">
+		<layout class="QVBoxLayout" name="plotLayout" stretch="4,1">
+			<property name="leftMargin">
+				<number>0</number>
+			</property>
+			<property name="topMargin">
+				<number>0</number>
+			</property>
+			<property name="rightMargin">
+				<number>0</number>
+			</property>
+			<property name="bottomMargin">
+				<number>0</number>
+			</property>
+			<property name="spacing">
+				<number>2</number>
+			</property>
+			<item>
+				<widget class="QwtPlot" name="pricePlot">
+					<property name="minimumSize">
+						<size>
+							<width>0</width>
+							<height>180</height>
+						</size>
+					</property>
+				</widget>
+			</item>
+			<item>
+				<widget class="QwtPlot" name="volumePlot">
+					<property name="minimumSize">
+						<size>
+							<width>0</width>
+							<height>60</height>
+						</size>
+					</property>
+					<property name="maximumSize">
+						<size>
+							<width>16777215</width>
+							<height>100</height>
+						</size>
+					</property>
+				</widget>
+			</item>
+		</layout>
+	</widget>
+	<customwidgets>
+		<customwidget>
+			<class>QwtPlot</class>
+			<extends>QFrame</extends>
+			<header>QwtPlot.h</header>
+		</customwidget>
+	</customwidgets>
+	<resources />
+	<connections />
+</ui>

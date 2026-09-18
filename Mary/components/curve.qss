@@ -1,0 +1,2 @@
+QwtPlot, QwtScaleWidget { background-color: %1; color: %2; }
+#curveCanvas { background-color: %3; }

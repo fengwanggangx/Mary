@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+	<class>CViewAShareClass</class>
+	<widget class="QWidget" name="CViewAShareClass">
+		<property name="marketPage" stdset="0">
+			<bool>true</bool>
+		</property>
+		<layout class="QVBoxLayout" name="rootLayout">
+			<property name="leftMargin">
+				<number>14</number>
+			</property>
+			<property name="topMargin">
+				<number>12</number>
+			</property>
+			<property name="rightMargin">
+				<number>14</number>
+			</property>
+			<property name="bottomMargin">
+				<number>0</number>
+			</property>
+			<property name="spacing">
+				<number>0</number>
+			</property>
+			<item>
+				<widget class="QSplitter" name="splitter">
+					<property name="orientation">
+						<enum>Qt::Horizontal</enum>
+					</property>
+					<property name="handleWidth">
+						<number>1</number>
+					</property>
+					<property name="childrenCollapsible">
+						<bool>false</bool>
+					</property>
+					<widget class="QFrame" name="listFrame">
+						<property name="marketPanel" stdset="0">
+							<bool>true</bool>
+						</property>
+						<layout class="QVBoxLayout" name="listFrameLayout">
+							<property name="leftMargin">
+								<number>0</number>
+							</property>
+							<property name="topMargin">
+								<number>0</number>
+							</property>
+							<property name="rightMargin">
+								<number>0</number>
+							</property>
+							<property name="bottomMargin">
+								<number>0</number>
+							</property>
+							<property name="spacing">
+								<number>0</number>
+							</property>
+							<item>
+								<layout class="QHBoxLayout" name="headingLayout">
+									<property name="leftMargin">
+										<number>12</number>
+									</property>
+									<property name="topMargin">
+										<number>10</number>
+									</property>
+									<property name="rightMargin">
+										<number>12</number>
+									</property>
+									<property name="bottomMargin">
+										<number>8</number>
+									</property>
+									<property name="spacing">
+										<number>6</number>
+									</property>
+									<item>
+										<widget class="QLabel" name="titleLabel">
+											<property name="text">
+												<string>沪深A股</string>
+											</property>
+											<property name="marketHeading" stdset="0">
+												<bool>true</bool>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QLabel" name="countLabel">
+											<property name="text">
+												<string></string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<spacer name="headingSpacer">
+											<property name="orientation">
+												<enum>Qt::Horizontal</enum>
+											</property>
+											<property name="sizeHint">
+												<size>
+													<width>40</width>
+													<height>20</height>
+												</size>
+											</property>
+										</spacer>
+									</item>
+									<item>
+										<widget class="QLineEdit" name="searchEdit">
+											<property name="minimumSize">
+												<size>
+													<width>180</width>
+													<height>32</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>180</width>
+													<height>32</height>
+												</size>
+											</property>
+											<property name="placeholderText">
+												<string>搜索代码 / 名称</string>
+											</property>
+											<property name="clearButtonEnabled">
+												<bool>true</bool>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QPushButton" name="searchButton">
+											<property name="minimumSize">
+												<size>
+													<width>32</width>
+													<height>32</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>32</width>
+													<height>32</height>
+												</size>
+											</property>
+											<property name="text">
+												<string>🔍</string>
+											</property>
+											<property name="toolTip">
+												<string>搜索</string>
+											</property>
+											<property name="accessibleName">
+												<string>搜索</string>
+											</property>
+										</widget>
+									</item>
+								</layout>
+							</item>
+							<item>
+								<widget class="CUITable" name="table">
+									<property name="frameShape">
+										<enum>QFrame::NoFrame</enum>
+									</property>
+									<property name="selectionBehavior">
+										<enum>QAbstractItemView::SelectRows</enum>
+									</property>
+									<property name="selectionMode">
+										<enum>QAbstractItemView::SingleSelection</enum>
+									</property>
+									<property name="editTriggers">
+										<set>QAbstractItemView::NoEditTriggers</set>
+									</property>
+									<property name="showGrid">
+										<bool>false</bool>
+									</property>
+									<property name="sortingEnabled">
+										<bool>true</bool>
+									</property>
+									<attribute name="verticalHeaderVisible">
+										<bool>false</bool>
+									</attribute>
+									<attribute name="verticalHeaderDefaultSectionSize">
+										<number>32</number>
+									</attribute>
+								</widget>
+							</item>
+							<item>
+								<widget class="QTabWidget" name="marketTabs">
+									<property name="minimumSize">
+										<size>
+											<width>0</width>
+											<height>30</height>
+										</size>
+									</property>
+									<property name="maximumSize">
+										<size>
+											<width>16777215</width>
+											<height>30</height>
+										</size>
+									</property>
+									<widget class="QWidget" name="marketTabsPage0">
+										<attribute name="title">
+											<string>沪深A股</string>
+										</attribute>
+									</widget>
+									<widget class="QWidget" name="marketTabsPage1">
+										<attribute name="title">
+											<string>北京A股</string>
+										</attribute>
+									</widget>
+									<widget class="QWidget" name="marketTabsPage2">
+										<attribute name="title">
+											<string>创业板</string>
+										</attribute>
+									</widget>
+									<widget class="QWidget" name="marketTabsPage3">
+										<attribute name="title">
+											<string>科创板</string>
+										</attribute>
+									</widget>
+								</widget>
+							</item>
+						</layout>
+					</widget>
+					<widget class="QSplitter" name="chartSplitter">
+						<property name="orientation">
+							<enum>Qt::Vertical</enum>
+						</property>
+						<property name="childrenCollapsible">
+							<bool>false</bool>
+						</property>
+						<widget class="QFrame" name="intradayFrame">
+							<property name="marketPanel" stdset="0">
+								<bool>true</bool>
+							</property>
+							<layout class="QVBoxLayout" name="intradayFrameLayout">
+								<item>
+									<widget class="QLabel" name="stockTitle">
+										<property name="text">
+											<string>选择证券</string>
+										</property>
+										<property name="marketHeading" stdset="0">
+											<bool>true</bool>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QLabel" name="priceLabel">
+										<property name="text">
+											<string>--</string>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QLabel" name="chartState">
+										<property name="marketMuted" stdset="0">
+											<bool>true</bool>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QLabel" name="intradayLabel">
+										<property name="text">
+											<string>分时</string>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="CUICurve" name="intradayCurve" />
+								</item>
+							</layout>
+						</widget>
+						<widget class="QFrame" name="candleFrame">
+							<property name="marketPanel" stdset="0">
+								<bool>true</bool>
+							</property>
+							<layout class="QVBoxLayout" name="candleFrameLayout">
+								<item>
+									<widget class="QTabWidget" name="periodTabs">
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>30</height>
+											</size>
+										</property>
+										<property name="maximumSize">
+											<size>
+												<width>16777215</width>
+												<height>30</height>
+											</size>
+										</property>
+										<widget class="QWidget" name="periodTabsPage0">
+											<attribute name="title">
+												<string>日K</string>
+											</attribute>
+										</widget>
+										<widget class="QWidget" name="periodTabsPage1">
+											<attribute name="title">
+												<string>周K</string>
+											</attribute>
+										</widget>
+										<widget class="QWidget" name="periodTabsPage2">
+											<attribute name="title">
+												<string>月K</string>
+											</attribute>
+										</widget>
+									</widget>
+								</item>
+								<item>
+									<widget class="CUICurve" name="candleCurve" />
+								</item>
+							</layout>
+						</widget>
+					</widget>
+				</widget>
+			</item>
+		</layout>
+	</widget>
+	<customwidgets>
+		<customwidget>
+			<class>CUITable</class>
+			<extends>QTableView</extends>
+			<header>CUITable.h</header>
+		</customwidget>
+		<customwidget>
+			<class>CUICurve</class>
+			<extends>QWidget</extends>
+			<header>CUICurve.h</header>
+		</customwidget>
+	</customwidgets>
+	<resources />
+	<connections />
+</ui>

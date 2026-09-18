@@ -1,0 +1,9 @@
+#removeButton { padding: 0px 5px; }
+
+#viewButton { padding: 0px 5px; }
+
+#addButton { padding: 0px 5px; }
+
+#okButton { padding: 0px 5px; }
+
+#cancelButton { padding: 0px 5px; }

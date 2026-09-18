@@ -1,5 +1,14 @@
 <RCC>
     <qresource prefix="/">
+        <file alias="styles/market-pages.qss">components/market-pages.qss</file>
+        <file alias="styles/theme-light.qss">components/theme-light.qss</file>
+        <file alias="styles/theme-dark.qss">components/theme-dark.qss</file>
+        <file alias="styles/market-overview.qss">components/market-overview.qss</file>
+        <file alias="styles/strategy-pages.qss">components/strategy-pages.qss</file>
+        <file alias="styles/curve.qss">components/curve.qss</file>
+        <file alias="styles/login.qss">components/login.qss</file>
+        <file alias="styles/server-settings.qss">components/server-settings.qss</file>
+        <file alias="styles/register.qss">components/register.qss</file>
         <file>images/login.jpg</file>
         <file alias="navigation/ai-trade-white.png">images/ai-trade-white.png</file>
         <file alias="navigation/ai-trade-black.png">images/ai-trade-black.png</file>

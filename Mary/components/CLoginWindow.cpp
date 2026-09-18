@@ -1,4 +1,5 @@
 #include "CLoginWindow.h"
+#include "CUIStyle.h"
 #include "CServerSettingsDialog.h"
 #include "CRegisterDialog.h"
 #include "../system/CHostMgr.h"
@@ -15,6 +16,7 @@ namespace
 LoginWindow::LoginWindow(QWidget* parent) : QDialog(parent), ui(new Ui::LoginWindowClass())
 {
 	ui->setupUi(this);
+	UIStyle::Apply(*this, ":/styles/login.qss");
 	setWindowFlag(Qt::FramelessWindowHint);
 	ConnectSlots();	
 	m_loginCallbackId = CLoginService::InstanceRef().Subscribe([this](const AuthEvent& event)

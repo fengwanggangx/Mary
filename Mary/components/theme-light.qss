@@ -1,0 +1,45 @@
+QMainWindow, #centralWidget { background: #f4f7fb; color: #162033; }
+#titleBar { background: #ffffff; border-bottom: 1px solid #e4eaf2; }
+#appIconLabel { background: transparent; }
+#appTitleLabel { color: #162033; font-size: 15px; font-weight: 600; }
+#navigationFrame { background: #ffffff; border-right: 1px solid #e4eaf2; }
+QTreeWidget { background: transparent; border: none; outline: none; color: #536176; font-size: 14px; }
+QTreeWidget::item { height: 42px; padding-left: 10px; }
+QTreeWidget::item:selected { background: #4d82f9; color: white; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+QTabBar { background: #ffffff; border: 0; border-bottom: 1px solid #e6ebf2; padding: 0; margin: 0; }
+QTabBar::tab { min-width: 72px; height: 36px; color: #65748a; background: #ffffff; border: 1px solid #e6ebf2; border-top: 0; border-bottom-width: 2px; margin-left: -1px; margin-bottom: -1px; padding: 0 8px; }
+QTabBar::tab:first { margin-left: 0; }
+QTabBar::tab:selected { color: #1677ff; background: #edf5fd; border-bottom: 2px solid #1677ff; font-weight: 600; }
+QFrame#shanghaiCard, QFrame#shenzhenCard, QFrame#chinextCard, QFrame#chartFrame, QFrame#depthFrame, QFrame#watchlistFrame { background: white; border: 1px solid #e4eaf2; border-radius: 7px; }
+QFrame[summaryCard="true"] { background: white; border: 1px solid #e4eaf2; border-radius: 7px; }
+#shanghaiPrice, #shenzhenPrice, #chinextPrice { color: #f04455; font-size: 23px; font-weight: 700; }
+#chartTitle, #depthTitle, #watchlistTitle { color: #1d2a3c; font-size: 14px; font-weight: 600; }
+#chartPlaceholder { color: #8b98aa; background: #fafcff; border: 1px dashed #dce4ef; }
+QTableWidget { background: white; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; }
+QTableView { background: white; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
+QTabWidget::pane { background: #f4f7fb; border: 1px solid #e4eaf2; top: -1px; }
+QComboBox { background: white; color: #344258; border: 1px solid #dce3ed; border-radius: 5px; padding: 5px 9px; }
+QComboBox QAbstractItemView { background: white; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
+QHeaderView::section { background: #f7f9fc; color: #68778c; border: none; border-bottom: 1px solid #e6ebf2; padding: 6px; }
+QLineEdit { background: white; border: 1px solid #dce3ed; border-radius: 5px; padding: 6px 9px; }
+QPushButton { border: 1px solid #dce3ed; border-radius: 5px; background: white; color: #536176; padding: 5px 10px; }
+QPushButton:hover { border-color: #1677ff; color: #1677ff; }
+#addButton { background: #1677ff; color: white; border-color: #1677ff; }
+#skinButton { background: transparent; color: #536176; border: 1px solid transparent; border-radius: 6px; padding: 0; }
+#skinButton:hover, #skinButton:pressed { color: #1677ff; background: #eef3f8; border-color: #dce3ed; }
+#skinButton::menu-indicator { image: none; width: 0; height: 0; }
+#minimizeButton, #maximizeButton, #closeButton { border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 0; font-size: 15px; }
+#minimizeButton:hover, #maximizeButton:hover { background: #eef3f8; border-color: #dce3ed; }
+#closeButton:hover { background: #f04455; color: white; }
+QMenu { background: white; color: #344258; border: 1px solid #dce3ed; border-radius: 6px; padding: 4px; }
+QMenu::item { min-width: 80px; padding: 6px 16px; border-radius: 4px; }
+QMenu::item:selected { background: #eef6ff; color: #1677ff; }
+QMenu#skinMenu::item { padding: 6px 8px 6px 20px; }
+QMenu#skinMenu::indicator { width: 14px; height: 14px; subcontrol-origin: padding; subcontrol-position: left center; left: 4px; }
+QMenu#skinMenu::indicator:checked { image: url(:/navigation/check-white.png); }
+QMenu#skinMenu::indicator:exclusive:checked { image: url(:/navigation/check-white.png); }
+QMenu#skinMenu::indicator:unchecked { image: none; }
+#globalStatusBar { background: white; border-top: 1px solid #e4eaf2; color: #69778b; }
+#connectionDot { color: #18bd8b; font-size: 11px; }
+#connectionDot[ready="true"] { color: #20c997; }
+#connectionDot[ready="false"] { color: #f0ad4e; }

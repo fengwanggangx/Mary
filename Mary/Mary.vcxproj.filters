@@ -259,6 +259,24 @@
     <ClCompile Include="components\CUITable.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
+    <ClCompile Include="components\CUIStyle.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CDistributionChart.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CMarketPageController.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewConstituents.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewWatchlist.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewAShare.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
     <ClCompile Include="components\CUICurve.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
@@ -283,6 +301,9 @@
       <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CUITable.h">
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="components\CDistributionChart.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="thirty\qwt\QwtPlot.h">
@@ -322,17 +343,41 @@
     <QtUic Include="components\CViewHQMarket.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
+    <QtUic Include="components\CUICurve.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
     <QtUic Include="components\CViewStrategySettings.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
     <QtUic Include="components\CStrategyEditDialog.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
-    <QtUic Include="components\CUITable.ui">
+    <QtUic Include="components\CViewConstituents.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CViewWatchlist.ui">
+      <Filter>Form Files\components</Filter>
+    </QtUic>
+    <QtUic Include="components\CViewAShare.ui">
       <Filter>Form Files\components</Filter>
     </QtUic>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="components\CMarketPageController.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CUIStyle.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewConstituents.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewWatchlist.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewAShare.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
     <ClInclude Include="system\CLoginService.h">
       <Filter>Source Files\system</Filter>
     </ClInclude>

@@ -1,0 +1,6 @@
+QFrame[summaryCard="true"] { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 7px; }
+QWidget[darkTheme="true"] QFrame[summaryCard="true"] { background: #131f32; border-color: #24334a; }
+QLabel[strategyMetric="true"] { font-size: 23px; font-weight: 600; }
+QLabel[strategyMetric="true"][rising="true"] { color: #ef4354; }
+QLabel[strategyMetric="true"][falling="true"] { color: #00bfa5; }
+QTabBar::tab { min-height: 36px; }

@@ -1,4 +1,5 @@
 #include "CServerSettingsDialog.h"
+#include "CUIStyle.h"
 #include "CServerSiteDialog.h"
 #include "ui_CServerSettingsDialog.h"
 
@@ -22,6 +23,7 @@ namespace
 CServerSettingsDialog::CServerSettingsDialog(QWidget* pParent) : QDialog(pParent), ui(new Ui::CServerSettingsDialogClass())
 {
 	ui->setupUi(this);
+	UIStyle::Apply(*this, ":/styles/server-settings.qss");
 	connect(ui->siteCombo, &QComboBox::currentIndexChanged, this, &CServerSettingsDialog::UpdateButtons);
 	connect(ui->viewButton, &QPushButton::clicked, this, &CServerSettingsDialog::ViewSite);
 	connect(ui->autoFastestCheck, &QCheckBox::toggled, this, &CServerSettingsDialog::OnAutoFastestToggled);

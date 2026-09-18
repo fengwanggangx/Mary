@@ -142,6 +142,12 @@
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
     <ClCompile Include="components\CUITable.cpp" />
+    <ClCompile Include="components\CUIStyle.cpp" />
+    <ClCompile Include="components\CDistributionChart.cpp" />
+    <ClCompile Include="components\CMarketPageController.cpp" />
+    <ClCompile Include="components\CViewConstituents.cpp" />
+    <ClCompile Include="components\CViewWatchlist.cpp" />
+    <ClCompile Include="components\CViewAShare.cpp" />
     <ClCompile Include="components\CDataTableModel.cpp" />
     <ClCompile Include="components\CUICurve.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
@@ -189,6 +195,7 @@
     <QtMoc Include="components\CViewStrategySettings.h" />
     <QtMoc Include="components\CStrategyEditDialog.h" />
     <QtMoc Include="components\CUITable.h" />
+    <QtMoc Include="components\CDistributionChart.h" />
     <QtMoc Include="thirty\qwt\QwtPlot.h" />
   </ItemGroup>
   <ItemGroup>
@@ -235,7 +242,10 @@
     <QtUic Include="components\CRiskSettings.ui" />
     <QtUic Include="components\CSystemSettings.ui" />
     <QtUic Include="components\CViewHQMarket.ui" />
-    <QtUic Include="components\CUITable.ui" />
+    <QtUic Include="components\CUICurve.ui" />
+    <QtUic Include="components\CViewConstituents.ui" />
+    <QtUic Include="components\CViewWatchlist.ui" />
+    <QtUic Include="components\CViewAShare.ui" />
     <QtUic Include="components\CViewStrategySettings.ui" />
     <QtUic Include="components\CStrategyEditDialog.ui" />
   </ItemGroup>
@@ -248,6 +258,11 @@
     <ClInclude Include="basic\CDistributor.h" />
     <ClInclude Include="basic\TMessagePump.h" />
     <ClInclude Include="basic\QtCallbackBridge.h" />
+    <ClInclude Include="components\CMarketPageController.h" />
+    <ClInclude Include="components\CUIStyle.h" />
+    <ClInclude Include="components\CViewConstituents.h" />
+    <ClInclude Include="components\CViewWatchlist.h" />
+    <ClInclude Include="components\CViewAShare.h" />
     <ClInclude Include="system\CLoginService.h" />
     <ClInclude Include="system\CSession.h" />
     <ClInclude Include="request\RequestCenter.h" />

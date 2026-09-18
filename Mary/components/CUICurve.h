@@ -8,6 +8,11 @@
 #include <memory>
 #include <vector>
 
+namespace Ui
+{
+	class CUICurveClass;
+}
+
 class QwtPlot;
 class QwtPlotCurve;
 class QwtPlotHistogram;
@@ -23,33 +28,35 @@ enum class CurveMode
 
 class CUICurve final : public QWidget
 {
-public:
-	explicit CUICurve(QWidget* pParent = nullptr);
-	~CUICurve() override;
+	public:
+		explicit CUICurve(QWidget* pParent = nullptr);
+		~CUICurve() override;
 
-	void SetMode(CurveMode mode);
-	CurveMode GetMode() const noexcept;
-	void SetBars(const std::vector<CMarketBar>& bars);
-	void Clear();
+		void SetMode(CurveMode mode);
+		CurveMode GetMode() const noexcept;
+		void SetBars(const std::vector<CMarketBar>& bars);
+		void Clear();
 
-protected:
-	void changeEvent(QEvent* pEvent) override;
+	protected:
+		void changeEvent(QEvent* pEvent) override;
 
-private:
-	void ApplyPalette();
-	void InitializePlots();
-	void Refresh();
-	std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;
-	std::shared_ptr<const std::vector<CMarketBar>> AggregateBars(bool bMonthly) const;
+	private:
+		void ApplyPalette();
+		void InitializePlots();
+		void Refresh();
+		std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;
+		std::shared_ptr<const std::vector<CMarketBar>> AggregateBars(bool bMonthly) const;
 
-private:
-	CurveMode m_mode{ CurveMode::Day };
-	std::shared_ptr<const std::vector<CMarketBar>> m_bars;
-	QwtPlot* m_pPricePlot{ nullptr };
-	QwtPlot* m_pVolumePlot{ nullptr };
-	QwtPlotTradingCurve* m_pTradingCurve{ nullptr };
-	QwtPlotCurve* m_pIntradayCurve{ nullptr };
-	QwtPlotHistogram* m_pVolumeCurve{ nullptr };
+	private:
+		std::unique_ptr<Ui::CUICurveClass> m_ui;
+		bool m_bApplyingPalette{ false };
+		CurveMode m_mode{ CurveMode::Day };
+		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+		QwtPlot* m_pPricePlot{ nullptr };
+		QwtPlot* m_pVolumePlot{ nullptr };
+		QwtPlotTradingCurve* m_pTradingCurve{ nullptr };
+		QwtPlotCurve* m_pIntradayCurve{ nullptr };
+		QwtPlotHistogram* m_pVolumeCurve{ nullptr };
 };
 
 #endif

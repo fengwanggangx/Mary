@@ -1,30 +1,686 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ui version="4.0">
- <class>CViewStrategySettingsClass</class>
- <widget class="QWidget" name="CViewStrategySettingsClass">
-  <property name="windowTitle"><string>策略管理</string></property>
-  <layout class="QVBoxLayout" name="rootLayout">
-   <property name="leftMargin"><number>16</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>16</number></property><property name="bottomMargin"><number>16</number></property>
-   <item><layout class="QHBoxLayout" name="titleLayout">
-    <item><widget class="QLabel" name="titleLabel"><property name="font"><font><pointsize>16</pointsize><bold>true</bold></font></property><property name="text"><string>策略管理</string></property></widget></item>
-    <item><spacer name="titleSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
-    <item><widget class="QPushButton" name="refreshButton"><property name="text"><string>刷新</string></property></widget></item>
-    <item><widget class="QPushButton" name="addButton"><property name="text"><string>新增策略</string></property></widget></item>
-   </layout></item>
-   <item><layout class="QHBoxLayout" name="filterLayout">
-    <item><widget class="QLineEdit" name="searchEdit"><property name="placeholderText"><string>搜索策略名称 / ID</string></property><property name="clearButtonEnabled"><bool>true</bool></property></widget></item>
-    <item><widget class="QComboBox" name="statusCombo"><item><property name="text"><string>全部状态</string></property></item><item><property name="text"><string>已启用</string></property></item><item><property name="text"><string>已停用</string></property></item></widget></item>
-    <item><spacer name="filterSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
-    <item><widget class="QLabel" name="countLabel"><property name="text"><string>共 0 条策略</string></property></widget></item>
-   </layout></item>
-   <item><widget class="QTableWidget" name="strategyTable">
-    <property name="alternatingRowColors"><bool>true</bool></property><property name="selectionBehavior"><enum>QAbstractItemView::SelectionBehavior::SelectRows</enum></property><property name="selectionMode"><enum>QAbstractItemView::SelectionMode::SingleSelection</enum></property><property name="editTriggers"><set>QAbstractItemView::EditTrigger::NoEditTriggers</set></property><property name="columnCount"><number>6</number></property>
-    <column><property name="text"><string>策略ID</string></property></column><column><property name="text"><string>策略名称</string></property></column><column><property name="text"><string>策略类型</string></property></column><column><property name="text"><string>订阅标的</string></property></column><column><property name="text"><string>状态</string></property></column><column><property name="text"><string>自动启动</string></property></column>
-   </widget></item>
-   <item><layout class="QHBoxLayout" name="actionLayout">
-    <item><widget class="QLabel" name="statusLabel"><property name="text"><string>就绪</string></property></widget></item><item><spacer name="actionSpacer"><property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QPushButton" name="modifyButton"><property name="text"><string>修改</string></property></widget></item><item><widget class="QPushButton" name="deleteButton"><property name="text"><string>删除</string></property></widget></item>
-   </layout></item>
-  </layout>
- </widget>
- <resources/><connections/>
+	<class>CViewStrategySettingsClass</class>
+	<widget class="QWidget" name="strategyManagementPage">
+		<layout class="QVBoxLayout" name="rootLayout">
+			<property name="leftMargin">
+				<number>0</number>
+			</property>
+			<property name="topMargin">
+				<number>0</number>
+			</property>
+			<property name="rightMargin">
+				<number>0</number>
+			</property>
+			<property name="bottomMargin">
+				<number>0</number>
+			</property>
+			<property name="spacing">
+				<number>0</number>
+			</property>
+			<item>
+				<widget class="QTabWidget" name="strategyTabs">
+					<widget class="QWidget" name="instancesPage">
+						<attribute name="title">
+							<string>策略实例</string>
+						</attribute>
+						<layout class="QVBoxLayout" name="instancesLayout" stretch="0,0,1">
+							<property name="leftMargin">
+								<number>14</number>
+							</property>
+							<property name="topMargin">
+								<number>12</number>
+							</property>
+							<property name="rightMargin">
+								<number>14</number>
+							</property>
+							<property name="bottomMargin">
+								<number>12</number>
+							</property>
+							<item>
+								<layout class="QHBoxLayout" name="metricsLayout" stretch="1,1,1,1">
+									<property name="spacing">
+										<number>10</number>
+									</property>
+									<item>
+										<widget class="QFrame" name="strategyCountCard">
+											<property name="summaryCard" stdset="0">
+												<bool>true</bool>
+											</property>
+											<property name="minimumSize">
+												<size>
+													<width>0</width>
+													<height>80</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>16777215</width>
+													<height>80</height>
+												</size>
+											</property>
+											<layout class="QVBoxLayout" name="strategyCountLayout">
+												<property name="leftMargin">
+													<number>8</number>
+												</property>
+												<property name="topMargin">
+													<number>1</number>
+												</property>
+												<property name="rightMargin">
+													<number>8</number>
+												</property>
+												<property name="bottomMargin">
+													<number>1</number>
+												</property>
+												<property name="spacing">
+													<number>1</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="strategyCountTitle">
+														<property name="text">
+															<string>策略数量</string>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="strategyCountValue">
+														<property name="text">
+															<string>--</string>
+														</property>
+														<property name="strategyMetric" stdset="0">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="strategyCountHint">
+														<property name="text">
+															<string>UI 展示数据 · 未接入服务</string>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</widget>
+									</item>
+									<item>
+										<widget class="QFrame" name="runningCountCard">
+											<property name="summaryCard" stdset="0">
+												<bool>true</bool>
+											</property>
+											<property name="minimumSize">
+												<size>
+													<width>0</width>
+													<height>80</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>16777215</width>
+													<height>80</height>
+												</size>
+											</property>
+											<layout class="QVBoxLayout" name="runningCountLayout">
+												<property name="leftMargin">
+													<number>8</number>
+												</property>
+												<property name="topMargin">
+													<number>1</number>
+												</property>
+												<property name="rightMargin">
+													<number>8</number>
+												</property>
+												<property name="bottomMargin">
+													<number>1</number>
+												</property>
+												<property name="spacing">
+													<number>1</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="runningCountTitle">
+														<property name="text">
+															<string>运行中</string>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="runningCountValue">
+														<property name="text">
+															<string>--</string>
+														</property>
+														<property name="strategyMetric" stdset="0">
+															<bool>true</bool>
+														</property>
+														<property name="falling" stdset="0">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="runningCountHint">
+														<property name="text">
+															<string>UI 展示数据 · 未接入服务</string>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</widget>
+									</item>
+									<item>
+										<widget class="QFrame" name="totalProfitCard">
+											<property name="summaryCard" stdset="0">
+												<bool>true</bool>
+											</property>
+											<property name="minimumSize">
+												<size>
+													<width>0</width>
+													<height>80</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>16777215</width>
+													<height>80</height>
+												</size>
+											</property>
+											<layout class="QVBoxLayout" name="totalProfitLayout">
+												<property name="leftMargin">
+													<number>8</number>
+												</property>
+												<property name="topMargin">
+													<number>1</number>
+												</property>
+												<property name="rightMargin">
+													<number>8</number>
+												</property>
+												<property name="bottomMargin">
+													<number>1</number>
+												</property>
+												<property name="spacing">
+													<number>1</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="totalProfitTitle">
+														<property name="text">
+															<string>总收益</string>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="totalProfitValue">
+														<property name="text">
+															<string>--</string>
+														</property>
+														<property name="strategyMetric" stdset="0">
+															<bool>true</bool>
+														</property>
+														<property name="rising" stdset="0">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="totalProfitHint">
+														<property name="text">
+															<string>UI 展示数据 · 未接入服务</string>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</widget>
+									</item>
+									<item>
+										<widget class="QFrame" name="todayProfitCard">
+											<property name="summaryCard" stdset="0">
+												<bool>true</bool>
+											</property>
+											<property name="minimumSize">
+												<size>
+													<width>0</width>
+													<height>80</height>
+												</size>
+											</property>
+											<property name="maximumSize">
+												<size>
+													<width>16777215</width>
+													<height>80</height>
+												</size>
+											</property>
+											<layout class="QVBoxLayout" name="todayProfitLayout">
+												<property name="leftMargin">
+													<number>8</number>
+												</property>
+												<property name="topMargin">
+													<number>1</number>
+												</property>
+												<property name="rightMargin">
+													<number>8</number>
+												</property>
+												<property name="bottomMargin">
+													<number>1</number>
+												</property>
+												<property name="spacing">
+													<number>1</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="todayProfitTitle">
+														<property name="text">
+															<string>今日收益</string>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="todayProfitValue">
+														<property name="text">
+															<string>--</string>
+														</property>
+														<property name="strategyMetric" stdset="0">
+															<bool>true</bool>
+														</property>
+														<property name="rising" stdset="0">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="todayProfitHint">
+														<property name="text">
+															<string>UI 展示数据 · 未接入服务</string>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</widget>
+									</item>
+								</layout>
+							</item>
+							<item>
+								<layout class="QHBoxLayout" name="toolbarLayout" stretch="0,0,0,0,0,0,1,0">
+									<item>
+										<widget class="QPushButton" name="newButton">
+											<property name="text">
+												<string>+ 新建实例</string>
+											</property>
+											<property name="enabled">
+												<bool>false</bool>
+											</property>
+											<property name="toolTip">
+												<string>仅 UI 预览，暂未接入策略服务</string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QPushButton" name="initializeButton">
+											<property name="text">
+												<string>初始化</string>
+											</property>
+											<property name="enabled">
+												<bool>false</bool>
+											</property>
+											<property name="toolTip">
+												<string>仅 UI 预览，暂未接入策略服务</string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QPushButton" name="startButton">
+											<property name="text">
+												<string>启动</string>
+											</property>
+											<property name="enabled">
+												<bool>false</bool>
+											</property>
+											<property name="toolTip">
+												<string>仅 UI 预览，暂未接入策略服务</string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QPushButton" name="stopButton">
+											<property name="text">
+												<string>停止</string>
+											</property>
+											<property name="enabled">
+												<bool>false</bool>
+											</property>
+											<property name="toolTip">
+												<string>仅 UI 预览，暂未接入策略服务</string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QPushButton" name="moreButton">
+											<property name="text">
+												<string>更多</string>
+											</property>
+											<property name="enabled">
+												<bool>false</bool>
+											</property>
+											<property name="toolTip">
+												<string>仅 UI 预览，暂未接入策略服务</string>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<spacer name="toolbarSpacer">
+											<property name="orientation">
+												<enum>Qt::Horizontal</enum>
+											</property>
+											<property name="sizeHint">
+												<size>
+													<width>40</width>
+													<height>20</height>
+												</size>
+											</property>
+										</spacer>
+									</item>
+									<item>
+										<widget class="QLineEdit" name="searchEdit">
+											<property name="placeholderText">
+												<string>搜索实例、标的或模板</string>
+											</property>
+											<property name="clearButtonEnabled">
+												<bool>true</bool>
+											</property>
+										</widget>
+									</item>
+									<item>
+										<widget class="QComboBox" name="statusCombo">
+											<item>
+												<property name="text">
+													<string>全部状态</string>
+												</property>
+											</item>
+											<item>
+												<property name="text">
+													<string>运行中</string>
+												</property>
+											</item>
+											<item>
+												<property name="text">
+													<string>已就绪</string>
+												</property>
+											</item>
+											<item>
+												<property name="text">
+													<string>已停止</string>
+												</property>
+											</item>
+											<item>
+												<property name="text">
+													<string>异常</string>
+												</property>
+											</item>
+										</widget>
+									</item>
+								</layout>
+							</item>
+							<item>
+								<widget class="QSplitter" name="detailSplitter">
+									<property name="orientation">
+										<enum>Qt::Vertical</enum>
+									</property>
+									<property name="childrenCollapsible">
+										<bool>false</bool>
+									</property>
+									<widget class="QTableWidget" name="instancesTable">
+										<property name="editTriggers">
+											<set>QAbstractItemView::NoEditTriggers</set>
+										</property>
+										<property name="selectionBehavior">
+											<enum>QAbstractItemView::SelectRows</enum>
+										</property>
+										<property name="selectionMode">
+											<enum>QAbstractItemView::SingleSelection</enum>
+										</property>
+										<property name="alternatingRowColors">
+											<bool>true</bool>
+										</property>
+										<attribute name="verticalHeaderVisible">
+											<bool>false</bool>
+										</attribute>
+										<attribute name="verticalHeaderDefaultSectionSize">
+											<number>30</number>
+										</attribute>
+										<attribute name="horizontalHeaderStretchLastSection">
+											<bool>true</bool>
+										</attribute>
+										<column>
+											<property name="text">
+												<string>实例名称</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>策略模板</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>账户</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>交易标的</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>模式</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>状态</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>持仓</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>今日盈亏</string>
+											</property>
+										</column>
+										<column>
+											<property name="text">
+												<string>更新时间</string>
+											</property>
+										</column>
+									</widget>
+									<widget class="QWidget" name="detailPage">
+										<layout class="QVBoxLayout" name="detailLayout" stretch="0,1">
+											<item>
+												<widget class="QLabel" name="detailsLabel">
+													<property name="text">
+														<string>请选择策略实例</string>
+													</property>
+													<property name="wordWrap">
+														<bool>true</bool>
+													</property>
+												</widget>
+											</item>
+											<item>
+												<widget class="QTabWidget" name="detailsTabs">
+													<widget class="QWidget" name="parametersPage">
+														<attribute name="title">
+															<string>参数</string>
+														</attribute>
+														<layout class="QVBoxLayout" name="parametersLayout" stretch="0,1,0,0,0,0">
+															<item>
+																<widget class="QLabel" name="parametersHint">
+																	<property name="text">
+																		<string>参数预览 · 仅展示结构，实际参数待接入策略服务</string>
+																	</property>
+																</widget>
+															</item>
+															<item>
+																<widget class="QTableWidget" name="parametersTable">
+																	<property name="editTriggers">
+																		<set>QAbstractItemView::NoEditTriggers</set>
+																	</property>
+																	<property name="selectionBehavior">
+																		<enum>QAbstractItemView::SelectRows</enum>
+																	</property>
+																	<property name="selectionMode">
+																		<enum>QAbstractItemView::SingleSelection</enum>
+																	</property>
+																	<property name="alternatingRowColors">
+																		<bool>true</bool>
+																	</property>
+																	<attribute name="verticalHeaderVisible">
+																		<bool>false</bool>
+																	</attribute>
+																	<attribute name="verticalHeaderDefaultSectionSize">
+																		<number>30</number>
+																	</attribute>
+																	<attribute name="horizontalHeaderStretchLastSection">
+																		<bool>true</bool>
+																	</attribute>
+																	<column>
+																		<property name="text">
+																			<string>参数</string>
+																		</property>
+																	</column>
+																	<column>
+																		<property name="text">
+																			<string>当前值</string>
+																		</property>
+																	</column>
+																	<column>
+																		<property name="text">
+																			<string>说明</string>
+																		</property>
+																	</column>
+																</widget>
+															</item>
+															<item>
+																<widget class="QPushButton" name="modifyButton">
+																	<property name="text">
+																		<string>修改参数（暂未接入）</string>
+																	</property>
+																	<property name="enabled">
+																		<bool>false</bool>
+																	</property>
+																	<property name="toolTip">
+																		<string>仅 UI 预览，暂未接入策略服务</string>
+																	</property>
+																</widget>
+															</item>
+															<item>
+																<widget class="QLabel" name="runtimeLabel">
+																	<property name="text">
+																		<string>运行概况：最新信号 —    最新价格 —    上次心跳 —    数据连接：未接入</string>
+																	</property>
+																	<property name="wordWrap">
+																		<bool>true</bool>
+																	</property>
+																</widget>
+															</item>
+															<item>
+																<widget class="QLabel" name="recentLogsLabel">
+																	<property name="text">
+																		<string>最近日志（UI 展示）</string>
+																	</property>
+																</widget>
+															</item>
+															<item>
+																<widget class="QTableWidget" name="logsTable">
+																	<property name="editTriggers">
+																		<set>QAbstractItemView::NoEditTriggers</set>
+																	</property>
+																	<property name="selectionBehavior">
+																		<enum>QAbstractItemView::SelectRows</enum>
+																	</property>
+																	<property name="selectionMode">
+																		<enum>QAbstractItemView::SingleSelection</enum>
+																	</property>
+																	<property name="alternatingRowColors">
+																		<bool>true</bool>
+																	</property>
+																	<attribute name="verticalHeaderVisible">
+																		<bool>false</bool>
+																	</attribute>
+																	<attribute name="verticalHeaderDefaultSectionSize">
+																		<number>30</number>
+																	</attribute>
+																	<attribute name="horizontalHeaderStretchLastSection">
+																		<bool>true</bool>
+																	</attribute>
+																	<column>
+																		<property name="text">
+																			<string>时间</string>
+																		</property>
+																	</column>
+																	<column>
+																		<property name="text">
+																			<string>级别</string>
+																		</property>
+																	</column>
+																	<column>
+																		<property name="text">
+																			<string>内容</string>
+																		</property>
+																	</column>
+																	<property name="maximumSize">
+																		<size>
+																			<width>16777215</width>
+																			<height>90</height>
+																		</size>
+																	</property>
+																</widget>
+															</item>
+														</layout>
+													</widget>
+													<widget class="QWidget" name="detailPlaceholder0">
+														<attribute name="title">
+															<string>运行变量</string>
+														</attribute>
+													</widget>
+													<widget class="QWidget" name="detailPlaceholder1">
+														<attribute name="title">
+															<string>委托</string>
+														</attribute>
+													</widget>
+													<widget class="QWidget" name="detailPlaceholder2">
+														<attribute name="title">
+															<string>成交</string>
+														</attribute>
+													</widget>
+													<widget class="QWidget" name="detailPlaceholder3">
+														<attribute name="title">
+															<string>日志</string>
+														</attribute>
+													</widget>
+												</widget>
+											</item>
+										</layout>
+									</widget>
+								</widget>
+							</item>
+						</layout>
+					</widget>
+					<widget class="QWidget" name="strategyPlaceholder0">
+						<attribute name="title">
+							<string>回测分析</string>
+						</attribute>
+					</widget>
+					<widget class="QWidget" name="strategyPlaceholder1">
+						<attribute name="title">
+							<string>策略模板</string>
+						</attribute>
+					</widget>
+					<widget class="QWidget" name="strategyPlaceholder2">
+						<attribute name="title">
+							<string>运行日志</string>
+						</attribute>
+					</widget>
+				</widget>
+			</item>
+		</layout>
+	</widget>
+	<resources />
+	<connections />
 </ui>

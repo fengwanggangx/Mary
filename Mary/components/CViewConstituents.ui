@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+	<class>CViewConstituentsClass</class>
+	<widget class="QWidget" name="CViewConstituentsClass">
+		<property name="marketPage" stdset="0">
+			<bool>true</bool>
+		</property>
+		<layout class="QVBoxLayout" name="rootLayout">
+			<property name="leftMargin">
+				<number>0</number>
+			</property>
+			<property name="topMargin">
+				<number>0</number>
+			</property>
+			<property name="rightMargin">
+				<number>0</number>
+			</property>
+			<property name="bottomMargin">
+				<number>0</number>
+			</property>
+			<property name="spacing">
+				<number>0</number>
+			</property>
+			<item>
+				<widget class="QFrame" name="listFrame">
+					<property name="marketPanel" stdset="0">
+						<bool>true</bool>
+					</property>
+					<layout class="QVBoxLayout" name="listFrameLayout">
+						<property name="leftMargin">
+							<number>12</number>
+						</property>
+						<property name="topMargin">
+							<number>12</number>
+						</property>
+						<property name="rightMargin">
+							<number>12</number>
+						</property>
+						<property name="bottomMargin">
+							<number>0</number>
+						</property>
+						<property name="spacing">
+							<number>0</number>
+						</property>
+						<item>
+							<layout class="QHBoxLayout" name="headingLayout">
+								<property name="leftMargin">
+									<number>0</number>
+								</property>
+								<property name="topMargin">
+									<number>0</number>
+								</property>
+								<property name="rightMargin">
+									<number>0</number>
+								</property>
+								<property name="bottomMargin">
+									<number>8</number>
+								</property>
+								<property name="spacing">
+									<number>6</number>
+								</property>
+								<item>
+									<widget class="QLabel" name="titleLabel">
+										<property name="text">
+											<string>成分股</string>
+										</property>
+										<property name="marketHeading" stdset="0">
+											<bool>true</bool>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QLabel" name="countLabel">
+										<property name="text">
+											<string></string>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<spacer name="headingSpacer">
+										<property name="orientation">
+											<enum>Qt::Horizontal</enum>
+										</property>
+										<property name="sizeHint">
+											<size>
+												<width>40</width>
+												<height>20</height>
+											</size>
+										</property>
+									</spacer>
+								</item>
+								<item>
+									<widget class="QLineEdit" name="searchEdit">
+										<property name="minimumSize">
+											<size>
+												<width>180</width>
+												<height>32</height>
+											</size>
+										</property>
+										<property name="maximumSize">
+											<size>
+												<width>180</width>
+												<height>32</height>
+											</size>
+										</property>
+										<property name="placeholderText">
+											<string>搜索代码 / 名称</string>
+										</property>
+										<property name="clearButtonEnabled">
+											<bool>true</bool>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QPushButton" name="searchButton">
+										<property name="minimumSize">
+											<size>
+												<width>32</width>
+												<height>32</height>
+											</size>
+										</property>
+										<property name="maximumSize">
+											<size>
+												<width>32</width>
+												<height>32</height>
+											</size>
+										</property>
+										<property name="text">
+											<string>🔍</string>
+										</property>
+										<property name="toolTip">
+											<string>搜索</string>
+										</property>
+										<property name="accessibleName">
+											<string>搜索</string>
+										</property>
+									</widget>
+								</item>
+							</layout>
+						</item>
+						<item>
+							<widget class="CUITable" name="table">
+								<property name="frameShape">
+									<enum>QFrame::NoFrame</enum>
+								</property>
+								<property name="selectionBehavior">
+									<enum>QAbstractItemView::SelectRows</enum>
+								</property>
+								<property name="selectionMode">
+									<enum>QAbstractItemView::SingleSelection</enum>
+								</property>
+								<property name="editTriggers">
+									<set>QAbstractItemView::NoEditTriggers</set>
+								</property>
+								<property name="showGrid">
+									<bool>false</bool>
+								</property>
+								<property name="sortingEnabled">
+									<bool>true</bool>
+								</property>
+								<attribute name="verticalHeaderVisible">
+									<bool>false</bool>
+								</attribute>
+								<attribute name="verticalHeaderDefaultSectionSize">
+									<number>32</number>
+								</attribute>
+							</widget>
+						</item>
+					</layout>
+				</widget>
+			</item>
+		</layout>
+	</widget>
+	<customwidgets>
+		<customwidget>
+			<class>CUITable</class>
+			<extends>QTableView</extends>
+			<header>CUITable.h</header>
+		</customwidget>
+	</customwidgets>
+	<resources />
+	<connections />
+</ui>

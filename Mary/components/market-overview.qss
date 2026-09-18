@@ -1,0 +1,22 @@
+QFrame[overviewPanel="true"] { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 5px; }
+QWidget[darkTheme="true"] QFrame[overviewPanel="true"] { background: #131f32; border-color: #24334a; }
+QLabel[overviewHeading="true"] { font-size: 13px; font-weight: 600; color: #344258; }
+QLabel[overviewMuted="true"] { font-size: 12px; color: #68778c; }
+QLabel[overviewValue="true"] { font-size: 16px; font-weight: 600; color: #344258; }
+QWidget[darkTheme="true"] QLabel[overviewHeading="true"], QWidget[darkTheme="true"] QLabel[overviewValue="true"] { color: #c8d8e7; }
+QWidget[darkTheme="true"] QLabel[overviewMuted="true"] { color: #8c9db6; }
+QLabel[overviewValue="true"][rising="true"], QLabel[overviewPrice="true"][rising="true"], QLabel[overviewChange="true"][rising="true"] { color: #f04455; }
+QLabel[overviewValue="true"][falling="true"], QLabel[overviewPrice="true"][rising="false"], QLabel[overviewChange="true"][rising="false"] { color: #00b987; }
+QLabel[overviewPrice="true"] { font-size: 23px; font-weight: 600; }
+QLabel[overviewBadge="true"] { font-size: 11px; color: #3686ff; background: #edf5fd; border-radius: 5px; }
+QWidget[darkTheme="true"] QLabel[overviewBadge="true"] { background: #163454; }
+QFrame[overviewSeparator="true"] { background: #e4eaf2; border: 0; }
+QWidget[darkTheme="true"] QFrame[overviewSeparator="true"] { background: #24334a; }
+QPushButton[sectorTile="true"] { background: #ffe0e4; color: #f04455; border: 1px solid transparent; border-radius: 2px; }
+QPushButton[sectorTile="true"][negative="true"] { background: #d4f3e9; color: #00b987; }
+QWidget[darkTheme="true"] QPushButton[sectorTile="true"] { background: #342332; }
+QWidget[darkTheme="true"] QPushButton[sectorTile="true"][negative="true"] { background: #123b3d; }
+QPushButton[sectorTile="true"]:checked { border: 2px solid #3686ff; }
+CDistributionChart { qproperty-risingColor: #f04455; qproperty-fallingColor: #00b987; }
+QWidget[darkTheme="true"] QLabel[overviewValue="true"][rising="true"] { color: #f04455; }
+QWidget[darkTheme="true"] QLabel[overviewValue="true"][falling="true"] { color: #00b987; }
