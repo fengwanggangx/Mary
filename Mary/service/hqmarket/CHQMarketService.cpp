@@ -32,11 +32,16 @@ namespace
 	{
 		switch (exchange)
 		{
-		case hqmarket::market::v1::SSE: return "SSE";
-		case hqmarket::market::v1::SZSE: return "SZSE";
-		case hqmarket::market::v1::BSE: return "BSE";
-		case hqmarket::market::v1::HKEX: return "HKEX";
-		default: return { };
+		case hqmarket::market::v1::SSE:
+			return "SSE";
+		case hqmarket::market::v1::SZSE:
+			return "SZSE";
+		case hqmarket::market::v1::BSE:
+			return "BSE";
+		case hqmarket::market::v1::HKEX:
+			return "HKEX";
+		default:
+			return {};
 		}
 	}
 
@@ -66,10 +71,18 @@ namespace
 		}
 		if ("SSE" == strExchange)
 		{
+			if (strCode.starts_with("000"))
+			{
+				return "指数";
+			}
 			return (strCode.starts_with("688") || strCode.starts_with("689")) ? "科创板" : "沪A";
 		}
 		if ("SZSE" == strExchange)
 		{
+			if (strCode.starts_with("399"))
+			{
+				return "指数";
+			}
 			return (strCode.starts_with("300") || strCode.starts_with("301")) ? "创业板" : "深A";
 		}
 		return "未知";
@@ -88,7 +101,7 @@ namespace
 		std::from_chars_result result = std::from_chars(pBegin, pEnd, sequence);
 		return (std::errc() == result.ec) && (pEnd == result.ptr) ? sequence : 0;
 	}
-}
+} // namespace
 
 CHQMarketService::CHQMarketService()
 {
@@ -132,6 +145,23 @@ void CHQMarketService::Initialize()
 			m_runtimeMetrics.m_nLastQuoteSequence.store(0);
 			RestoreSubscriptions();
 			QuerySecurities();
+		}
+		else if ((SessionState::Disconnected == state) || (SessionState::Reconnecting == state) || (SessionState::Stopping == state))
+		{
+			std::vector<CQuote> quotes;
+			{
+				std::unique_lock lock(m_mtx_quotes);
+				quotes.reserve(m_quotes.size());
+				for (auto& [strSecurity, quote] : m_quotes)
+				{
+					quote.m_bStale = true;
+					quotes.emplace_back(quote);
+				}
+			}
+			for (const auto& quote : quotes)
+			{
+				EnqueueQuote(quote);
+			}
 		}
 	});
 	if (CSession::InstanceRef().IsAuthenticated())
@@ -241,8 +271,7 @@ void CHQMarketService::RegisterSecurity(const CSecurity& info)
 bool CHQMarketService::SubscribeQuote(const CSecurity& info)
 {
 	std::string strSecurity = info.String();
-	request::_TyParams parameters
-	{
+	request::_TyParams parameters{
 		{ "security", strSecurity },
 		{ "channel", "quote" }
 	};
@@ -252,8 +281,7 @@ bool CHQMarketService::SubscribeQuote(const CSecurity& info)
 bool CHQMarketService::UnsubscribeQuote(const CSecurity& info)
 {
 	std::string strSecurity = info.String();
-	request::_TyParams parameters
-	{
+	request::_TyParams parameters{
 		{ "security", strSecurity },
 		{ "channel", "quote" }
 	};
@@ -263,8 +291,7 @@ bool CHQMarketService::UnsubscribeQuote(const CSecurity& info)
 bool CHQMarketService::SubscribeDepth(const CSecurity& info)
 {
 	std::string strSecurity = info.String();
-	request::_TyParams parameters
-	{
+	request::_TyParams parameters{
 		{ "security", strSecurity },
 		{ "channel", "depth" }
 	};
@@ -274,8 +301,7 @@ bool CHQMarketService::SubscribeDepth(const CSecurity& info)
 bool CHQMarketService::UnsubscribeDepth(const CSecurity& info)
 {
 	std::string strSecurity = info.String();
-	request::_TyParams parameters
-	{
+	request::_TyParams parameters{
 		{ "security", strSecurity },
 		{ "channel", "depth" }
 	};
@@ -316,6 +342,11 @@ bool CHQMarketService::Subscribe(const std::string& strKey, const request::_TyPa
 	}
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
+		const auto existing = m_subscriptions.find(strKey);
+		if ((m_subscriptions.end() != existing) && (param == existing->second))
+		{
+			return CSession::InstanceRef().IsAuthenticated();
+		}
 		m_subscriptions.insert_or_assign(strKey, param);
 	}
 	return CSession::InstanceRef().SendRequest(request::Subscription(param));
@@ -591,7 +622,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 	}
 
 	auto [view, changes] = writer.Commit();
-	m_pump_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes)});
+	m_pump_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes) });
 }
 
 void CHQMarketService::OnResponse(const CRequest& req)
@@ -620,6 +651,10 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		for (const auto& security : ev.m_securities)
 		{
 			RegisterSecurity(security);
+			if (CSession::InstanceRef().IsAuthenticated())
+			{
+				SubscribeQuote(security);
+			}
 		}
 		m_pump_security_list.Notify(ev);
 		return;

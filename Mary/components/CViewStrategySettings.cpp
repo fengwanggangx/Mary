@@ -1,5 +1,7 @@
 #include "CViewStrategySettings.h"
 #include "CUIStyle.h"
+#include "CStrategyEditDialog.h"
+#include "../system/CSession.h"
 #include "ui_CViewStrategySettings.h"
 
 #include <QApplication>
@@ -7,6 +9,10 @@
 #include <QHeaderView>
 #include <QTableWidget>
 #include <QTabBar>
+#include <QPointer>
+#include <QMetaObject>
+#include <QTimer>
+#include <QMessageBox>
 
 namespace
 {
@@ -38,29 +44,54 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	{
 		table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	}
-	m_ui->strategyCountValue->setText("6");
-	m_ui->runningCountValue->setText("3");
-	m_ui->totalProfitValue->setText("+28,635.80 元");
-	m_ui->todayProfitValue->setText("+1,168.46 元");
-	AppendRow(m_pInstances, { "茅台趋势01", "双均线", "模拟账户", "600519.SH", "模拟", "运行中", "100股", "+682.35", "09:28:15" });
-	AppendRow(m_pInstances, { "平安网格01", "网格交易", "模拟账户", "000001.SZ", "模拟", "运行中", "2,000股", "+432.18", "09:31:42" });
-	AppendRow(m_pInstances, { "ETF突破01", "突破策略", "实盘账户", "510300.SH", "实盘", "已就绪", "0", "0.00", "09:20:36" });
-	AppendRow(m_pInstances, { "五粮液趋势", "双均线", "模拟账户", "000858.SZ", "模拟", "已停止", "0", "-218.65", "08:56:21" });
-	AppendRow(m_pInstances, { "招行回归01", "均值回归", "模拟账户", "600036.SH", "模拟", "运行中", "1,000股", "+216.30", "09:15:33" });
-	AppendRow(m_pInstances, { "数据测试01", "网格交易", "模拟账户", "000001.SZ", "模拟", "异常", "0", "+56.28", "09:12:08" });
-	AppendRow(m_ui->parametersTable, { "单笔数量", "—", "单次下单数量" });
-	AppendRow(m_ui->parametersTable, { "止损比例", "—", "最大亏损止损比例" });
-	AppendRow(m_ui->logsTable, { "—", "信息", "策略页面已加载，尚未连接策略执行引擎" });
 	m_ui->detailSplitter->setStretchFactor(0, 1);
 	m_ui->detailSplitter->setStretchFactor(1, 1);
 	connect(m_pSearch, &QLineEdit::textChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pStatus, &QComboBox::currentIndexChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pInstances, &QTableWidget::itemSelectionChanged, this, &CViewStrategySettings::RefreshDetails);
-	m_pInstances->selectRow(0);
 	ApplyTheme();
+	CStrategyService& service = CStrategyService::InstanceRef();
+	service.Initialize();
+	QPointer<CViewStrategySettings> safeThis(this);
+	m_nQueryToken = service.AddQueryHandler([safeThis](const CStrategyService::_TyStrategyList& strategies, const std::string& strError)
+	{
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, strategies, strError]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshStrategies(strategies, strError);
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
+	connect(m_ui->newButton, &QPushButton::clicked, this, [this]()
+	{
+		EditStrategy(true);
+	});
+	connect(m_ui->modifyButton, &QPushButton::clicked, this, [this]()
+	{
+		EditStrategy(false);
+	});
+	QTimer* timer = new QTimer(this);
+	connect(timer, &QTimer::timeout, this, &CViewStrategySettings::RefreshConnection);
+	timer->start(1000);
+	RefreshConnection();
+	if (service.IsCacheValid())
+	{
+		RefreshStrategies(service.GetStrategies(), std::string());
+	}
+	if (CSession::InstanceRef().IsAuthenticated() && !service.QueryStrategies())
+	{
+		m_ui->strategyCountHint->setText("策略查询未发送");
+	}
 }
 
-CViewStrategySettings::~CViewStrategySettings() = default;
+CViewStrategySettings::~CViewStrategySettings()
+{
+	CStrategyService::InstanceRef().RemoveQueryHandler(m_nQueryToken);
+}
 
 void CViewStrategySettings::RefreshFilter()
 {
@@ -84,9 +115,17 @@ void CViewStrategySettings::RefreshDetails()
 	if ((0 > nRow) || m_pInstances->isRowHidden(nRow))
 	{
 		m_pDetails->setText(QStringLiteral("请选择策略实例"));
+		m_ui->parametersTable->setRowCount(0);
+		RefreshConnection();
 		return;
 	}
-	m_pDetails->setText(QString("%1 · %2 · %3 · %4\n持仓：%5   今日盈亏：%6 元   执行引擎：未接入（UI 展示）").arg(m_pInstances->item(nRow, 0)->text(), m_pInstances->item(nRow, 1)->text(), m_pInstances->item(nRow, 3)->text(), m_pInstances->item(nRow, 5)->text(), m_pInstances->item(nRow, 6)->text(), m_pInstances->item(nRow, 7)->text()));
+	m_pDetails->setText(QString("%1 · %2 · %3\n配置已加载；运行状态、持仓和收益暂无协议数据").arg(m_pInstances->item(nRow, 0)->text(), m_pInstances->item(nRow, 1)->text(), m_pInstances->item(nRow, 3)->text()));
+	m_ui->parametersTable->setRowCount(0);
+	for (const auto& [strName, strValue] : m_strategies[nRow].parameters())
+	{
+		AppendRow(m_ui->parametersTable, { QString::fromStdString(strName), QString::fromStdString(strValue), QString() });
+	}
+	RefreshConnection();
 }
 
 void CViewStrategySettings::changeEvent(QEvent* pEvent)
@@ -116,5 +155,78 @@ void CViewStrategySettings::ApplyTheme()
 	{
 		QTableWidgetItem* profit = m_pInstances->item(nRow, 7);
 		profit->setForeground(profit->text().startsWith('-') ? fallingColor : risingColor);
+	}
+}
+
+void CViewStrategySettings::RefreshStrategies(const CStrategyService::_TyStrategyList& strategies, const std::string& strError)
+{
+	if (!strError.empty())
+	{
+		m_ui->strategyCountHint->setText(QString::fromStdString(strError));
+		m_pInstances->setRowCount(0);
+		m_strategies.clear();
+		m_ui->strategyCountValue->setText("--");
+		RefreshDetails();
+		return;
+	}
+	m_strategies = strategies;
+	m_pInstances->setRowCount(0);
+	for (const auto& strategy : m_strategies)
+	{
+		QStringList securities;
+		for (const auto& subscription : strategy.subscriptions())
+		{
+			securities.append(QString::fromStdString(subscription.security() + "." + subscription.exchange()));
+		}
+		AppendRow(m_pInstances, { QString::fromStdString(strategy.strategy_name()), QString::fromStdString(strategy.strategy_type()), "--", securities.join(", "), "--", strategy.enabled() ? "已启用" : "已禁用", "--", "--", "--" });
+	}
+	m_ui->strategyCountValue->setText(QString::number(m_strategies.size()));
+	m_ui->strategyCountHint->setText("服务器配置");
+	RefreshFilter();
+	if (0 < m_pInstances->rowCount())
+	{
+		m_pInstances->selectRow(0);
+	}
+	RefreshDetails();
+}
+
+void CViewStrategySettings::RefreshConnection()
+{
+	bool bConnected = CSession::InstanceRef().IsAuthenticated();
+	m_ui->newButton->setEnabled(bConnected);
+	int nRow = m_pInstances->currentRow();
+	m_ui->modifyButton->setEnabled(bConnected && (0 <= nRow) && (m_strategies.size() > static_cast<std::size_t>(nRow)) && !m_pInstances->isRowHidden(nRow));
+	m_ui->runtimeLabel->setText(bConnected ? "连接正常；运行状态、信号、持仓和收益暂无协议数据" : "连接不可用，等待登录或重连");
+}
+
+void CViewStrategySettings::EditStrategy(bool bNew)
+{
+	if (!CSession::InstanceRef().IsAuthenticated())
+	{
+		return;
+	}
+	CStrategyEditDialog dialog(this);
+	if (!bNew)
+	{
+		int nRow = m_pInstances->currentRow();
+		if ((0 > nRow) || (m_strategies.size() <= static_cast<std::size_t>(nRow)))
+		{
+			return;
+		}
+		dialog.SetStrategy(m_strategies[nRow]);
+	}
+	if (QDialog::Accepted != dialog.exec())
+	{
+		return;
+	}
+	request::StrategyInfo strategy = dialog.GetStrategy();
+	bool bSent = bNew ? CStrategyService::InstanceRef().AddStrategy(strategy) : CStrategyService::InstanceRef().ModifyStrategy(strategy);
+	if (!bSent)
+	{
+		QMessageBox::warning(this, "请求未发送", "请检查连接及策略配置");
+	}
+	else
+	{
+		m_ui->strategyCountHint->setText("配置请求已发送，等待服务器确认");
 	}
 }

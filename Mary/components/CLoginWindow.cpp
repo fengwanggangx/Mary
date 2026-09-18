@@ -1,4 +1,5 @@
 #include "CLoginWindow.h"
+#include "ui_CLoginWindow.h"
 #include "CUIStyle.h"
 #include "CServerSettingsDialog.h"
 #include "CRegisterDialog.h"
@@ -6,35 +7,35 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QMetaObject>
+#include <QPointer>
 
-namespace
+LoginWindow::LoginWindow(QWidget* pParent) : QDialog(pParent), m_ui(std::make_unique<Ui::LoginWindowClass>())
 {
-	// 界面测试时跳过服务器登录；关闭后恢复正常认证流程。
-	constexpr bool UiTestLogin{ true };
-}
-
-LoginWindow::LoginWindow(QWidget* parent) : QDialog(parent), ui(new Ui::LoginWindowClass())
-{
-	ui->setupUi(this);
+	m_ui->setupUi(this);
 	UIStyle::Apply(*this, ":/styles/login.qss");
 	setWindowFlag(Qt::FramelessWindowHint);
-	ConnectSlots();	
-	m_loginCallbackId = CLoginService::InstanceRef().Subscribe([this](const AuthEvent& event)
+	ConnectSlots();
+	QPointer<LoginWindow> safeThis(this);
+	m_loginCallbackId = CLoginService::InstanceRef().Subscribe([safeThis](const AuthEvent& event)
 	{
-		QMetaObject::invokeMethod(this, [this, event]()
+		if (safeThis.isNull())
 		{
-			if (AuthOperation::Login != event.m_operation)
+			return;
+		}
+		QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+		{
+			if (safeThis.isNull() || (AuthOperation::Login != event.m_operation))
 			{
 				return;
 			}
 			if (AuthState::Success == event.m_state)
 			{
-				accept();
+				safeThis->accept();
 			}
 			else if (AuthState::Failed == event.m_state)
 			{
-				ui->pushButton_login->setEnabled(true);
-				QMessageBox::information(this, "提示", QString::fromStdString(event.m_message));
+				safeThis->m_ui->pushButton_login->setEnabled(true);
+				QMessageBox::information(safeThis.data(), "提示", QString::fromStdString(event.m_message));
 			}
 		}, Qt::QueuedConnection);
 	});
@@ -43,34 +44,32 @@ LoginWindow::LoginWindow(QWidget* parent) : QDialog(parent), ui(new Ui::LoginWin
 LoginWindow::~LoginWindow()
 {
 	CLoginService::InstanceRef().Unsubscribe(m_loginCallbackId);
-	delete ui;
 }
 
 void LoginWindow::ConnectSlots()
 {
-	QObject::connect(ui->pushButton_login, &QPushButton::clicked, this, &LoginWindow::OnLoginBtnClicked);
-	QObject::connect(ui->pushButton_register, &QPushButton::clicked, this, &LoginWindow::OnRegisterBtnClicked);
-	QObject::connect(ui->pushButton_close, &QPushButton::clicked, this, &LoginWindow::OnCloseBtnClicked);
-	QObject::connect(ui->pushButton_settings, &QPushButton::clicked, this, &LoginWindow::OnSettingsBtnClicked);
+	QObject::connect(m_ui->pushButton_login, &QPushButton::clicked, this, &LoginWindow::OnLoginBtnClicked);
+	QObject::connect(m_ui->pushButton_register, &QPushButton::clicked, this, &LoginWindow::OnRegisterBtnClicked);
+	QObject::connect(m_ui->pushButton_close, &QPushButton::clicked, this, &LoginWindow::OnCloseBtnClicked);
+	QObject::connect(m_ui->pushButton_settings, &QPushButton::clicked, this, &LoginWindow::OnSettingsBtnClicked);
 }
 
 void LoginWindow::mousePressEvent(QMouseEvent* event)
 {
-	if (event->button() == Qt::LeftButton) 
+	if (Qt::LeftButton == event->button())
 	{
 		QWidget* child = childAt(event->pos());
-		if ((nullptr == child) || (child == this) || ((qobject_cast<QPushButton*>(child) == nullptr)  && (qobject_cast<QLineEdit*>(child) == nullptr)))
+		if ((nullptr == child) || (this == child) || ((nullptr == qobject_cast<QPushButton*>(child)) && (nullptr == qobject_cast<QLineEdit*>(child))))
 		{
 			m_dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
 			m_isDragging = true;
 			event->accept();
 		}
-
 	}
 }
 void LoginWindow::mouseMoveEvent(QMouseEvent* event)
 {
-	if (m_isDragging && (event->buttons() & Qt::LeftButton)) 
+	if (m_isDragging && (0 != (event->buttons() & Qt::LeftButton)))
 	{
 		move(event->globalPosition().toPoint() - m_dragPosition);
 		event->accept();
@@ -86,12 +85,6 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 
 void LoginWindow::OnLoginBtnClicked()
 {
-	if (UiTestLogin)
-	{
-		accept();
-		return;
-	}
-
 	std::optional<CHostInfo> site = CHostMgr::InstanceRef().GetActiveHost();
 	if (!site.has_value())
 	{
@@ -99,12 +92,12 @@ void LoginWindow::OnLoginBtnClicked()
 		return;
 	}
 
-	ui->pushButton_login->setEnabled(false);
+	m_ui->pushButton_login->setEnabled(false);
 
 	CAuthParam param;
 	param.m_operation = AuthOperation::Login;
-	param.m_strAccount = ui->lineEdit_account->text().toStdString();
-	param.m_strPassword = ui->lineEdit_passwd->text().toStdString();
+	param.m_strAccount = m_ui->lineEdit_account->text().toStdString();
+	param.m_strPassword = m_ui->lineEdit_passwd->text().toStdString();
 	param.m_host = std::move(*site);
 	CLoginService::InstanceRef().Authenticate(param);
 }
@@ -112,19 +105,19 @@ void LoginWindow::OnLoginBtnClicked()
 void LoginWindow::OnRegisterBtnClicked()
 {
 	CRegisterDialog dialog(this);
-	dialog.SetAccount(ui->lineEdit_account->text());
+	dialog.SetAccount(m_ui->lineEdit_account->text());
 	if (QDialog::Accepted == dialog.exec())
 	{
-		ui->lineEdit_account->setText(dialog.Account());
-		ui->lineEdit_passwd->clear();
-		ui->lineEdit_passwd->setFocus();
+		m_ui->lineEdit_account->setText(dialog.Account());
+		m_ui->lineEdit_passwd->clear();
+		m_ui->lineEdit_passwd->setFocus();
 	}
 }
 
 void LoginWindow::OnCloseBtnClicked()
 {
 	reject();
-	//QApplication::quit();
+	// QApplication::quit();
 }
 
 void LoginWindow::OnSettingsBtnClicked()

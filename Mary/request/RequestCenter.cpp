@@ -33,6 +33,12 @@ namespace request
 		{
 			req.SetExtraData(k, v);
 		}
+		hqmarket::market::v1::SubscribeRequest payload;
+		CSecurity security = ParseSecurity(req.GetExtraData("security"));
+		payload.add_securities()->set_symbol(security.m_strCode);
+		payload.mutable_securities(0)->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
+		payload.add_channels(static_cast<hqmarket::market::v1::Channel>(ParseChannel(req.GetExtraData("channel"))));
+		req.SetData(payload);
 		return req;
 	}
 
@@ -45,6 +51,12 @@ namespace request
 		{
 			req.SetExtraData(k, v);
 		}
+		hqmarket::market::v1::UnsubscribeRequest payload;
+		CSecurity security = ParseSecurity(req.GetExtraData("security"));
+		payload.add_securities()->set_symbol(security.m_strCode);
+		payload.mutable_securities(0)->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
+		payload.add_channels(static_cast<hqmarket::market::v1::Channel>(ParseChannel(req.GetExtraData("channel"))));
+		req.SetData(payload);
 		return req;
 	}
 
@@ -57,6 +69,13 @@ namespace request
 		req.SetExtraData("channel", strChannel);
 		req.SetExtraData("begin_time_ms", std::to_string(nBeginTime));
 		req.SetExtraData("end_time_ms", std::to_string(nEndTime));
+		hqmarket::market::v1::QueryRequest payload;
+		payload.mutable_security()->set_symbol(info.m_strCode);
+		payload.mutable_security()->set_exchange(static_cast<hqmarket::market::v1::Exchange>(info.m_market));
+		payload.set_channel(static_cast<hqmarket::market::v1::Channel>(ParseChannel(strChannel)));
+		payload.set_begin_time_ms(nBeginTime);
+		payload.set_end_time_ms(nEndTime);
+		req.SetData(payload);
 		return req;
 	}
 

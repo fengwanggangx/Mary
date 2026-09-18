@@ -1,80 +1,119 @@
 #include "CViewHQMarket.h"
 #include "CUIStyle.h"
+#include "CDataTableModel.h"
 #include "ui_CViewHQMarket.h"
 
 #include <QApplication>
-#include <QButtonGroup>
-#include <QPushButton>
 #include <QEvent>
 #include <QHeaderView>
+#include <QMetaObject>
+#include <QPointer>
 #include <QTabBar>
-#include <vector>
+#include <cmath>
+#include <algorithm>
 
 CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CViewHQMarketClass>())
 {
 	m_ui->setupUi(this);
 	m_ui->marketTabs->tabBar()->setDrawBase(false);
 	m_ui->marketTabs->tabBar()->setExpanding(false);
-	m_ui->shanghaiPrice->setText("3,428.16");
-	m_ui->shenzhenPrice->setText("10,487.32");
-	m_ui->chinextPrice->setText("2,176.45");
-	m_ui->shanghaiChange->setText("+0.62%  +21.18");
-	m_ui->shenzhenChange->setText("+0.81%  +84.12");
-	m_ui->chinextChange->setText("-0.24%  -5.32");
-	QList<QLabel*> metricValues{ m_ui->metric0Value, m_ui->metric1Value, m_ui->metric2Value, m_ui->metric3Value, m_ui->metric4Value, m_ui->metric5Value };
-	QStringList values{ "1.26万亿", "3258", "1421", "186", "78", "12" };
-	for (int nIndex = 0; metricValues.size() > nIndex; ++nIndex)
-	{
-		metricValues[nIndex]->setText(values[nIndex]);
-	}
-	m_ui->distributionChart->SetValues({ 80, 160, 260, 440, 730, 1100, 500, 200, 880, 500, 320, 190, 100 });
-	QButtonGroup* group = new QButtonGroup(this);
-	QStringList sectorNames{ "银行", "食品饮料", "电子", "医药生物", "电力设备", "非银金融", "有色金属", "计算机", "汽车" };
-	QStringList sectorChanges{ "+2.16%", "+1.32%", "+0.85%", "-0.41%", "-0.66%", "+1.26%", "+0.73%", "+0.56%", "-0.29%" };
-	for (int nIndex = 0; sectorNames.size() > nIndex; ++nIndex)
-	{
-		QPushButton* tile = new QPushButton(sectorNames[nIndex] + "\n" + sectorChanges[nIndex], m_ui->sectorsPanel);
-		tile->setCheckable(true);
-		tile->setProperty("sectorTile", true);
-		tile->setProperty("negative", sectorChanges[nIndex].startsWith('-'));
-		tile->setMinimumHeight(58);
-		group->addButton(tile, nIndex);
-		m_ui->sectorGrid->addWidget(tile, nIndex / 5, nIndex % 5);
-	}
-	std::vector<int> order{ 0, 1, 5, 2, 6 };
-	m_ui->rankingTable->setRowCount(static_cast<int>(order.size()));
 	m_ui->rankingTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->rankingTable->horizontalHeader()->setFixedHeight(24);
-	for (int nRow = 0; order.size() > static_cast<std::size_t>(nRow); ++nRow)
+	m_ui->constituentsPage->SetSector("行业数据未提供");
+	ApplyTheme();
+	CHQMarketService& service = CHQMarketService::InstanceRef();
+	service.Initialize();
+	QPointer<CViewHQMarket> safeThis(this);
+	m_nQuoteTableToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet&)
 	{
-		m_ui->rankingTable->setItem(nRow, 0, new QTableWidgetItem(QString::number(nRow + 1)));
-		m_ui->rankingTable->setItem(nRow, 1, new QTableWidgetItem(sectorNames[order[nRow]]));
-		m_ui->rankingTable->setItem(nRow, 2, new QTableWidgetItem(sectorChanges[order[nRow]]));
-	}
-	connect(group, &QButtonGroup::idClicked, this, [this, sectorNames, order](int nIndex)
-	{
-		m_ui->constituentsPage->SetSector(sectorNames[nIndex]);
-		m_ui->rankingTable->clearSelection();
-		for (int nRow = 0; order.size() > static_cast<std::size_t>(nRow); ++nRow)
+		if (!safeThis.isNull())
 		{
-			if (nIndex == order[nRow])
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, view]()
 			{
-				m_ui->rankingTable->selectRow(nRow);
-			}
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshQuotes(view);
+				}
+			}, Qt::QueuedConnection);
 		}
 	});
-	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, [this, sectorNames, group, order](int nRow, int)
-	{
-		group->button(order[nRow])->setChecked(true);
-		m_ui->constituentsPage->SetSector(sectorNames[order[nRow]]);
-	});
-	group->button(0)->setChecked(true);
-	m_ui->rankingTable->selectRow(0);
-	m_ui->constituentsPage->SetSector("银行");
-	ApplyTheme();
+	RefreshQuotes(service.GetQuoteTableView());
+	service.SubscribeQuote(CSecurity("000001", Exchange::sse));
+	service.SubscribeQuote(CSecurity("399001", Exchange::szse));
+	service.SubscribeQuote(CSecurity("399006", Exchange::szse));
 }
 
-CViewHQMarket::~CViewHQMarket() = default;
+CViewHQMarket::~CViewHQMarket()
+{
+	CHQMarketService::InstanceRef().RemoveQuoteTableHandler(m_nQuoteTableToken);
+}
+
+void CViewHQMarket::RefreshQuotes(const CDataTableView& view)
+{
+	CDataTableModel model;
+	model.SetView(view, CDataChangeSet{});
+	QList<QLabel*> prices{ m_ui->shanghaiPrice, m_ui->shenzhenPrice, m_ui->chinextPrice };
+	QList<QLabel*> changes{ m_ui->shanghaiChange, m_ui->shenzhenChange, m_ui->chinextChange };
+	QStringList indices{ "000001.SSE", "399001.SZSE", "399006.SZSE" };
+	for (const auto& label : prices)
+	{
+		label->setText("--");
+	}
+	for (const auto& label : changes)
+	{
+		label->setText("--");
+	}
+	int nRising = 0;
+	int nFalling = 0;
+	int nFlat = 0;
+	QVector<int> distribution(13, 0);
+	for (int nRow = 0; model.rowCount() > nRow; ++nRow)
+	{
+		QString strSecurity = model.index(nRow, 0).data().toString();
+		double fPrice = model.index(nRow, 2).data().toDouble();
+		double fPreClose = model.index(nRow, 5).data().toDouble();
+		if ((0.0 >= fPrice) || (0.0 >= fPreClose) || ("交易中" != model.index(nRow, 7).data().toString()))
+		{
+			continue;
+		}
+		double fPercent = model.index(nRow, 4).data().toDouble();
+		int nIndex = static_cast<int>(indices.indexOf(strSecurity));
+		if (0 <= nIndex)
+		{
+			prices[nIndex]->setText(QString::number(fPrice, 'f', 2));
+			changes[nIndex]->setText(QString("%1%2%  %1%3").arg(0.0 <= fPercent ? "+" : "").arg(fPercent, 0, 'f', 2).arg(fPrice - fPreClose, 0, 'f', 2));
+			prices[nIndex]->setProperty("rising", 0.0 <= fPercent);
+			changes[nIndex]->setProperty("rising", 0.0 <= fPercent);
+			UIStyle::Refresh(*prices[nIndex]);
+			UIStyle::Refresh(*changes[nIndex]);
+			continue;
+		}
+		QString strMarket = model.index(nRow, 10).data().toString();
+		if (("沪A" != strMarket) && ("深A" != strMarket) && ("创业板" != strMarket) && ("科创板" != strMarket))
+		{
+			continue;
+		}
+		if (0.0 < fPercent)
+		{
+			++nRising;
+		}
+		else if (0.0 > fPercent)
+		{
+			++nFalling;
+		}
+		else
+		{
+			++nFlat;
+		}
+		int nBucket = std::clamp(static_cast<int>(std::floor(fPercent)) + 6, 0, 12);
+		++distribution[nBucket];
+	}
+	bool bHasQuotes = 0 < (nRising + nFalling + nFlat);
+	m_ui->metric1Value->setText(bHasQuotes ? QString::number(nRising) : "--");
+	m_ui->metric2Value->setText(bHasQuotes ? QString::number(nFalling) : "--");
+	m_ui->metric3Value->setText(bHasQuotes ? QString::number(nFlat) : "--");
+	m_ui->distributionChart->SetValues(bHasQuotes ? distribution : QVector<int>{});
+}
 
 void CViewHQMarket::changeEvent(QEvent* pEvent)
 {
@@ -95,14 +134,4 @@ void CViewHQMarket::ApplyTheme()
 	setProperty("darkTheme", bDarkTheme);
 	UIStyle::Apply(*this, ":/styles/market-overview.qss");
 	UIStyle::Refresh(*this);
-	m_ui->shanghaiPrice->ensurePolished();
-	QColor risingColor = m_ui->shanghaiPrice->palette().color(QPalette::WindowText);
-	for (int nRow = 0; m_ui->rankingTable->rowCount() > nRow; ++nRow)
-	{
-		QTableWidgetItem* change = m_ui->rankingTable->item(nRow, 2);
-		if (nullptr != change)
-		{
-			change->setForeground(risingColor);
-		}
-	}
 }

@@ -18,7 +18,27 @@ void CStrategyService::Initialize()
 		{
 			OnResponse(response);
 		});
+		CSession::InstanceRef().RegisterStateHandler([this](SessionState state, const std::string&)
+		{
+			if (SessionState::Ready == state)
+			{
+				QueryStrategies();
+			}
+		});
 	});
+}
+
+_TyCallbackId CStrategyService::AddQueryHandler(_TyQueryHandler&& handler)
+{
+	return m_queryPump.Subscribe([handler = std::move(handler)](const std::pair<_TyStrategyList, std::string>& result)
+	{
+		handler(result.first, result.second);
+	});
+}
+
+void CStrategyService::RemoveQueryHandler(_TyCallbackId nToken)
+{
+	m_queryPump.Unsubscribe(nToken);
 }
 
 void CStrategyService::SetQueryHandler(_TyQueryHandler&& handler)
@@ -169,6 +189,7 @@ void CStrategyService::OnResponse(const CRequest& response)
 		{
 			handler(strategies, strError);
 		}
+		m_queryPump.Notify({ std::move(strategies), std::move(strError) });
 		return;
 	}
 
@@ -196,5 +217,13 @@ void CStrategyService::OnResponse(const CRequest& response)
 	if (handler)
 	{
 		handler(strCmd, strError.empty(), strategy, strError);
+	}
+	if (strError.empty())
+	{
+		QueryStrategies();
+	}
+	else
+	{
+		m_queryPump.Notify({ GetStrategies(), strError });
 	}
 }

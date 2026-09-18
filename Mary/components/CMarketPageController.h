@@ -34,7 +34,6 @@ class CMarketPageController final : public QObject
 
 	private:
 		void BindService();
-		void LoadDemoData();
 		void EnsureSelection();
 		void RefreshSelection();
 		void HandleHistory(std::uint64_t nRequestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
@@ -42,10 +41,8 @@ class CMarketPageController final : public QObject
 		CSecurity GetSecurity(const QModelIndex& index) const;
 
 		MarketTableMode m_mode;
-		bool m_demo{ false };
 		QString m_sector;
 		std::string m_selectedSecurity;
-		CDataTable m_demoTable;
 		std::unordered_set<std::string> m_watchlist;
 		CUITable* m_table{ nullptr };
 		CDataTableModel* m_model{ nullptr };

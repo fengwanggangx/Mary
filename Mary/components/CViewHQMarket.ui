@@ -256,7 +256,7 @@
 												<item>
 													<widget class="QLabel" name="summaryTitle">
 														<property name="text">
-															<string>市场概况</string>
+															<string>市场概况（已接收行情）</string>
 														</property>
 														<property name="overviewHeading" stdset="0">
 															<bool>true</bool>
@@ -266,7 +266,7 @@
 												<item>
 													<widget class="QLabel" name="summaryBadge">
 														<property name="text">
-															<string>示例数据</string>
+															<string>实时报价</string>
 														</property>
 														<property name="overviewBadge" stdset="0">
 															<bool>true</bool>
@@ -656,7 +656,7 @@
 												<item>
 													<widget class="QLabel" name="sectorsTitle">
 														<property name="text">
-															<string>行业板块</string>
+															<string>行业板块（协议未提供）</string>
 														</property>
 														<property name="overviewHeading" stdset="0">
 															<bool>true</bool>
@@ -765,7 +765,7 @@
 												<item>
 													<widget class="QLabel" name="rankingTitle">
 														<property name="text">
-															<string>板块排行</string>
+															<string>板块排行（协议未提供）</string>
 														</property>
 														<property name="overviewHeading" stdset="0">
 															<bool>true</bool>

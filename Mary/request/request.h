@@ -28,65 +28,68 @@ using _TyStrategyInfo = request::StrategyInfo;
 using _TyStrategyList = request::StrategyList;
 class CRequest
 {
-  public:
-	enum class Type
-	{
-		UNKNOWN = 0,
-		QUERY_AUTH = 1,
-		QUERY_USERINFO = 2,
-		UPDATE_AUTH = 3,
-		STRATEGY = 4,
-		HQMARKET = 5,
-		HEARTBEAT = 6
-	};
+	public:
+		enum class Type
+		{
+			UNKNOWN = 0,
+			QUERY_AUTH = 1,
+			QUERY_USERINFO = 2,
+			UPDATE_AUTH = 3,
+			STRATEGY = 4,
+			HQMARKET = 5,
+			HEARTBEAT = 6
+		};
 
-  public:
-	CRequest();
-	~CRequest();
-	CRequest(const CRequest& arg);
-	CRequest& operator=(const CRequest& arg);
-	CRequest(CRequest&& arg) noexcept;
-	CRequest& operator=(CRequest&& arg) noexcept;
+	public:
+		CRequest();
+		~CRequest();
+		CRequest(const CRequest& arg);
+		CRequest& operator=(const CRequest& arg);
+		CRequest(CRequest&& arg) noexcept;
+		CRequest& operator=(CRequest&& arg) noexcept;
 
-  public:
-	_TyRequestId GetId() const;
-	void SetId(_TyRequestId id);
+	public:
+		_TyRequestId GetId() const;
+		void SetId(_TyRequestId id);
 
-	Type GetType() const;
-	void SetType(Type t);
+		Type GetType() const;
+		void SetType(Type t);
 
-	std::string GetCmd() const;
-	void SetCmd(const std::string& strCmd);
+		std::string GetCmd() const;
+		void SetCmd(const std::string& strCmd);
 
-	std::string GetExtraData(const std::string& strKey) const;
-	std::unordered_map<std::string, std::string> GetExtraData() const;
-	void SetExtraData(const std::string& strKey, const std::string& strValue);
+		std::string GetExtraData(const std::string& strKey) const;
+		std::unordered_map<std::string, std::string> GetExtraData() const;
+		void SetExtraData(const std::string& strKey, const std::string& strValue);
 
-	std::string GetReturnData(const std::string& strKey) const;
-	std::unordered_map<std::string, std::string> GetReturnData() const;
-	void SetReturnData(const std::string& strKey, const std::string& strValue);
+		std::string GetReturnData(const std::string& strKey) const;
+		std::unordered_map<std::string, std::string> GetReturnData() const;
+		void SetReturnData(const std::string& strKey, const std::string& strValue);
 
-	void SetData(const _TySubscriptionAck& value);
-	void SetData(const _TyQuoteData& value);
-	void SetData(const _TyDepthData& value);
-	void SetData(const _TyQueryResponse& value);
-	void SetData(const _TySecurityList& value);
-	void SetData(const _TyStrategyInfo& value);
-	void SetData(const _TyStrategyList& value);
-	const _TyReqData& GetData() const;
+		void SetData(const _TySubscriptionAck& value);
+		void SetData(const hqmarket::market::v1::SubscribeRequest& value);
+		void SetData(const hqmarket::market::v1::UnsubscribeRequest& value);
+		void SetData(const hqmarket::market::v1::QueryRequest& value);
+		void SetData(const _TyQuoteData& value);
+		void SetData(const _TyDepthData& value);
+		void SetData(const _TyQueryResponse& value);
+		void SetData(const _TySecurityList& value);
+		void SetData(const _TyStrategyInfo& value);
+		void SetData(const _TyStrategyList& value);
+		const _TyReqData& GetData() const;
 
-	void SetConnectionId(net::_TyConnectionId id);
-	net::_TyConnectionId GetConnectionId() const;
+		void SetConnectionId(net::_TyConnectionId id);
+		net::_TyConnectionId GetConnectionId() const;
 
-	bool Serialize(std::string* pOutput) const;
-	bool Deserialize(const std::string& strData);
+		bool Serialize(std::string* pOutput) const;
+		bool Deserialize(const std::string& strData);
 
-	std::optional<std::pair<int, std::string>> GetErrorInfo() const;
+		std::optional<std::pair<int, std::string>> GetErrorInfo() const;
 
-  private:
-	std::unique_ptr<google::protobuf::Arena> m_arena;
-	_TyReqData* m_data{ nullptr };
-	net::_TyConnectionId m_connection_id{ -1 };
+	private:
+		std::unique_ptr<google::protobuf::Arena> m_arena;
+		_TyReqData* m_data{ nullptr };
+		net::_TyConnectionId m_connection_id{ -1 };
 };
 
 #endif

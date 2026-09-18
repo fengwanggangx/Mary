@@ -11,58 +11,10 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QStyle>
-#include <cmath>
+#include <QSettings>
 
 namespace
 {
-	struct CDemoSecurity
-	{
-			const char* m_code;
-			const char* m_name;
-			const char* m_sector;
-			double m_price;
-			double m_percent;
-	};
-
-	const std::vector<CDemoSecurity> DemoSecurities{
-		{ "600519.SSE", "贵州茅台", "食品饮料", 1736.50, 1.23 },
-		{ "300750.SZSE", "宁德时代", "电力设备", 231.20, 0.74 },
-		{ "000858.SZSE", "五粮液", "食品饮料", 157.80, 1.09 },
-		{ "601318.SSE", "中国平安", "非银金融", 48.52, -0.21 },
-		{ "600036.SSE", "招商银行", "银行", 36.28, 2.16 },
-		{ "688981.SSE", "中芯国际", "电子", 49.36, -1.20 },
-		{ "002594.SZSE", "比亚迪", "汽车", 245.30, 1.45 },
-		{ "300059.SZSE", "东方财富", "非银金融", 17.28, 0.93 },
-		{ "601398.SSE", "工商银行", "银行", 6.23, 1.14 },
-		{ "600900.SSE", "长江电力", "电力设备", 28.62, 0.35 },
-		{ "002475.SZSE", "立讯精密", "电子", 35.42, -0.56 },
-		{ "601012.SSE", "隆基绿能", "电力设备", 19.63, 0.82 },
-		{ "601939.SSE", "建设银行", "银行", 8.42, 1.32 },
-		{ "601288.SSE", "农业银行", "银行", 4.86, 1.25 },
-		{ "601988.SSE", "中国银行", "银行", 5.23, 0.96 },
-		{ "601328.SSE", "交通银行", "银行", 7.15, 1.42 },
-		{ "000001.SZSE", "平安银行", "银行", 11.62, -0.34 },
-		{ "600000.SSE", "浦发银行", "银行", 10.38, 1.07 },
-		{ "601166.SSE", "兴业银行", "银行", 20.56, 1.68 },
-		{ "600276.SSE", "恒瑞医药", "医药生物", 46.82, -0.41 },
-		{ "600030.SSE", "中信证券", "非银金融", 27.10, 1.26 },
-		{ "600050.SSE", "中国联通", "计算机", 5.12, 0.56 },
-		{ "600111.SSE", "北方稀土", "有色金属", 22.46, 0.73 },
-		{ "920001.BSE", "纬达光电", "电子", 12.30, 0.48 }
-	};
-
-	QString SectorOf(const QString& strCode)
-	{
-		for (const auto& demoValue : DemoSecurities)
-		{
-			if (strCode == QString::fromUtf8(demoValue.m_code))
-			{
-				return QString::fromUtf8(demoValue.m_sector);
-			}
-		}
-		return QString();
-	}
-
 	class CMarketTableDelegate final : public QStyledItemDelegate
 	{
 		public:
@@ -81,6 +33,11 @@ namespace
 				}
 				if ((2 <= nColumn) && (5 >= nColumn))
 				{
+					if (0.0 >= index.siblingAtColumn(2).data().toDouble())
+					{
+						option->text = "--";
+						return;
+					}
 					double fValue = index.data().toDouble();
 					option->text = QString::number(fValue, 'f', 2);
 					if (4 == nColumn)
@@ -126,7 +83,8 @@ class CMarketFilterProxyModel final : public QSortFilterProxyModel
 			{
 				return false;
 			}
-			if (!m_sector.isEmpty() && (m_sector != SectorOf(strCode)))
+			// The current security protocol has no industry membership field.
+			if (!m_sector.isEmpty())
 			{
 				return false;
 			}
@@ -142,12 +100,19 @@ class CMarketFilterProxyModel final : public QSortFilterProxyModel
 CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTable, QObject* pParent)
 	: QObject(pParent), m_mode(mode), m_table(pTable)
 {
-	m_demo = !CSession::InstanceRef().IsAuthenticated() || (MarketTableMode::Constituents == mode);
 	m_model = new CDataTableModel(this);
 	m_proxy = new CMarketFilterProxyModel(this);
 	m_proxy->setSourceModel(m_model);
 	if (MarketTableMode::Watchlist == mode)
 	{
+		QSettings settings("Mary", "Mary");
+		for (const auto& strSecurity : settings.value("watchlist/securities").toStringList())
+		{
+			if (ParseSecurity(strSecurity.toStdString()).IsValid())
+			{
+				m_watchlist.emplace(strSecurity.toStdString());
+			}
+		}
 		m_proxy->m_watchlist = &m_watchlist;
 	}
 	m_table->setModel(m_proxy);
@@ -160,10 +125,6 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 	{
 		EnsureSelection();
 	});
-	if (m_demo)
-	{
-		LoadDemoData();
-	}
 	BindService();
 }
 
@@ -208,48 +169,21 @@ void CMarketPageController::ToggleWatchlist(const QString& strCode)
 				m_watchlist.emplace(strKey.toStdString());
 			}
 			m_proxy->Refresh();
+			QStringList securities;
+			for (const auto& strSecurity : m_watchlist)
+			{
+				securities.append(QString::fromStdString(strSecurity));
+			}
+			QSettings settings("Mary", "Mary");
+			settings.setValue("watchlist/securities", securities);
 			m_table->Update();
 			break;
 		}
 	}
 }
 
-void CMarketPageController::LoadDemoData()
-{
-	std::vector<CDataColumnSchema> schema{
-		{ 1, "代码", DataType::String }, { 2, "名称", DataType::String }, { 3, "最新价", DataType::Double }, { 4, "涨跌额", DataType::Double }, { 5, "涨跌幅", DataType::Double }, { 6, "昨收", DataType::Double }, { 7, "成交量", DataType::Int64 }, { 8, "状态", DataType::String }, { 9, "序列", DataType::UInt64 }, { 10, "证券状态", DataType::String }, { 11, "市场", DataType::String }
-	};
-	for (const auto& column : schema)
-	{
-		m_demoTable.AddColumn(column);
-	}
-	CDataTableWriter writer = m_demoTable.BeginWrite();
-	_TyDataRowId nRowId = 1;
-	for (const auto& demoValue : DemoSecurities)
-	{
-		std::string strCode(demoValue.m_code);
-		std::string strMarket = strCode.ends_with(".BSE") ? "北交所" : strCode.starts_with("688") ? "科创板"
-																   : strCode.starts_with("300")	  ? "创业板"
-																   : strCode.ends_with(".SSE")	  ? "沪A"
-																								  : "深A";
-		double fPreClose = demoValue.m_price / (1.0 + demoValue.m_percent / 100.0);
-		writer.AddRow(nRowId, { strCode, std::string(demoValue.m_name), demoValue.m_price, demoValue.m_price - fPreClose, demoValue.m_percent, fPreClose, std::int64_t(1200000 + nRowId * 37000), std::string("示例"), std::uint64_t(0), std::string("normal"), strMarket });
-		if (12 >= nRowId)
-		{
-			m_watchlist.emplace(strCode);
-		}
-		++nRowId;
-	}
-	auto [view, changes] = writer.Commit();
-	HandleQuoteTable(view, changes);
-}
-
 void CMarketPageController::BindService()
 {
-	if (m_demo)
-	{
-		return;
-	}
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
 	QPointer<CMarketPageController> safeThis(this);
@@ -282,7 +216,32 @@ void CMarketPageController::BindService()
 		}, Qt::QueuedConnection);
 	});
 	HandleQuoteTable(service.GetQuoteTableView(), CDataChangeSet{});
-	service.QuerySecurities();
+	CSession::InstanceRef().RegisterStateHandler([safeThis](SessionState state, const std::string& strMessage)
+	{
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, state, strMessage]()
+			{
+				if (safeThis.isNull())
+				{
+					return;
+				}
+				if (SessionState::Ready == state)
+				{
+					safeThis->m_selectedSecurity.clear();
+					safeThis->RefreshSelection();
+				}
+				else if (nullptr != safeThis->m_chartState)
+				{
+					safeThis->m_chartState->setText(QString::fromStdString(strMessage.empty() ? "连接不可用" : strMessage));
+					safeThis->m_minuteRequestId = 0;
+					safeThis->m_dayRequestId = 0;
+					safeThis->m_intraday->Clear();
+					safeThis->m_candles->Clear();
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
 }
 
 void CMarketPageController::SetSector(const QString& strSector)
@@ -346,7 +305,7 @@ void CMarketPageController::RefreshSelection()
 		m_stockTitle->setText("没有匹配的证券");
 		m_selectedSecurity.clear();
 		m_price->setText("--");
-		m_chartState->clear();
+		m_chartState->setText(CSession::InstanceRef().IsAuthenticated() ? "暂无证券数据" : "连接不可用");
 		m_intraday->Clear();
 		m_candles->Clear();
 		m_minuteRequestId = 0;
@@ -356,7 +315,7 @@ void CMarketPageController::RefreshSelection()
 	m_stockTitle->setText(QString::fromStdString(security.m_strName + "  " + security.String()));
 	double fPrice = current.siblingAtColumn(2).data().toDouble();
 	double fPercent = current.siblingAtColumn(4).data().toDouble();
-	m_price->setText(QString("%1    %2%3%").arg(fPrice, 0, 'f', 2).arg(0 <= fPercent ? "+" : "").arg(fPercent, 0, 'f', 2));
+	m_price->setText(0.0 < fPrice ? QString("%1    %2%3%").arg(fPrice, 0, 'f', 2).arg(0 <= fPercent ? "+" : "").arg(fPercent, 0, 'f', 2) : "--");
 	m_price->setProperty("rising", 0 <= fPercent);
 	m_price->style()->unpolish(m_price);
 	m_price->style()->polish(m_price);
@@ -365,7 +324,7 @@ void CMarketPageController::RefreshSelection()
 		return;
 	}
 	m_selectedSecurity = security.String();
-	m_chartState->setText(m_demo ? "演示行情 · 未连接服务器" : "正在查询历史行情");
+	m_chartState->setText("正在查询历史行情");
 	RequestHistory(CurveMode::Intraday);
 	RequestHistory(m_candles->GetMode());
 }
@@ -379,23 +338,11 @@ void CMarketPageController::RequestHistory(CurveMode mode)
 	}
 	bool bMinute = CurveMode::Intraday == mode;
 	CUICurve* curve = bMinute ? m_intraday : m_candles;
-	curve->SetMode(mode);
-	if (m_demo)
+	if (nullptr == curve)
 	{
-		std::vector<CMarketBar> bars;
-		int nCount = bMinute ? 120 : 90;
-		bars.reserve(nCount);
-		double fPrice = m_table->currentIndex().siblingAtColumn(2).data().toDouble();
-		std::int64_t nEnd = QDateTime::currentMSecsSinceEpoch();
-		for (int nIndex = 0; nCount > nIndex; ++nIndex)
-		{
-			double fClose = fPrice * (0.94 + 0.06 * nIndex / nCount + 0.008 * std::sin(nIndex * 0.4));
-			double fOpen = fClose * (1.0 + 0.003 * std::sin(nIndex * 1.3));
-			bars.emplace_back(CMarketBar{ nEnd - (nCount - nIndex) * std::int64_t(bMinute ? 60000 : 86400000), fOpen, (std::max)(fOpen, fClose) * 1.004, (std::min)(fOpen, fClose) * 0.996, fClose, std::int64_t(10000 + nIndex * 127), std::int64_t(0) });
-		}
-		curve->SetBars(bars);
 		return;
 	}
+	curve->SetMode(mode);
 	curve->Clear();
 	std::uint64_t& nId = bMinute ? m_minuteRequestId : m_dayRequestId;
 	nId = 0;

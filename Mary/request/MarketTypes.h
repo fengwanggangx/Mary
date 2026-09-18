@@ -11,6 +11,9 @@ namespace hqmarket::market::v1
 	class SecurityList;
 	class PriceLevel;
 	class SubscriptionAck;
+	class SubscribeRequest;
+	class UnsubscribeRequest;
+	class QueryRequest;
 	class QuoteData;
 	class DepthData;
 	class QueryResponse;
@@ -67,20 +70,20 @@ enum class MarketState
 
 struct CSecurity
 {
-	std::string m_strCode;
-	std::string m_strName;
-	Exchange m_market{ Exchange::unknown };
-	MarketState m_status{ MarketState::unknown };
+		std::string m_strCode;
+		std::string m_strName;
+		Exchange m_market{ Exchange::unknown };
+		MarketState m_status{ MarketState::unknown };
 
-	CSecurity() = default;
-	CSecurity(const std::string& strCode, Exchange mk, MarketState status = MarketState::unknown);
-	CSecurity(const std::string& strCode, const std::string& strName, Exchange mk, MarketState status = MarketState::unknown);
-	CSecurity(const CSecurity& arg);
-	CSecurity& operator=(const CSecurity& arg);
-	bool operator==(const CSecurity& arg) const;
+		CSecurity() = default;
+		CSecurity(const std::string& strCode, Exchange mk, MarketState status = MarketState::unknown);
+		CSecurity(const std::string& strCode, const std::string& strName, Exchange mk, MarketState status = MarketState::unknown);
+		CSecurity(const CSecurity& arg);
+		CSecurity& operator=(const CSecurity& arg);
+		bool operator==(const CSecurity& arg) const;
 
-	bool IsValid() const;
-	std::string String() const;
+		bool IsValid() const;
+		std::string String() const;
 };
 
 std::string GetMarketString(Exchange exchange);
@@ -94,16 +97,16 @@ std::string FmtSecurityString(const std::string& strCode, Exchange mk);
 
 struct CQuoteInfo
 {
-	CQuoteInfo() = default;
-	CQuoteInfo(const std::string& strCode, Exchange mk, Channel channel) : m_security(strCode, mk), m_channel(channel)
-	{
-	}
+		CQuoteInfo() = default;
+		CQuoteInfo(const std::string& strCode, Exchange mk, Channel channel) : m_security(strCode, mk), m_channel(channel)
+		{
+		}
 
-	bool IsValid() const;
-	std::string String() const;
+		bool IsValid() const;
+		std::string String() const;
 
-	CSecurity m_security;
-	Channel m_channel{ Channel::unknown };
+		CSecurity m_security;
+		Channel m_channel{ Channel::unknown };
 };
 
 #endif

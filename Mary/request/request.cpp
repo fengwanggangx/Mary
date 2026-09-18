@@ -102,6 +102,21 @@ void CRequest::SetData(const _TySubscriptionAck& value)
 	m_data->mutable_subscription_ack()->CopyFrom(value);
 }
 
+void CRequest::SetData(const hqmarket::market::v1::SubscribeRequest& value)
+{
+	m_data->mutable_subscribe_request()->CopyFrom(value);
+}
+
+void CRequest::SetData(const hqmarket::market::v1::UnsubscribeRequest& value)
+{
+	m_data->mutable_unsubscribe_request()->CopyFrom(value);
+}
+
+void CRequest::SetData(const hqmarket::market::v1::QueryRequest& value)
+{
+	m_data->mutable_query_request()->CopyFrom(value);
+}
+
 void CRequest::SetData(const _TyQuoteData& value)
 {
 	m_data->mutable_quote()->CopyFrom(value);

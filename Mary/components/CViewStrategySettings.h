@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <memory>
+#include "../service/strategy/CStrategyService.h"
 
 namespace Ui
 {
@@ -27,6 +28,11 @@ class CViewStrategySettings final : public QWidget
 		std::unique_ptr<Ui::CViewStrategySettingsClass> m_ui;
 		void RefreshFilter();
 		void RefreshDetails();
+		void RefreshStrategies(const CStrategyService::_TyStrategyList& strategies, const std::string& strError);
+		void EditStrategy(bool bNew);
+		void RefreshConnection();
+		CStrategyService::_TyStrategyList m_strategies;
+		_TyCallbackId m_nQueryToken{ 0 };
 		QTableWidget* m_pInstances{ nullptr };
 		QLabel* m_pDetails{ nullptr };
 		QLineEdit* m_pSearch{ nullptr };
