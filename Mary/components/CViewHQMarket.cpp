@@ -1,6 +1,7 @@
 #include "CViewHQMarket.h"
 #include "CUIStyle.h"
 #include "CDataTableModel.h"
+#include "../system/CSession.h"
 #include "ui_CViewHQMarket.h"
 
 #include <QApplication>
@@ -8,7 +9,9 @@
 #include <QHeaderView>
 #include <QMetaObject>
 #include <QPointer>
+#include <QPushButton>
 #include <QTabBar>
+#include <QTableWidgetItem>
 #include <cmath>
 #include <algorithm>
 
@@ -19,13 +22,12 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	m_ui->marketTabs->tabBar()->setExpanding(false);
 	m_ui->rankingTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->rankingTable->horizontalHeader()->setFixedHeight(24);
-	m_ui->constituentsPage->SetSector("行业数据未提供");
 	ApplyTheme();
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewHQMarket> safeThis(this);
 	m_nQuoteTableToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet&)
-	{
+													  {
 		if (!safeThis.isNull())
 		{
 			QMetaObject::invokeMethod(safeThis.data(), [safeThis, view]()
@@ -35,17 +37,174 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 					safeThis->RefreshQuotes(view);
 				}
 			}, Qt::QueuedConnection);
+		} });
+	m_nSectorListToken = service.AddSectorListHandler([safeThis](const CSectorListEvent& event)
+													  {
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshSectors(event);
+				}
+			}, Qt::QueuedConnection);
+		} });
+	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler([safeThis](const CSectorConstituentsEvent& event)
+																	  {
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshConstituents(event);
+				}
+			}, Qt::QueuedConnection);
+		} });
+	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, [this](int nIndex)
+			{
+		if (0 == nIndex)
+		{
+			RequestSectors();
 		}
-	});
+		else
+		{
+			m_bOverviewRequested = false;
+		} });
+	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, [this](int nRow, int)
+			{
+		QTableWidgetItem* pItem = m_ui->rankingTable->item(nRow, 1);
+		if (nullptr != pItem)
+		{
+			SelectSector(pItem->data(Qt::UserRole).toString());
+		} });
+	CSession::InstanceRef().RegisterStateHandler([safeThis](SessionState state, const std::string&)
+												 {
+		if ((SessionState::Ready == state) && !safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
+			{
+				if (!safeThis.isNull() && (0 == safeThis->m_ui->marketTabs->currentIndex()))
+				{
+					safeThis->m_bOverviewRequested = false;
+					safeThis->RequestSectors();
+				}
+			}, Qt::QueuedConnection);
+		} });
 	RefreshQuotes(service.GetQuoteTableView());
 	service.SubscribeQuote(CSecurity("000001", Exchange::sse));
 	service.SubscribeQuote(CSecurity("399001", Exchange::szse));
 	service.SubscribeQuote(CSecurity("399006", Exchange::szse));
+	RequestSectors();
 }
 
 CViewHQMarket::~CViewHQMarket()
 {
 	CHQMarketService::InstanceRef().RemoveQuoteTableHandler(m_nQuoteTableToken);
+	CHQMarketService::InstanceRef().RemoveSectorListHandler(m_nSectorListToken);
+	CHQMarketService::InstanceRef().RemoveSectorConstituentsHandler(m_nSectorConstituentsToken);
+}
+
+void CViewHQMarket::RequestSectors()
+{
+	if (m_bOverviewRequested)
+	{
+		return;
+	}
+	if (!CSession::InstanceRef().IsAuthenticated())
+	{
+		m_ui->sectorState->setText("等待行情服务连接");
+		return;
+	}
+	m_bOverviewRequested = true;
+	m_ui->sectorState->setText("正在加载行业板块…");
+	CHQMarketService::InstanceRef().QuerySectors(SectorType::industry);
+}
+
+void CViewHQMarket::RefreshSectors(const CSectorListEvent& event)
+{
+	while (nullptr != m_ui->sectorGrid->itemAt(0))
+	{
+		QLayoutItem* pItem = m_ui->sectorGrid->takeAt(0);
+		delete pItem->widget();
+		delete pItem;
+	}
+	m_ui->rankingTable->setRowCount(0);
+	if (!event.m_strError.empty())
+	{
+		m_ui->sectorState->setText(QString::fromStdString(event.m_strError));
+		return;
+	}
+	m_sectors = event.m_sectors;
+	std::sort(m_sectors.begin(), m_sectors.end(), [](const CSectorInfo& left, const CSectorInfo& right)
+			  { return left.m_fChangePercent > right.m_fChangePercent; });
+	if (m_sectors.empty())
+	{
+		m_ui->sectorState->setText("暂无行业板块数据");
+		return;
+	}
+	m_ui->sectorState->setText(QString("共%1个行业").arg(m_sectors.size()));
+	int nTileCount = (std::min)(9, static_cast<int>(m_sectors.size()));
+	for (int nIndex = 0; nTileCount > nIndex; ++nIndex)
+	{
+		const CSectorInfo& sector = m_sectors[static_cast<std::size_t>(nIndex)];
+		QPushButton* pButton = new QPushButton(QString("%1\n%2%3%").arg(QString::fromStdString(sector.m_strName), 0.0 <= sector.m_fChangePercent ? "+" : "", QString::number(sector.m_fChangePercent, 'f', 2)), this);
+		pButton->setCheckable(true);
+		pButton->setProperty("sectorTile", true);
+		pButton->setProperty("negative", 0.0 > sector.m_fChangePercent);
+		pButton->setProperty("sectorCode", QString::fromStdString(sector.m_strCode));
+		connect(pButton, &QPushButton::clicked, this, [this, pButton]()
+				{ SelectSector(pButton->property("sectorCode").toString()); });
+		m_ui->sectorGrid->addWidget(pButton, nIndex / 5, nIndex % 5);
+	}
+	int nRankingCount = (std::min)(5, static_cast<int>(m_sectors.size()));
+	m_ui->rankingTable->setRowCount(nRankingCount);
+	for (int nIndex = 0; nRankingCount > nIndex; ++nIndex)
+	{
+		const CSectorInfo& sector = m_sectors[static_cast<std::size_t>(nIndex)];
+		QTableWidgetItem* pRank = new QTableWidgetItem(QString::number(nIndex + 1));
+		QTableWidgetItem* pName = new QTableWidgetItem(QString::fromStdString(sector.m_strName));
+		QTableWidgetItem* pPercent = new QTableWidgetItem(QString("%1%2%").arg(0.0 <= sector.m_fChangePercent ? "+" : "", QString::number(sector.m_fChangePercent, 'f', 2)));
+		pName->setData(Qt::UserRole, QString::fromStdString(sector.m_strCode));
+		m_ui->rankingTable->setItem(nIndex, 0, pRank);
+		m_ui->rankingTable->setItem(nIndex, 1, pName);
+		m_ui->rankingTable->setItem(nIndex, 2, pPercent);
+	}
+}
+
+void CViewHQMarket::SelectSector(const QString& strSectorCode)
+{
+	if (strSectorCode.isEmpty())
+	{
+		return;
+	}
+	m_strSelectedSectorCode = strSectorCode;
+	for (int nIndex = 0; m_ui->sectorGrid->count() > nIndex; ++nIndex)
+	{
+		QPushButton* pButton = qobject_cast<QPushButton*>(m_ui->sectorGrid->itemAt(nIndex)->widget());
+		if (nullptr != pButton)
+		{
+			pButton->setChecked(strSectorCode == pButton->property("sectorCode").toString());
+		}
+	}
+	m_ui->sectorState->setText("正在加载成分股…");
+	CHQMarketService::InstanceRef().QuerySectorConstituents(SectorType::industry, strSectorCode.toStdString());
+}
+
+void CViewHQMarket::RefreshConstituents(const CSectorConstituentsEvent& event)
+{
+	if (!event.m_strError.empty())
+	{
+		m_ui->sectorState->setText(QString::fromStdString(event.m_strError));
+		return;
+	}
+	if (m_strSelectedSectorCode != QString::fromStdString(event.m_sector.m_strCode))
+	{
+		return;
+	}
+	m_ui->sectorState->setText(QString("%1 · %2只成分股").arg(QString::fromStdString(event.m_sector.m_strName)).arg(event.m_securities.size()));
+	m_ui->constituentsPage->SetSector(event.m_sector, event.m_securities);
 }
 
 void CViewHQMarket::RefreshQuotes(const CDataTableView& view)

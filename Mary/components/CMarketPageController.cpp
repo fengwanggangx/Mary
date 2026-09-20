@@ -17,84 +17,83 @@ namespace
 {
 	class CMarketTableDelegate final : public QStyledItemDelegate
 	{
-		public:
-			explicit CMarketTableDelegate(QObject* parent) : QStyledItemDelegate(parent)
-			{
-			}
+	  public:
+		explicit CMarketTableDelegate(QObject* parent) : QStyledItemDelegate(parent)
+		{
+		}
 
-		protected:
-			void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
+	  protected:
+		void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
+		{
+			QStyledItemDelegate::initStyleOption(option, index);
+			int nColumn = index.column();
+			if (0 == nColumn)
 			{
-				QStyledItemDelegate::initStyleOption(option, index);
-				int nColumn = index.column();
-				if (0 == nColumn)
+				option->text = index.data().toString().section('.', 0, 0);
+			}
+			if ((2 <= nColumn) && (5 >= nColumn))
+			{
+				if (0.0 >= index.siblingAtColumn(2).data().toDouble())
 				{
-					option->text = index.data().toString().section('.', 0, 0);
+					option->text = "--";
+					return;
 				}
-				if ((2 <= nColumn) && (5 >= nColumn))
+				double fValue = index.data().toDouble();
+				option->text = QString::number(fValue, 'f', 2);
+				if (4 == nColumn)
 				{
-					if (0.0 >= index.siblingAtColumn(2).data().toDouble())
-					{
-						option->text = "--";
-						return;
-					}
-					double fValue = index.data().toDouble();
-					option->text = QString::number(fValue, 'f', 2);
-					if (4 == nColumn)
-					{
-						option->text += "%";
-					}
-					if (((3 == nColumn) || (4 == nColumn)) && (0.0 < fValue))
-					{
-						option->text.prepend('+');
-					}
+					option->text += "%";
 				}
-				option->displayAlignment = 2 <= nColumn ? Qt::AlignRight | Qt::AlignVCenter : Qt::AlignLeft | Qt::AlignVCenter;
-				if ((2 == nColumn) || (3 == nColumn) || (4 == nColumn))
+				if (((3 == nColumn) || (4 == nColumn)) && (0.0 < fValue))
 				{
-					double fPercent = index.siblingAtColumn(4).data().toDouble();
-					QColor color = 0.0 <= fPercent ? QColor("#f04455") : QColor("#00b987");
-					option->palette.setColor(QPalette::Text, color);
-					option->palette.setColor(QPalette::HighlightedText, color);
+					option->text.prepend('+');
 				}
 			}
+			option->displayAlignment = 2 <= nColumn ? Qt::AlignRight | Qt::AlignVCenter : Qt::AlignLeft | Qt::AlignVCenter;
+			if ((2 == nColumn) || (3 == nColumn) || (4 == nColumn))
+			{
+				double fPercent = index.siblingAtColumn(4).data().toDouble();
+				QColor color = 0.0 <= fPercent ? QColor("#f04455") : QColor("#00b987");
+				option->palette.setColor(QPalette::Text, color);
+				option->palette.setColor(QPalette::HighlightedText, color);
+			}
+		}
 	};
 } // namespace
 
 class CMarketFilterProxyModel final : public QSortFilterProxyModel
 {
-	public:
-		explicit CMarketFilterProxyModel(QObject* parent) : QSortFilterProxyModel(parent)
-		{
-		}
-		QString m_sector;
-		int m_market{ -1 };
-		const std::unordered_set<std::string>* m_watchlist{ nullptr };
-		void Refresh()
-		{
-			invalidateFilter();
-		}
+  public:
+	explicit CMarketFilterProxyModel(QObject* parent) : QSortFilterProxyModel(parent)
+	{
+	}
+	int m_market{ -1 };
+	const std::unordered_set<std::string>* m_watchlist{ nullptr };
+	const std::unordered_set<std::string>* m_constituents{ nullptr };
+	void Refresh()
+	{
+		invalidateFilter();
+	}
 
-	protected:
-		bool filterAcceptsRow(int nRow, const QModelIndex& parent) const override
+  protected:
+	bool filterAcceptsRow(int nRow, const QModelIndex& parent) const override
+	{
+		QString strCode = sourceModel()->index(nRow, 0, parent).data().toString();
+		if ((nullptr != m_watchlist) && !m_watchlist->contains(strCode.toStdString()))
 		{
-			QString strCode = sourceModel()->index(nRow, 0, parent).data().toString();
-			if ((nullptr != m_watchlist) && !m_watchlist->contains(strCode.toStdString()))
-			{
-				return false;
-			}
-			// The current security protocol has no industry membership field.
-			if (!m_sector.isEmpty())
-			{
-				return false;
-			}
-			QString strMarket = sourceModel()->index(nRow, 10, parent).data().toString();
-			if (0 == m_market)
-			{
-				return ("沪A" == strMarket) || ("深A" == strMarket) || ("创业板" == strMarket) || ("科创板" == strMarket);
-			}
-			return (0 > m_market) || (1 == m_market && "北交所" == strMarket) || (2 == m_market && "创业板" == strMarket) || (3 == m_market && "科创板" == strMarket);
+			return false;
 		}
+		if ((nullptr != m_constituents) && !m_constituents->contains(strCode.toStdString()))
+		{
+			return false;
+		}
+		QString strMarket = sourceModel()->index(nRow, 10, parent).data().toString();
+		if (0 == m_market)
+		{
+			return ("沪A" == strMarket) || ("深A" == strMarket) || ("创业板" == strMarket) || ("科创板" == strMarket);
+		}
+		return (0 > m_market) || (1 == m_market && "北交所" == strMarket) || (2 == m_market && "创业板" == strMarket) || (3 == m_market && "科创板" == strMarket);
+	}
 };
 
 CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTable, QObject* pParent)
@@ -103,6 +102,10 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 	m_model = new CDataTableModel(this);
 	m_proxy = new CMarketFilterProxyModel(this);
 	m_proxy->setSourceModel(m_model);
+	if (MarketTableMode::Constituents == mode)
+	{
+		m_proxy->m_constituents = &m_constituents;
+	}
 	if (MarketTableMode::Watchlist == mode)
 	{
 		QSettings settings("Mary", "Mary");
@@ -118,13 +121,9 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 	m_table->setModel(m_proxy);
 	m_table->setItemDelegate(new CMarketTableDelegate(m_table));
 	connect(m_table, &CUITable::RowSelected, this, [this]()
-	{
-		RefreshSelection();
-	});
+			{ RefreshSelection(); });
 	connect(m_table, &CUITable::ResultsChanged, this, [this]()
-	{
-		EnsureSelection();
-	});
+			{ EnsureSelection(); });
 	BindService();
 }
 
@@ -188,7 +187,7 @@ void CMarketPageController::BindService()
 	service.Initialize();
 	QPointer<CMarketPageController> safeThis(this);
 	m_quoteTableToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet& changes)
-	{
+													 {
 		if (safeThis.isNull())
 		{
 			return;
@@ -199,10 +198,9 @@ void CMarketPageController::BindService()
 			{
 				safeThis->HandleQuoteTable(view, changes);
 			}
-		}, Qt::QueuedConnection);
-	});
+		}, Qt::QueuedConnection); });
 	m_historyToken = service.AddHistoryHandler([safeThis](std::uint64_t nId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
-	{
+											   {
 		if (safeThis.isNull())
 		{
 			return;
@@ -213,11 +211,10 @@ void CMarketPageController::BindService()
 			{
 				safeThis->HandleHistory(nId, strSecurity, period, bars, strError);
 			}
-		}, Qt::QueuedConnection);
-	});
+		}, Qt::QueuedConnection); });
 	HandleQuoteTable(service.GetQuoteTableView(), CDataChangeSet{});
 	CSession::InstanceRef().RegisterStateHandler([safeThis](SessionState state, const std::string& strMessage)
-	{
+												 {
 		if (!safeThis.isNull())
 		{
 			QMetaObject::invokeMethod(safeThis.data(), [safeThis, state, strMessage]()
@@ -240,14 +237,17 @@ void CMarketPageController::BindService()
 					safeThis->m_candles->Clear();
 				}
 			}, Qt::QueuedConnection);
-		}
-	});
+		} });
 }
 
-void CMarketPageController::SetSector(const QString& strSector)
+void CMarketPageController::SetConstituents(const std::vector<CSecurity>& securities)
 {
-	m_sector = strSector;
-	m_proxy->m_sector = strSector;
+	m_constituents.clear();
+	m_constituents.reserve(securities.size());
+	for (const auto& security : securities)
+	{
+		m_constituents.emplace(security.String());
+	}
 	m_proxy->Refresh();
 	m_table->Update();
 	EnsureSelection();

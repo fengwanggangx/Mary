@@ -15,17 +15,11 @@ CViewConstituents::CViewConstituents(QWidget* pParent) : QWidget(pParent), m_ui(
 	m_ui->table->SetSearchColumns({ 0, 1 });
 	connect(m_ui->searchEdit, &QLineEdit::textChanged, m_ui->table, &CUITable::Search);
 	connect(m_ui->searchEdit, &QLineEdit::returnPressed, this, [this]()
-	{
-		m_ui->table->Search(m_ui->searchEdit->text());
-	});
+			{ m_ui->table->Search(m_ui->searchEdit->text()); });
 	connect(m_ui->searchButton, &QPushButton::clicked, this, [this]()
-	{
-		m_ui->table->Search(m_ui->searchEdit->text());
-	});
+			{ m_ui->table->Search(m_ui->searchEdit->text()); });
 	connect(m_ui->table, &CUITable::ResultsChanged, this, [this](int nCount)
-	{
-		m_ui->countLabel->setText((m_strSector.isEmpty() ? QString() : m_strSector + " · ") + QString("共%1只").arg(nCount));
-	});
+			{ m_ui->countLabel->setText((m_strSector.isEmpty() ? QString() : m_strSector + " · ") + QString("共%1只").arg(nCount)); });
 	m_controller = std::make_unique<CMarketPageController>(MarketTableMode::Constituents, m_ui->table, this);
 
 	ApplyTheme();
@@ -33,10 +27,10 @@ CViewConstituents::CViewConstituents(QWidget* pParent) : QWidget(pParent), m_ui(
 
 CViewConstituents::~CViewConstituents() = default;
 
-void CViewConstituents::SetSector(const QString& strSector)
+void CViewConstituents::SetSector(const CSectorInfo& sector, const std::vector<CSecurity>& securities)
 {
-	m_strSector = strSector;
-	m_controller->SetSector(strSector);
+	m_strSector = QString::fromStdString(sector.m_strName);
+	m_controller->SetConstituents(securities);
 }
 
 void CViewConstituents::changeEvent(QEvent* pEvent)

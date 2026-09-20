@@ -101,6 +101,23 @@ namespace
 		std::from_chars_result result = std::from_chars(pBegin, pEnd, sequence);
 		return (std::errc() == result.ec) && (pEnd == result.ptr) ? sequence : 0;
 	}
+
+	CSectorInfo ParseSector(const hqmarket::market::v1::SectorInfo& value, SectorType type)
+	{
+		CSectorInfo sector;
+		sector.m_type = type;
+		sector.m_strCode = value.code();
+		sector.m_strName = value.name();
+		sector.m_fChangePercent = ScaledPrice(value.change_percent(), value.percent_scale());
+		sector.m_nRisingCount = value.rising_count();
+		sector.m_nFallingCount = value.falling_count();
+		sector.m_nFlatCount = value.flat_count();
+		sector.m_nMemberCount = value.member_count();
+		sector.m_leadingSecurity = CSecurity(value.leading_security().symbol(), ToExchange(value.leading_security().exchange()));
+		sector.m_strLeadingName = value.leading_name();
+		sector.m_nSnapshotTime = value.snapshot_time_ms();
+		return sector;
+	}
 } // namespace
 
 CHQMarketService::CHQMarketService()
@@ -139,7 +156,7 @@ void CHQMarketService::Initialize()
 	m_quoteWorker = std::thread(&CHQMarketService::QuoteWorkerLoop, this);
 	CSession::InstanceRef().RegisterResponseHandler(std::bind_front(&CHQMarketService::OnResponse, this));
 	CSession::InstanceRef().RegisterStateHandler([this](SessionState state, const std::string&)
-	{
+												 {
 		if (SessionState::Ready == state)
 		{
 			m_runtimeMetrics.m_nLastQuoteSequence.store(0);
@@ -162,8 +179,7 @@ void CHQMarketService::Initialize()
 			{
 				EnqueueQuote(quote);
 			}
-		}
-	});
+		} });
 	if (CSession::InstanceRef().IsAuthenticated())
 	{
 		QuerySecurities();
@@ -193,9 +209,7 @@ void CHQMarketService::RemoveDepthHandler(_TyHandlerToken token)
 CHQMarketService::_TyHandlerToken CHQMarketService::AddHistoryHandler(_TyHistoryHandler&& handler)
 {
 	return m_pump_history.Subscribe([handler = std::move(handler)](const CMarketHistoryEvent& event)
-	{
-		handler(event.m_requestId, event.m_strSecurity, event.m_period, event.m_bars, event.m_strError);
-	});
+									{ handler(event.m_requestId, event.m_strSecurity, event.m_period, event.m_bars, event.m_strError); });
 }
 
 void CHQMarketService::RemoveHistoryHandler(_TyHandlerToken token)
@@ -206,9 +220,7 @@ void CHQMarketService::RemoveHistoryHandler(_TyHandlerToken token)
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteTableHandler(_TyQuoteTableHandler&& handler)
 {
 	return m_pump_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
-	{
-		handler(event.m_view, event.m_changes);
-	});
+										{ handler(event.m_view, event.m_changes); });
 }
 
 void CHQMarketService::RemoveQuoteTableHandler(_TyHandlerToken token)
@@ -224,6 +236,26 @@ CHQMarketService::_TyHandlerToken CHQMarketService::AddSecurityListHandler(_TySe
 void CHQMarketService::RemoveSecurityListHandler(_TyHandlerToken token)
 {
 	m_pump_security_list.Unsubscribe(token);
+}
+
+CHQMarketService::_TyHandlerToken CHQMarketService::AddSectorListHandler(_TySectorListHandler&& handler)
+{
+	return m_pump_sector_list.Subscribe(std::move(handler));
+}
+
+void CHQMarketService::RemoveSectorListHandler(_TyHandlerToken token)
+{
+	m_pump_sector_list.Unsubscribe(token);
+}
+
+CHQMarketService::_TyHandlerToken CHQMarketService::AddSectorConstituentsHandler(_TySectorConstituentsHandler&& handler)
+{
+	return m_pump_sector_constituents.Subscribe(std::move(handler));
+}
+
+void CHQMarketService::RemoveSectorConstituentsHandler(_TyHandlerToken token)
+{
+	m_pump_sector_constituents.Unsubscribe(token);
 }
 
 void CHQMarketService::RegisterSecurity(const CSecurity& info)
@@ -332,6 +364,34 @@ bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod perio
 bool CHQMarketService::QuerySecurities()
 {
 	return CSession::InstanceRef().SendRequest(request::QueryMarketSecurities());
+}
+
+bool CHQMarketService::QuerySectors(SectorType type)
+{
+	CRequest req = request::QueryMarketSectors(type);
+	m_nLatestSectorListRequest.store(req.GetId());
+	if (CSession::InstanceRef().SendRequest(req))
+	{
+		return true;
+	}
+	req.SetReturnData("error_code", "-1");
+	req.SetReturnData("error_message", "板块查询请求发送失败");
+	OnResponse(req);
+	return false;
+}
+
+bool CHQMarketService::QuerySectorConstituents(SectorType type, const std::string& strSectorCode)
+{
+	CRequest req = request::QueryMarketSectorConstituents(type, strSectorCode);
+	m_nLatestSectorConstituentsRequest.store(req.GetId());
+	if (CSession::InstanceRef().SendRequest(req))
+	{
+		return true;
+	}
+	req.SetReturnData("error_code", "-1");
+	req.SetReturnData("error_message", "成分股查询请求发送失败");
+	OnResponse(req);
+	return false;
 }
 
 bool CHQMarketService::Subscribe(const std::string& strKey, const request::_TyParams& param)
@@ -450,6 +510,12 @@ std::vector<CSecurity> CHQMarketService::GetSecurities() const
 	return m_securities;
 }
 
+std::vector<CSectorInfo> CHQMarketService::GetSectors() const
+{
+	std::shared_lock lock(m_mtx_sectors);
+	return m_sectors;
+}
+
 CMarketRuntimeMetrics CHQMarketService::GetRuntimeMetrics() const
 {
 	CMarketRuntimeMetrics metrics;
@@ -538,9 +604,7 @@ void CHQMarketService::QuoteWorkerLoop()
 		{
 			std::unique_lock<std::mutex> lock(m_mtx_pendingQuotes);
 			m_cv_pendingQuotes.wait_for(lock, std::chrono::milliseconds(20), [this]()
-			{
-				return m_bStopping.load();
-			});
+										{ return m_bStopping.load(); });
 			quotes.swap(m_pendingQuotes);
 		}
 		if (!quotes.empty())
@@ -629,6 +693,78 @@ void CHQMarketService::OnResponse(const CRequest& req)
 {
 	std::string strCmd = req.GetCmd();
 	const _TyReqData& message = req.GetData();
+	if ("query_sectors" == strCmd)
+	{
+		if (req.GetId() != m_nLatestSectorListRequest.load())
+		{
+			return;
+		}
+		CSectorListEvent event;
+		event.m_nRequestId = req.GetId();
+		event.m_type = SectorType::industry;
+		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
+		if (errorInfo.has_value() && (0 != errorInfo->first))
+		{
+			event.m_strError = errorInfo->second.empty() ? "板块查询失败" : errorInfo->second;
+		}
+		else if (!message.has_sector_list_response())
+		{
+			event.m_strError = "板块响应缺少数据";
+		}
+		else
+		{
+			const hqmarket::market::v1::SectorListResponse& data = message.sector_list_response();
+			event.m_type = static_cast<SectorType>(data.type());
+			event.m_sectors.reserve(data.sectors_size());
+			for (const auto& value : data.sectors())
+			{
+				event.m_sectors.emplace_back(ParseSector(value, event.m_type));
+			}
+			{
+				std::unique_lock lock(m_mtx_sectors);
+				m_sectors = event.m_sectors;
+			}
+		}
+		m_pump_sector_list.Notify(event);
+		return;
+	}
+	if ("query_sector_constituents" == strCmd)
+	{
+		if (req.GetId() != m_nLatestSectorConstituentsRequest.load())
+		{
+			return;
+		}
+		CSectorConstituentsEvent event;
+		event.m_nRequestId = req.GetId();
+		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
+		if (errorInfo.has_value() && (0 != errorInfo->first))
+		{
+			event.m_strError = errorInfo->second.empty() ? "成分股查询失败" : errorInfo->second;
+		}
+		else if (!message.has_sector_constituents_response())
+		{
+			event.m_strError = "成分股响应缺少数据";
+		}
+		else
+		{
+			const hqmarket::market::v1::SectorConstituentsResponse& data = message.sector_constituents_response();
+			SectorType type = static_cast<SectorType>(data.type());
+			event.m_sector = ParseSector(data.sector(), type);
+			event.m_securities.reserve(data.securities_size());
+			for (const auto& value : data.securities())
+			{
+				CSecurity security(value.security().symbol(), value.name(), ToExchange(value.security().exchange()), ParseMarketState(value.status()));
+				if (!security.IsValid())
+				{
+					continue;
+				}
+				event.m_securities.emplace_back(security);
+				RegisterSecurity(security);
+			}
+		}
+		m_pump_sector_constituents.Notify(event);
+		return;
+	}
 	if (("query_securities" == strCmd) && message.has_security_list())
 	{
 		const auto& data = message.security_list();

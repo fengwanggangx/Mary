@@ -655,15 +655,25 @@
 												</property>
 												<item>
 													<widget class="QLabel" name="sectorsTitle">
-														<property name="text">
-															<string>行业板块（协议未提供）</string>
+												<property name="text">
+													<string>行业板块</string>
 														</property>
 														<property name="overviewHeading" stdset="0">
 															<bool>true</bool>
 														</property>
 													</widget>
-												</item>
-												<item>
+										</item>
+										<item>
+											<widget class="QLabel" name="sectorState">
+												<property name="text">
+													<string>尚未加载</string>
+												</property>
+												<property name="overviewMuted" stdset="0">
+													<bool>true</bool>
+												</property>
+											</widget>
+										</item>
+										<item>
 													<layout class="QGridLayout" name="sectorGrid">
 														<property name="spacing">
 															<number>2</number>
@@ -764,8 +774,8 @@
 												</property>
 												<item>
 													<widget class="QLabel" name="rankingTitle">
-														<property name="text">
-															<string>板块排行（协议未提供）</string>
+												<property name="text">
+													<string>板块排行</string>
 														</property>
 														<property name="overviewHeading" stdset="0">
 															<bool>true</bool>

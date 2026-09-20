@@ -14,16 +14,27 @@ QT_END_NAMESPACE
 
 class CViewHQMarket final : public QWidget
 {
-	public:
-		explicit CViewHQMarket(QWidget* pParent = nullptr);
-		~CViewHQMarket() override;
+	friend class CReviewRegressionTests;
 
-	private:
-		void ApplyTheme();
-		void RefreshQuotes(const CDataTableView& view);
-		CHQMarketService::_TyHandlerToken m_nQuoteTableToken{ 0 };
-		void changeEvent(QEvent* event) override;
-		std::unique_ptr<Ui::CViewHQMarketClass> m_ui;
+  public:
+	explicit CViewHQMarket(QWidget* pParent = nullptr);
+	~CViewHQMarket() override;
+
+  private:
+	void ApplyTheme();
+	void RefreshQuotes(const CDataTableView& view);
+	void RequestSectors();
+	void RefreshSectors(const CSectorListEvent& event);
+	void RefreshConstituents(const CSectorConstituentsEvent& event);
+	void SelectSector(const QString& strSectorCode);
+	CHQMarketService::_TyHandlerToken m_nQuoteTableToken{ 0 };
+	CHQMarketService::_TyHandlerToken m_nSectorListToken{ 0 };
+	CHQMarketService::_TyHandlerToken m_nSectorConstituentsToken{ 0 };
+	std::vector<CSectorInfo> m_sectors;
+	QString m_strSelectedSectorCode;
+	bool m_bOverviewRequested{ false };
+	void changeEvent(QEvent* event) override;
+	std::unique_ptr<Ui::CViewHQMarketClass> m_ui;
 };
 
 #endif

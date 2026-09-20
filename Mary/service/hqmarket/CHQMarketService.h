@@ -26,13 +26,15 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	friend class CReviewRegressionTests;
 	DECLARE_SINGLE_DFAULT(CHQMarketService)
 
-public:
+  public:
 	using _TyHandlerToken = _TyCallbackId;
 	using _TyQuoteHandler = std::function<void(const CQuote&)>;
 	using _TyDepthHandler = std::function<void(const CMarketDepth&)>;
 	using _TyHistoryHandler = std::function<void(_TyRequestId, const std::string&, MarketBarPeriod, const std::vector<CMarketBar>&, const std::string&)>;
 	using _TyQuoteTableHandler = std::function<void(const CDataTableView&, const CDataChangeSet&)>;
 	using _TySecurityListHandler = std::function<void(const CSecurityListEvent&)>;
+	using _TySectorListHandler = std::function<void(const CSectorListEvent&)>;
+	using _TySectorConstituentsHandler = std::function<void(const CSectorConstituentsEvent&)>;
 
 	void Initialize();
 
@@ -46,6 +48,10 @@ public:
 	void RemoveQuoteTableHandler(_TyHandlerToken token);
 	_TyHandlerToken AddSecurityListHandler(_TySecurityListHandler&& handler);
 	void RemoveSecurityListHandler(_TyHandlerToken token);
+	_TyHandlerToken AddSectorListHandler(_TySectorListHandler&& handler);
+	void RemoveSectorListHandler(_TyHandlerToken token);
+	_TyHandlerToken AddSectorConstituentsHandler(_TySectorConstituentsHandler&& handler);
+	void RemoveSectorConstituentsHandler(_TyHandlerToken token);
 
 	void RegisterSecurity(const CSecurity& info);
 	bool SubscribeQuote(const CSecurity& info);
@@ -55,6 +61,8 @@ public:
 
 	bool QueryHistory(const CSecurity& info, MarketBarPeriod period, std::int64_t nBeginTime, std::int64_t nEndTime, _TyRequestId* requestId = nullptr);
 	bool QuerySecurities();
+	bool QuerySectors(SectorType type);
+	bool QuerySectorConstituents(SectorType type, const std::string& strSectorCode);
 
 	bool FindQuote(const CSecurity& info, CQuote& result) const;
 	bool FindDepth(const CSecurity& info, CMarketDepth& result) const;
@@ -64,11 +72,12 @@ public:
 
 	CDataTableView GetQuoteTableView() const;
 	std::vector<CSecurity> GetSecurities() const;
+	std::vector<CSectorInfo> GetSectors() const;
 	CMarketRuntimeMetrics GetRuntimeMetrics() const;
 
 	void SetPendingQuoteLimit(std::size_t count);
 
-private:
+  private:
 	void OnResponse(const CRequest& req);
 
 	bool Subscribe(const std::string& strKey, const request::_TyParams& param);
@@ -81,7 +90,7 @@ private:
 	void QuoteWorkerLoop();
 	void FlushQuotes(std::unordered_map<std::string, CQuote>& quotes);
 
-private:
+  private:
 	bool m_bInitialized{ false }; // 服务是否已初始化
 
 	mutable std::shared_mutex m_mtx_quotes;
@@ -101,30 +110,37 @@ private:
 	mutable std::shared_mutex m_mtx_securities;
 	std::vector<CSecurity> m_securities; // 当前证券列表
 
+	mutable std::shared_mutex m_mtx_sectors;
+	std::vector<CSectorInfo> m_sectors;
+	std::atomic_uint64_t m_nLatestSectorListRequest{ 0 };
+	std::atomic_uint64_t m_nLatestSectorConstituentsRequest{ 0 };
+
 	CDataTable m_quoteTable; // 行情展示数据表
 
-	mutable std::mutex m_mtx_pendingQuotes; // 待处理行情及证券元数据锁
-	std::condition_variable m_cv_pendingQuotes; // 行情处理线程唤醒条件
-	std::unordered_map<std::string, CQuote> m_pendingQuotes; // 等待批量刷新的行情
-	std::unordered_map<std::string, _TyDataRowId> m_quoteRowIds; // 证券对应的数据表行号
-	std::unordered_map<std::string, std::string> m_securityNames; // 证券名称缓存
+	mutable std::mutex m_mtx_pendingQuotes;							 // 待处理行情及证券元数据锁
+	std::condition_variable m_cv_pendingQuotes;						 // 行情处理线程唤醒条件
+	std::unordered_map<std::string, CQuote> m_pendingQuotes;		 // 等待批量刷新的行情
+	std::unordered_map<std::string, _TyDataRowId> m_quoteRowIds;	 // 证券对应的数据表行号
+	std::unordered_map<std::string, std::string> m_securityNames;	 // 证券名称缓存
 	std::unordered_map<std::string, MarketState> m_securityStatuses; // 证券状态缓存
-	std::unordered_set<std::string> m_pendingSecurityUpdates; // 等待刷新的证券元数据
-	std::unordered_set<std::string> m_registeredSecurities; // 已注册证券集合
+	std::unordered_set<std::string> m_pendingSecurityUpdates;		 // 等待刷新的证券元数据
+	std::unordered_set<std::string> m_registeredSecurities;			 // 已注册证券集合
 
-	std::thread m_quoteWorker; // 行情批量处理线程
+	std::thread m_quoteWorker;			   // 行情批量处理线程
 	std::atomic_bool m_bStopping{ false }; // 行情线程停止标志
 
 	CAtomMarketRuntimeMetrics m_runtimeMetrics; // 线程安全的行情运行统计
 
 	_TyDataRowId m_nextQuoteRowId{ 1 }; // 下一个行情表行号
 
-private:
-	TMessagePump<CQuote> m_pump_quote; // 最新行情事件分发器
-	TMessagePump<CMarketDepth> m_pump_depth; // 盘口深度事件分发器
-	TMessagePump<CMarketHistoryEvent> m_pump_history; // 历史行情事件分发器
-	TMessagePump<CQuoteTableEvent> m_pump_quote_table; // 行情表变更事件分发器
+  private:
+	TMessagePump<CQuote> m_pump_quote;					   // 最新行情事件分发器
+	TMessagePump<CMarketDepth> m_pump_depth;			   // 盘口深度事件分发器
+	TMessagePump<CMarketHistoryEvent> m_pump_history;	   // 历史行情事件分发器
+	TMessagePump<CQuoteTableEvent> m_pump_quote_table;	   // 行情表变更事件分发器
 	TMessagePump<CSecurityListEvent> m_pump_security_list; // 证券列表事件分发器
+	TMessagePump<CSectorListEvent> m_pump_sector_list;
+	TMessagePump<CSectorConstituentsEvent> m_pump_sector_constituents;
 };
 
 #endif
