@@ -8,12 +8,12 @@
 #include <QEvent>
 #include <QHeaderView>
 #include <QMetaObject>
-#include <QPointer>
 #include <QPushButton>
 #include <QTabBar>
 #include <QTableWidgetItem>
 #include <cmath>
 #include <algorithm>
+#include <functional>
 
 CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CViewHQMarketClass>())
 {
@@ -26,72 +26,12 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewHQMarket> safeThis(this);
-	m_nQuoteTableToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet&)
-													  {
-		if (!safeThis.isNull())
-		{
-			QMetaObject::invokeMethod(safeThis.data(), [safeThis, view]()
-			{
-				if (!safeThis.isNull())
-				{
-					safeThis->RefreshQuotes(view);
-				}
-			}, Qt::QueuedConnection);
-		} });
-	m_nSectorListToken = service.AddSectorListHandler([safeThis](const CSectorListEvent& event)
-													  {
-		if (!safeThis.isNull())
-		{
-			QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
-			{
-				if (!safeThis.isNull())
-				{
-					safeThis->RefreshSectors(event);
-				}
-			}, Qt::QueuedConnection);
-		} });
-	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler([safeThis](const CSectorConstituentsEvent& event)
-																	  {
-		if (!safeThis.isNull())
-		{
-			QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
-			{
-				if (!safeThis.isNull())
-				{
-					safeThis->RefreshConstituents(event);
-				}
-			}, Qt::QueuedConnection);
-		} });
-	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, [this](int nIndex)
-			{
-		if (0 == nIndex)
-		{
-			RequestSectors();
-		}
-		else
-		{
-			m_bOverviewRequested = false;
-		} });
-	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, [this](int nRow, int)
-			{
-		QTableWidgetItem* pItem = m_ui->rankingTable->item(nRow, 1);
-		if (nullptr != pItem)
-		{
-			SelectSector(pItem->data(Qt::UserRole).toString());
-		} });
-	CSession::InstanceRef().RegisterStateHandler([safeThis](SessionState state, const std::string&)
-												 {
-		if ((SessionState::Ready == state) && !safeThis.isNull())
-		{
-			QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
-			{
-				if (!safeThis.isNull() && (0 == safeThis->m_ui->marketTabs->currentIndex()))
-				{
-					safeThis->m_bOverviewRequested = false;
-					safeThis->RequestSectors();
-				}
-			}, Qt::QueuedConnection);
-		} });
+	m_nQuoteTableToken = service.AddQuoteTableHandler(std::bind_front(&CViewHQMarket::HandleQuoteTable, safeThis));
+	m_nSectorListToken = service.AddSectorListHandler(std::bind_front(&CViewHQMarket::HandleSectorList, safeThis));
+	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler(std::bind_front(&CViewHQMarket::HandleSectorConstituents, safeThis));
+	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, &CViewHQMarket::OnMarketTabChanged);
+	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, &CViewHQMarket::OnRankingCellClicked);
+	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::HandleSessionState, safeThis));
 	RefreshQuotes(service.GetQuoteTableView());
 	service.SubscribeQuote(CSecurity("000001", Exchange::sse));
 	service.SubscribeQuote(CSecurity("399001", Exchange::szse));
@@ -99,11 +39,102 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	RequestSectors();
 }
 
+void CViewHQMarket::HandleQuoteTable(QPointer<CViewHQMarket> safeThis, const CDataTableView& view, const CDataChangeSet&)
+{
+	if (safeThis.isNull())
+	{
+		return;
+	}
+	QMetaObject::invokeMethod(safeThis.data(), [safeThis, view]()
+	{
+		if (!safeThis.isNull())
+		{
+			safeThis->RefreshQuotes(view);
+		}
+	}, Qt::QueuedConnection);
+}
+
+void CViewHQMarket::HandleSectorList(QPointer<CViewHQMarket> safeThis, const CSectorListEvent& event)
+{
+	if (safeThis.isNull())
+	{
+		return;
+	}
+	QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+	{
+		if (!safeThis.isNull())
+		{
+			safeThis->RefreshSectors(event);
+		}
+	}, Qt::QueuedConnection);
+}
+
+void CViewHQMarket::HandleSectorConstituents(QPointer<CViewHQMarket> safeThis, const CSectorConstituentsEvent& event)
+{
+	if (safeThis.isNull())
+	{
+		return;
+	}
+	QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+	{
+		if (!safeThis.isNull())
+		{
+			safeThis->RefreshConstituents(event);
+		}
+	}, Qt::QueuedConnection);
+}
+
+void CViewHQMarket::HandleSessionState(QPointer<CViewHQMarket> safeThis, SessionState state, const std::string&)
+{
+	if ((SessionState::Ready != state) || safeThis.isNull())
+	{
+		return;
+	}
+	QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
+	{
+		if (!safeThis.isNull() && (0 == safeThis->m_ui->marketTabs->currentIndex()))
+		{
+			safeThis->m_bOverviewRequested = false;
+			safeThis->RequestSectors();
+		}
+	}, Qt::QueuedConnection);
+}
+
 CViewHQMarket::~CViewHQMarket()
 {
 	CHQMarketService::InstanceRef().RemoveQuoteTableHandler(m_nQuoteTableToken);
 	CHQMarketService::InstanceRef().RemoveSectorListHandler(m_nSectorListToken);
 	CHQMarketService::InstanceRef().RemoveSectorConstituentsHandler(m_nSectorConstituentsToken);
+}
+
+void CViewHQMarket::OnMarketTabChanged(int nIndex)
+{
+	if (0 == nIndex)
+	{
+		RequestSectors();
+	}
+	else
+	{
+		m_bOverviewRequested = false;
+	}
+}
+
+void CViewHQMarket::OnRankingCellClicked(int nRow, int)
+{
+	QTableWidgetItem* pItem = m_ui->rankingTable->item(nRow, 1);
+	if (nullptr != pItem)
+	{
+		SelectSector(pItem->data(Qt::UserRole).toString());
+	}
+}
+
+void CViewHQMarket::HandleSectorButtonClicked()
+{
+	QPushButton* pButton = qobject_cast<QPushButton*>(sender());
+	if (nullptr != pButton)
+	{
+		SelectSector(pButton->property("sectorCode").toString());
+	}
 }
 
 void CViewHQMarket::RequestSectors()
@@ -154,8 +185,7 @@ void CViewHQMarket::RefreshSectors(const CSectorListEvent& event)
 		pButton->setProperty("sectorTile", true);
 		pButton->setProperty("negative", 0.0 > sector.m_fChangePercent);
 		pButton->setProperty("sectorCode", QString::fromStdString(sector.m_strCode));
-		connect(pButton, &QPushButton::clicked, this, [this, pButton]()
-				{ SelectSector(pButton->property("sectorCode").toString()); });
+		connect(pButton, &QPushButton::clicked, this, &CViewHQMarket::HandleSectorButtonClicked);
 		m_ui->sectorGrid->addWidget(pButton, nIndex / 5, nIndex % 5);
 	}
 	int nRankingCount = (std::min)(5, static_cast<int>(m_sectors.size()));
