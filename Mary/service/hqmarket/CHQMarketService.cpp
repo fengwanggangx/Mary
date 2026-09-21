@@ -707,13 +707,13 @@ void CHQMarketService::OnRequestReply(const CRequest& req)
 		{
 			ev.m_strError = errorInfo->second.empty() ? "板块查询失败" : errorInfo->second;
 		}
-		else if (!message.has_sector_list_response())
+		else if (!message.has_sector_list())
 		{
 			ev.m_strError = "板块响应缺少数据";
 		}
 		else
 		{
-			const hqmarket::market::v1::SectorListResponse& data = message.sector_list_response();
+			const hqmarket::market::v1::SectorList& data = message.sector_list();
 			ev.m_type = static_cast<SectorType>(data.type());
 			ev.m_sectors.reserve(data.sectors_size());
 			for (const auto& value : data.sectors())
@@ -741,13 +741,13 @@ void CHQMarketService::OnRequestReply(const CRequest& req)
 		{
 			event.m_strError = errorInfo->second.empty() ? "成分股查询失败" : errorInfo->second;
 		}
-		else if (!message.has_sector_constituents_response())
+		else if (!message.has_sector_constituents())
 		{
 			event.m_strError = "成分股响应缺少数据";
 		}
 		else
 		{
-			const hqmarket::market::v1::SectorConstituentsResponse& data = message.sector_constituents_response();
+			const hqmarket::market::v1::SectorConstituents& data = message.sector_constituents();
 			SectorType type = static_cast<SectorType>(data.type());
 			event.m_sector = ParseSector(data.sector(), type);
 			event.m_securities.reserve(data.securities_size());

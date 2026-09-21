@@ -93,9 +93,6 @@ namespace request
 		req.SetType(CRequest::Type::HQMARKET);
 		req.SetCmd("query_sectors");
 		req.SetExtraData("sector_type", std::to_string(static_cast<int>(type)));
-		hqmarket::market::v1::SectorListRequest payload;
-		payload.set_type(static_cast<hqmarket::market::v1::SectorType>(type));
-		req.SetData(payload);
 		return req;
 	}
 
@@ -106,10 +103,6 @@ namespace request
 		req.SetCmd("query_sector_constituents");
 		req.SetExtraData("sector_type", std::to_string(static_cast<int>(type)));
 		req.SetExtraData("sector_code", strSectorCode);
-		hqmarket::market::v1::SectorConstituentsRequest payload;
-		payload.set_type(static_cast<hqmarket::market::v1::SectorType>(type));
-		payload.set_sector_code(strSectorCode);
-		req.SetData(payload);
 		return req;
 	}
 
