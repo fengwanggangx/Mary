@@ -78,7 +78,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	void SetPendingQuoteLimit(std::size_t count);
 
   private:
-	void OnResponse(const CRequest& req);
+	void OnRequestReply(const CRequest& req);
 
 	bool Subscribe(const std::string& strKey, const request::_TyParams& param);
 	bool Unsubscribe(const std::string& strKey, const request::_TyParams& param);

@@ -37,7 +37,7 @@ class CMarketPageController final : public QObject
 	void EnsureSelection();
 	void RefreshSelection();
 	void HandleHistory(std::uint64_t nRequestId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError);
-	void HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes);
+	void OnQuoteTableUpdate(const CDataTableView& view, const CDataChangeSet& changes);
 	CSecurity GetSecurity(const QModelIndex& index) const;
 
 	MarketTableMode m_mode;

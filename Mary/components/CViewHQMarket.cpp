@@ -25,13 +25,13 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	ApplyTheme();
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
-	QPointer<CViewHQMarket> safeThis(this);
-	m_nQuoteTableToken = service.AddQuoteTableHandler(std::bind_front(&CViewHQMarket::HandleQuoteTable, safeThis));
-	m_nSectorListToken = service.AddSectorListHandler(std::bind_front(&CViewHQMarket::HandleSectorList, safeThis));
-	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler(std::bind_front(&CViewHQMarket::HandleSectorConstituents, safeThis));
-	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, &CViewHQMarket::OnMarketTabChanged);
+	QPointer<CViewHQMarket> pInstance(this);
+	m_nQuoteTableToken = service.AddQuoteTableHandler(std::bind_front(&CViewHQMarket::OnQuoteTableUpdate, pInstance));
+	m_nSectorListToken = service.AddSectorListHandler(std::bind_front(&CViewHQMarket::OnSectorListUpdate, pInstance));
+	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler(std::bind_front(&CViewHQMarket::OnSectorConstituentsUpdate, pInstance));
+	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, &CViewHQMarket::OnTabChanged);
 	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, &CViewHQMarket::OnRankingCellClicked);
-	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::HandleSessionState, safeThis));
+	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::OnSessionStateChanged, pInstance));
 	RefreshQuotes(service.GetQuoteTableView());
 	service.SubscribeQuote(CSecurity("000001", Exchange::sse));
 	service.SubscribeQuote(CSecurity("399001", Exchange::szse));
@@ -39,63 +39,63 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	RequestSectors();
 }
 
-void CViewHQMarket::HandleQuoteTable(QPointer<CViewHQMarket> safeThis, const CDataTableView& view, const CDataChangeSet&)
+void CViewHQMarket::OnQuoteTableUpdate(QPointer<CViewHQMarket> pInstance, const CDataTableView& view, const CDataChangeSet&)
 {
-	if (safeThis.isNull())
+	if (pInstance.isNull())
 	{
 		return;
 	}
-	QMetaObject::invokeMethod(safeThis.data(), [safeThis, view]()
+	QMetaObject::invokeMethod(pInstance.data(), [pInstance, view]()
 	{
-		if (!safeThis.isNull())
+		if (!pInstance.isNull())
 		{
-			safeThis->RefreshQuotes(view);
+			pInstance->RefreshQuotes(view);
 		}
 	}, Qt::QueuedConnection);
 }
 
-void CViewHQMarket::HandleSectorList(QPointer<CViewHQMarket> safeThis, const CSectorListEvent& event)
+void CViewHQMarket::OnSectorListUpdate(QPointer<CViewHQMarket> pInstance, const CSectorListEvent& ev)
 {
-	if (safeThis.isNull())
+	if (pInstance.isNull())
 	{
 		return;
 	}
-	QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+	QMetaObject::invokeMethod(pInstance.data(), [pInstance, ev]()
 	{
-		if (!safeThis.isNull())
+		if (!pInstance.isNull())
 		{
-			safeThis->RefreshSectors(event);
+			pInstance->RefreshSectors(ev);
 		}
 	}, Qt::QueuedConnection);
 }
 
-void CViewHQMarket::HandleSectorConstituents(QPointer<CViewHQMarket> safeThis, const CSectorConstituentsEvent& event)
+void CViewHQMarket::OnSectorConstituentsUpdate(QPointer<CViewHQMarket> pInstance, const CSectorConstituentsEvent& ev)
 {
-	if (safeThis.isNull())
+	if (pInstance.isNull())
 	{
 		return;
 	}
-	QMetaObject::invokeMethod(safeThis.data(), [safeThis, event]()
+	QMetaObject::invokeMethod(pInstance.data(), [pInstance, ev]()
 	{
-		if (!safeThis.isNull())
+		if (!pInstance.isNull())
 		{
-			safeThis->RefreshConstituents(event);
+			pInstance->RefreshConstituents(ev);
 		}
 	}, Qt::QueuedConnection);
 }
 
-void CViewHQMarket::HandleSessionState(QPointer<CViewHQMarket> safeThis, SessionState state, const std::string&)
+void CViewHQMarket::OnSessionStateChanged(QPointer<CViewHQMarket> pInstance, SessionState state, const std::string&)
 {
-	if ((SessionState::Ready != state) || safeThis.isNull())
+	if ((SessionState::Ready != state) || pInstance.isNull())
 	{
 		return;
 	}
-	QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
+	QMetaObject::invokeMethod(pInstance.data(), [pInstance]()
 	{
-		if (!safeThis.isNull() && (0 == safeThis->m_ui->marketTabs->currentIndex()))
+		if (!pInstance.isNull() && (0 == pInstance->m_ui->marketTabs->currentIndex()))
 		{
-			safeThis->m_bOverviewRequested = false;
-			safeThis->RequestSectors();
+			pInstance->m_bOverviewRequested = false;
+			pInstance->RequestSectors();
 		}
 	}, Qt::QueuedConnection);
 }
@@ -107,9 +107,9 @@ CViewHQMarket::~CViewHQMarket()
 	CHQMarketService::InstanceRef().RemoveSectorConstituentsHandler(m_nSectorConstituentsToken);
 }
 
-void CViewHQMarket::OnMarketTabChanged(int nIndex)
+void CViewHQMarket::OnTabChanged(int idx)
 {
-	if (0 == nIndex)
+	if (0 == idx)
 	{
 		RequestSectors();
 	}
@@ -128,7 +128,7 @@ void CViewHQMarket::OnRankingCellClicked(int nRow, int)
 	}
 }
 
-void CViewHQMarket::HandleSectorButtonClicked()
+void CViewHQMarket::OnSectorButtonClicked()
 {
 	QPushButton* pButton = qobject_cast<QPushButton*>(sender());
 	if (nullptr != pButton)
@@ -153,7 +153,7 @@ void CViewHQMarket::RequestSectors()
 	CHQMarketService::InstanceRef().QuerySectors(SectorType::industry);
 }
 
-void CViewHQMarket::RefreshSectors(const CSectorListEvent& event)
+void CViewHQMarket::RefreshSectors(const CSectorListEvent& ev)
 {
 	while (nullptr != m_ui->sectorGrid->itemAt(0))
 	{
@@ -162,12 +162,12 @@ void CViewHQMarket::RefreshSectors(const CSectorListEvent& event)
 		delete pItem;
 	}
 	m_ui->rankingTable->setRowCount(0);
-	if (!event.m_strError.empty())
+	if (!ev.m_strError.empty())
 	{
-		m_ui->sectorState->setText(QString::fromStdString(event.m_strError));
+		m_ui->sectorState->setText(QString::fromStdString(ev.m_strError));
 		return;
 	}
-	m_sectors = event.m_sectors;
+	m_sectors = ev.m_sectors;
 	std::sort(m_sectors.begin(), m_sectors.end(), [](const CSectorInfo& left, const CSectorInfo& right)
 			  { return left.m_fChangePercent > right.m_fChangePercent; });
 	if (m_sectors.empty())
@@ -185,12 +185,12 @@ void CViewHQMarket::RefreshSectors(const CSectorListEvent& event)
 		pButton->setProperty("sectorTile", true);
 		pButton->setProperty("negative", 0.0 > sector.m_fChangePercent);
 		pButton->setProperty("sectorCode", QString::fromStdString(sector.m_strCode));
-		connect(pButton, &QPushButton::clicked, this, &CViewHQMarket::HandleSectorButtonClicked);
+		connect(pButton, &QPushButton::clicked, this, &CViewHQMarket::OnSectorButtonClicked);
 		m_ui->sectorGrid->addWidget(pButton, nIndex / 5, nIndex % 5);
 	}
 	int nRankingCount = (std::min)(5, static_cast<int>(m_sectors.size()));
 	m_ui->rankingTable->setRowCount(nRankingCount);
-	for (int nIndex = 0; nRankingCount > nIndex; ++nIndex)
+	for (int nIndex = 0; nIndex < nRankingCount; ++nIndex)
 	{
 		const CSectorInfo& sector = m_sectors[static_cast<std::size_t>(nIndex)];
 		QTableWidgetItem* pRank = new QTableWidgetItem(QString::number(nIndex + 1));
@@ -222,19 +222,19 @@ void CViewHQMarket::SelectSector(const QString& strSectorCode)
 	CHQMarketService::InstanceRef().QuerySectorConstituents(SectorType::industry, strSectorCode.toStdString());
 }
 
-void CViewHQMarket::RefreshConstituents(const CSectorConstituentsEvent& event)
+void CViewHQMarket::RefreshConstituents(const CSectorConstituentsEvent& ev)
 {
-	if (!event.m_strError.empty())
+	if (!ev.m_strError.empty())
 	{
-		m_ui->sectorState->setText(QString::fromStdString(event.m_strError));
+		m_ui->sectorState->setText(QString::fromStdString(ev.m_strError));
 		return;
 	}
-	if (m_strSelectedSectorCode != QString::fromStdString(event.m_sector.m_strCode))
+	if (m_strSelectedSectorCode != QString::fromStdString(ev.m_sector.m_strCode))
 	{
 		return;
 	}
-	m_ui->sectorState->setText(QString("%1 · %2只成分股").arg(QString::fromStdString(event.m_sector.m_strName)).arg(event.m_securities.size()));
-	m_ui->constituentsPage->SetSector(event.m_sector, event.m_securities);
+	m_ui->sectorState->setText(QString("%1 · %2只成分股").arg(QString::fromStdString(ev.m_sector.m_strName)).arg(ev.m_securities.size()));
+	m_ui->constituentsPage->SetSector(ev.m_sector, ev.m_securities);
 }
 
 void CViewHQMarket::RefreshQuotes(const CDataTableView& view)

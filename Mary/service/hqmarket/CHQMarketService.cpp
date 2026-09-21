@@ -154,7 +154,7 @@ void CHQMarketService::Initialize()
 	m_bInitialized = true;
 	m_bStopping.store(false);
 	m_quoteWorker = std::thread(&CHQMarketService::QuoteWorkerLoop, this);
-	CSession::InstanceRef().RegisterResponseHandler(std::bind_front(&CHQMarketService::OnResponse, this));
+	CSession::InstanceRef().RegisterResponseHandler(std::bind_front(&CHQMarketService::OnRequestReply, this));
 	CSession::InstanceRef().RegisterStateHandler([this](SessionState state, const std::string&)
 												 {
 		if (SessionState::Ready == state)
@@ -357,7 +357,7 @@ bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod perio
 	}
 	request.SetReturnData("error_code", "-1");
 	request.SetReturnData("error_message", "历史行情请求发送失败");
-	OnResponse(request);
+	OnRequestReply(request);
 	return false;
 }
 
@@ -376,7 +376,7 @@ bool CHQMarketService::QuerySectors(SectorType type)
 	}
 	req.SetReturnData("error_code", "-1");
 	req.SetReturnData("error_message", "板块查询请求发送失败");
-	OnResponse(req);
+	OnRequestReply(req);
 	return false;
 }
 
@@ -390,7 +390,7 @@ bool CHQMarketService::QuerySectorConstituents(SectorType type, const std::strin
 	}
 	req.SetReturnData("error_code", "-1");
 	req.SetReturnData("error_message", "成分股查询请求发送失败");
-	OnResponse(req);
+	OnRequestReply(req);
 	return false;
 }
 
@@ -689,7 +689,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 	m_pump_quote_table.Notify(CQuoteTableEvent{ std::move(view), std::move(changes) });
 }
 
-void CHQMarketService::OnResponse(const CRequest& req)
+void CHQMarketService::OnRequestReply(const CRequest& req)
 {
 	std::string strCmd = req.GetCmd();
 	const _TyReqData& message = req.GetData();
@@ -699,33 +699,33 @@ void CHQMarketService::OnResponse(const CRequest& req)
 		{
 			return;
 		}
-		CSectorListEvent event;
-		event.m_nRequestId = req.GetId();
-		event.m_type = SectorType::industry;
+		CSectorListEvent ev;
+		ev.m_nRequestId = req.GetId();
+		ev.m_type = SectorType::industry;
 		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
 		if (errorInfo.has_value() && (0 != errorInfo->first))
 		{
-			event.m_strError = errorInfo->second.empty() ? "板块查询失败" : errorInfo->second;
+			ev.m_strError = errorInfo->second.empty() ? "板块查询失败" : errorInfo->second;
 		}
 		else if (!message.has_sector_list_response())
 		{
-			event.m_strError = "板块响应缺少数据";
+			ev.m_strError = "板块响应缺少数据";
 		}
 		else
 		{
 			const hqmarket::market::v1::SectorListResponse& data = message.sector_list_response();
-			event.m_type = static_cast<SectorType>(data.type());
-			event.m_sectors.reserve(data.sectors_size());
+			ev.m_type = static_cast<SectorType>(data.type());
+			ev.m_sectors.reserve(data.sectors_size());
 			for (const auto& value : data.sectors())
 			{
-				event.m_sectors.emplace_back(ParseSector(value, event.m_type));
+				ev.m_sectors.emplace_back(ParseSector(value, ev.m_type));
 			}
 			{
 				std::unique_lock lock(m_mtx_sectors);
-				m_sectors = event.m_sectors;
+				m_sectors = ev.m_sectors;
 			}
 		}
-		m_pump_sector_list.Notify(event);
+		m_pump_sector_list.Notify(ev);
 		return;
 	}
 	if ("query_sector_constituents" == strCmd)

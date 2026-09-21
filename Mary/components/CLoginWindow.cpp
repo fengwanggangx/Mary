@@ -83,8 +83,14 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 	QDialog::mouseReleaseEvent(event);
 }
 
+bool bTest = true;
 void LoginWindow::OnLoginBtnClicked()
 {
+	if (bTest)
+	{
+		accept();
+		return;
+	}
 	std::optional<CHostInfo> site = CHostMgr::InstanceRef().GetActiveHost();
 	if (!site.has_value())
 	{

@@ -196,7 +196,7 @@ void CMarketPageController::BindService()
 		{
 			if (!safeThis.isNull())
 			{
-				safeThis->HandleQuoteTable(view, changes);
+				safeThis->OnQuoteTableUpdate(view, changes);
 			}
 		}, Qt::QueuedConnection); });
 	m_historyToken = service.AddHistoryHandler([safeThis](std::uint64_t nId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
@@ -212,7 +212,7 @@ void CMarketPageController::BindService()
 				safeThis->HandleHistory(nId, strSecurity, period, bars, strError);
 			}
 		}, Qt::QueuedConnection); });
-	HandleQuoteTable(service.GetQuoteTableView(), CDataChangeSet{});
+	OnQuoteTableUpdate(service.GetQuoteTableView(), CDataChangeSet{});
 	CSession::InstanceRef().RegisterStateHandler([safeThis](SessionState state, const std::string& strMessage)
 												 {
 		if (!safeThis.isNull())
@@ -281,7 +281,7 @@ CSecurity CMarketPageController::GetSecurity(const QModelIndex& index) const
 	return security;
 }
 
-void CMarketPageController::HandleQuoteTable(const CDataTableView& view, const CDataChangeSet& changes)
+void CMarketPageController::OnQuoteTableUpdate(const CDataTableView& view, const CDataChangeSet& changes)
 {
 	m_model->SetView(view, changes);
 	for (int nColumn = 0; m_model->columnCount() > nColumn; ++nColumn)

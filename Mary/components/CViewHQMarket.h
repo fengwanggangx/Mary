@@ -23,27 +23,33 @@ class CViewHQMarket final : public QWidget
 	explicit CViewHQMarket(QWidget* pParent = nullptr);
 	~CViewHQMarket() override;
 
+private:
+	static void OnQuoteTableUpdate(QPointer<CViewHQMarket> pInstance, const CDataTableView& view, const CDataChangeSet& changes);
+	static void OnSectorListUpdate(QPointer<CViewHQMarket> pInstance, const CSectorListEvent& ev);
+	static void OnSectorConstituentsUpdate(QPointer<CViewHQMarket> pInstance, const CSectorConstituentsEvent& ev);
+	static void OnSessionStateChanged(QPointer<CViewHQMarket> pInstance, SessionState state, const std::string& strMessage);
+
+private:
+	void OnTabChanged(int nIndex);
+	void OnRankingCellClicked(int nRow, int nColumn);
+
   private:
 	void ApplyTheme();
-	static void HandleQuoteTable(QPointer<CViewHQMarket> safeThis, const CDataTableView& view, const CDataChangeSet& changes);
-	static void HandleSectorList(QPointer<CViewHQMarket> safeThis, const CSectorListEvent& event);
-	static void HandleSectorConstituents(QPointer<CViewHQMarket> safeThis, const CSectorConstituentsEvent& event);
-	static void HandleSessionState(QPointer<CViewHQMarket> safeThis, SessionState state, const std::string& strMessage);
-	void OnMarketTabChanged(int nIndex);
-	void OnRankingCellClicked(int nRow, int nColumn);
-	void HandleSectorButtonClicked();
+	void OnSectorButtonClicked();
 	void RefreshQuotes(const CDataTableView& view);
 	void RequestSectors();
-	void RefreshSectors(const CSectorListEvent& event);
-	void RefreshConstituents(const CSectorConstituentsEvent& event);
+	void RefreshSectors(const CSectorListEvent& ev);
+	void RefreshConstituents(const CSectorConstituentsEvent& ev);
 	void SelectSector(const QString& strSectorCode);
+	void changeEvent(QEvent* pEvent) override;
+
+private:
 	CHQMarketService::_TyHandlerToken m_nQuoteTableToken{ 0 };
 	CHQMarketService::_TyHandlerToken m_nSectorListToken{ 0 };
 	CHQMarketService::_TyHandlerToken m_nSectorConstituentsToken{ 0 };
 	std::vector<CSectorInfo> m_sectors;
 	QString m_strSelectedSectorCode;
 	bool m_bOverviewRequested{ false };
-	void changeEvent(QEvent* event) override;
 	std::unique_ptr<Ui::CViewHQMarketClass> m_ui;
 };
 

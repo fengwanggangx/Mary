@@ -16,7 +16,7 @@ void CStrategyService::Initialize()
 	{
 		CSession::InstanceRef().RegisterResponseHandler([this](const CRequest& response)
 		{
-			OnResponse(response);
+			OnRequestReply(response);
 		});
 		CSession::InstanceRef().RegisterStateHandler([this](SessionState state, const std::string&)
 		{
@@ -148,7 +148,7 @@ bool CStrategyService::ValidateStrategy(const request::StrategyInfo& strategy, s
 	return true;
 }
 
-void CStrategyService::OnResponse(const CRequest& response)
+void CStrategyService::OnRequestReply(const CRequest& response)
 {
 	std::string strCmd = response.GetCmd();
 	std::optional<std::pair<int, std::string>> errorInfo = response.GetErrorInfo();
