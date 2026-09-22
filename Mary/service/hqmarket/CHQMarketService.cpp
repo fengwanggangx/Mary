@@ -607,10 +607,10 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 	{
 		const CQuote& quote = v.second;
 		const std::string& strSecurity = v.first;
-		const auto rowIter = m_quoteRowIds.find(strSecurity);
-		if (m_quoteRowIds.end() == rowIter)
+		_TyDataRowId rowId = -1;
+		if (container::try_vfind(m_quoteRowIds, strSecurity, rowId))
 		{
-			_TyDataRowId rowId = m_nextQuoteRowId++;
+			rowId = m_nextQuoteRowId++;
 			m_quoteRowIds.emplace(strSecurity, rowId);
 			std::string strName;
 			std::string strListingStatus;
@@ -629,7 +629,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			writer.AddRow(rowId, { strSecurity, strName, quote.m_fLastPrice, fChange, fPercent, quote.m_fPreClose, quote.m_nVolume, std::string(quote.m_bStale ? "已延迟" : "交易中"), quote.m_nSequence, strListingStatus, MarketCategory(strSecurity) });
 			continue;
 		}
-		_TyDataRowId rowId = rowIter->second;
+
 		std::string strName;
 		std::string strListingStatus;
 		bool bMetadataChanged = false;
