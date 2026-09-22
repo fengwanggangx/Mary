@@ -48,8 +48,8 @@ class LoginWindow : public QDialog
 	QPoint m_dragPosition;
 	bool m_isDragging{ false };
 	_TyCallbackId m_loginCallbackId{ 0 };
-	CAccountRepository m_accountRepository;
-	std::vector<CStoredAccount> m_accounts;
+	CAccountStorager m_accountRepository;
+	std::vector<CAccountInfo> m_accounts;
 	std::string m_strPendingAccount;
 	std::string m_strPendingPassword;
 };

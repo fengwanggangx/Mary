@@ -283,6 +283,9 @@
     <ClCompile Include="thirty\qwt\QwtPlot.cpp">
       <Filter>Source Files\thirty\qwt</Filter>
     </ClCompile>
+    <ClCompile Include="database\CAccountStorager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CLoginWindow.h">
@@ -567,6 +570,9 @@
     <ClInclude Include="service\hqmarket\defines_hqmarket.h">
       <Filter>Source Files\service\hqmarket</Filter>
     </ClInclude>
+    <ClInclude Include="database\CAccountStorager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="images\mary-app-icon.rc">
@@ -667,5 +673,7 @@
     <None Include="scripts\main.lua">
       <Filter>Source Files\scripts</Filter>
     </None>
+    <None Include="exec\Debug\sql\table_create.sql" />
+    <None Include="exec\Release\sql\table_create.sql" />
   </ItemGroup>
 </Project>

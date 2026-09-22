@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-struct CStoredAccount
+struct CAccountInfo
 {
 	std::string m_strAccount;
 	std::vector<std::uint8_t> m_password;
@@ -14,10 +14,10 @@ struct CStoredAccount
 	std::int64_t m_nLastSuccessTime{ 0 };
 };
 
-class CAccountRepository final
+class CAccountStorager final
 {
   public:
-	std::vector<CStoredAccount> LoadAccounts() const;
+	std::vector<CAccountInfo> LoadAccounts() const;
 	bool SaveAccount(const std::string& strAccount, const std::vector<std::uint8_t>& password, std::int64_t nTimestamp) const;
 	bool DeleteAccount(const std::string& strAccount) const;
 };
