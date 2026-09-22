@@ -1,18 +1,55 @@
-#include "CAccountRepository.h"
+#include "CAccountStorager.h"
 
 #include "CDBEngine.h"
-#include "CSQLite3.h"
+#include "IDataBase.h"
+
+namespace
+{
+	std::string QuoteText(const std::string& strValue)
+	{
+		std::string strResult("'");
+		strResult.reserve(strValue.size() + 2);
+		for (char ch : strValue)
+		{
+			strResult.push_back(ch);
+			if ('\'' == ch)
+			{
+				strResult.push_back(ch);
+			}
+		}
+		strResult.push_back('\'');
+		return strResult;
+	}
+
+	std::string BlobLiteral(const std::vector<std::uint8_t>& value)
+	{
+		static constexpr char HEX[] = "0123456789ABCDEF";
+		std::string strResult("X'");
+		strResult.reserve(value.size() * 2 + 3);
+		for (std::uint8_t byte : value)
+		{
+			strResult.push_back(HEX[byte >> 4]);
+			strResult.push_back(HEX[byte & 0x0F]);
+		}
+		strResult.push_back('\'');
+		return strResult;
+	}
+} // namespace
 
 
 std::vector<CAccountInfo> CAccountStorager::LoadAccounts() const
 {
-	std::vector<CAccountInfo> accounts;
+	std::string strSql = "SELECT account, password, create_time, update_time, last_success_time FROM account ORDER BY last_success_time DESC, account ASC";
+
 	db::_TyDBPtr db = CDBEngine::InstanceRef().GetDBPtr(db::em_database::sqlite);
-	db::CSQLite3::_TySqlRows rows;
-	if (0 != db->ExecQueryPrepared("SELECT account, password, create_time, update_time, last_success_time FROM account ORDER BY last_success_time DESC, account ASC", {}, rows))
+	const db::CQueryTable& table = db->ExecQuery(strSql);
+	if (table.m_rows.empty())
 	{
-		return accounts;
+		return {};
 	}
+
+	const db::CQueryTable::_TyRows& rows = table.m_rows;
+	std::vector<CAccountInfo> accounts;
 	accounts.reserve(rows.size());
 	for (const auto& row : rows)
 	{
@@ -37,13 +74,13 @@ bool CAccountStorager::SaveAccount(const std::string& strAccount, const std::vec
 		return false;
 	}
 	db::_TyDBPtr db = CDBEngine::InstanceRef().GetDBPtr(db::em_database::sqlite);
-	std::string strSQL = "INSERT INTO account(account, password, create_time, update_time, last_success_time) VALUES(?, ?, ?, ?, ?) ON CONFLICT(account) DO UPDATE SET password=excluded.password, update_time=excluded.update_time, last_success_time=excluded.last_success_time";
-	db::CSQLite3::_TySqlParameters parameters{ strAccount, password, nTimestamp, nTimestamp, nTimestamp };
-	return 0 == db->ExecUpdatePrepared(strSQL, parameters);
+	std::string strTimestamp = std::to_string(nTimestamp);
+	std::string strSQL = "INSERT INTO account(account,password,create_time,update_time,last_success_time) VALUES(" + QuoteText(strAccount) + "," + BlobLiteral(password) + "," + strTimestamp + "," + strTimestamp + "," + strTimestamp + ") ON CONFLICT(account) DO UPDATE SET password=excluded.password,update_time=excluded.update_time,last_success_time=excluded.last_success_time";
+	return 0 == db->ExecUpdate(strSQL);
 }
 
 bool CAccountStorager::DeleteAccount(const std::string& strAccount) const
 {
 	db::_TyDBPtr db = CDBEngine::InstanceRef().GetDBPtr(db::em_database::sqlite);
-	return 0 == db->ExecUpdatePrepared("DELETE FROM account WHERE account=?", { strAccount });
+	return 0 == db->ExecUpdate("DELETE FROM account WHERE account=" + QuoteText(strAccount));
 }

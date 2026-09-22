@@ -296,6 +296,7 @@
     <ClInclude Include="database\COracle.h" />
     <ClInclude Include="database\CSQLite3.h" />
     <ClInclude Include="database\IDataBase.h" />
+    <ClInclude Include="database\CQueryTable.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="ini\CIniFile.h" />
     <ClInclude Include="ini\CINIHandler.h" />

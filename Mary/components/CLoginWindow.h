@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <memory>
 #include "../system/CLoginService.h"
-#include "../database/CAccountRepository.h"
+#include "../database/CAccountStorager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
