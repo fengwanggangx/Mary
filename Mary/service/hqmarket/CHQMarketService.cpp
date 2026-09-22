@@ -228,8 +228,7 @@ void CHQMarketService::RemoveHistoryHandler(_TyHandlerToken token)
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteTableHandler(_TyQuoteTableHandler&& handler)
 {
-	return m_pump_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event)
-										{ handler(event.m_view, event.m_changes); });
+	return m_pump_quote_table.Subscribe([handler = std::move(handler)](const CQuoteTableEvent& event) { handler(event.m_view, event.m_changes); });
 }
 
 void CHQMarketService::RemoveQuoteTableHandler(_TyHandlerToken token)

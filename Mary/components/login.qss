@@ -27,6 +27,11 @@ QDialog#LoginWindowClass
 	color: white;
 }
 
+#checkBox_remember
+{
+	color: white;
+}
+
 #pushButton_register { color: white; background: transparent; border: none; text-decoration: underline; } #pushButton_register:hover { color: #bde8ff; }
 
 #pushButton_settings { color: white; } #pushButton_settings:hover { background-color: #4098c5; }

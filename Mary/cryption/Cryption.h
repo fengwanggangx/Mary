@@ -5,7 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <botan/aead.h>
-#include "./common/ISingleton.h"
+#include "../common/ISingleton.h"
 
 class Botan::AEAD_Mode;
 namespace crypto
@@ -54,20 +54,22 @@ namespace crypto
 	{
 		DECLARE_SINGLE_DFAULT(CCryptor)
 
-	public:
+	  public:
 		std::string Encrypt(const std::string& strText, crypto::algorithm agm, const CParam& param);
 		std::string Decrypt(const std::string& strText, crypto::algorithm agm, const CParam& param);
 
 		std::vector<uint8_t> Encrypt(const std::vector<uint8_t>& data, crypto::algorithm agm, const CParam& param);
 		std::vector<uint8_t> Decrypt(const std::vector<uint8_t>& data, crypto::algorithm agm, const CParam& param);
+		bool ProtectCurrentUser(const std::vector<uint8_t>& data, std::vector<uint8_t>& protectedData, std::string& strError) const;
+		bool UnprotectCurrentUser(const std::vector<uint8_t>& protectedData, std::vector<uint8_t>& data, std::string& strError) const;
 
-	private:
+	  private:
 		Botan::AEAD_Mode* GetCryptor(crypto::algorithm agm, crypto::proc ty);
 		std::vector<uint8_t> Process(crypto::proc ty, const std::vector<uint8_t>& data, crypto::algorithm agm, const CParam& param);
 
-	private:
+	  private:
 		std::unordered_map<crypto::algorithm, std::pair<std::unique_ptr<Botan::AEAD_Mode>, std::unique_ptr<Botan::AEAD_Mode>>> m_crytors;
 	};
-}
+} // namespace crypto
 
 #endif

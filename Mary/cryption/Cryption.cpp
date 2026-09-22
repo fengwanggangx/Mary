@@ -1,6 +1,9 @@
 #include "Cryption.h"
 #include <botan/auto_rng.h>
 #include <botan/base64.h>
+#include <Windows.h>
+#include <dpapi.h>
+#include <memory>
 
 namespace crypto
 {
@@ -51,7 +54,6 @@ namespace crypto
 	{
 		m_crytors.clear();
 	}
-
 
 	std::pair<std::vector<uint8_t>, std::vector<uint8_t>> GenerateKV(crypto::algorithm agm)
 	{
@@ -149,4 +151,46 @@ namespace crypto
 	{
 		return Process(crypto::proc::decode, data, agm, param);
 	}
-}
+
+	bool CCryptor::ProtectCurrentUser(const std::vector<uint8_t>& data, std::vector<uint8_t>& protectedData, std::string& strError) const
+	{
+		protectedData.clear();
+		strError.clear();
+		if (data.empty())
+		{
+			strError = "Input data is empty";
+			return false;
+		}
+		DATA_BLOB input{ static_cast<DWORD>(data.size()), const_cast<BYTE*>(reinterpret_cast<const BYTE*>(data.data())) };
+		DATA_BLOB output{ 0, nullptr };
+		if (FALSE == CryptProtectData(&input, L"Mary login password", nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &output))
+		{
+			strError = "CryptProtectData failed: " + std::to_string(GetLastError());
+			return false;
+		}
+		std::unique_ptr<void, decltype(&LocalFree)> outputOwner(output.pbData, &LocalFree);
+		protectedData.assign(output.pbData, output.pbData + output.cbData);
+		return true;
+	}
+
+	bool CCryptor::UnprotectCurrentUser(const std::vector<uint8_t>& protectedData, std::vector<uint8_t>& data, std::string& strError) const
+	{
+		data.clear();
+		strError.clear();
+		if (protectedData.empty())
+		{
+			strError = "Protected data is empty";
+			return false;
+		}
+		DATA_BLOB input{ static_cast<DWORD>(protectedData.size()), const_cast<BYTE*>(reinterpret_cast<const BYTE*>(protectedData.data())) };
+		DATA_BLOB output{ 0, nullptr };
+		if (FALSE == CryptUnprotectData(&input, nullptr, nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &output))
+		{
+			strError = "CryptUnprotectData failed: " + std::to_string(GetLastError());
+			return false;
+		}
+		std::unique_ptr<void, decltype(&LocalFree)> outputOwner(output.pbData, &LocalFree);
+		data.assign(output.pbData, output.pbData + output.cbData);
+		return true;
+	}
+} // namespace crypto
