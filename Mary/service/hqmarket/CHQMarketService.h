@@ -26,7 +26,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	friend class CReviewRegressionTests;
 	DECLARE_SINGLE_DFAULT(CHQMarketService)
 
-  public:
+	public:
 	using _TyHandlerToken = _TyCallbackId;
 	using _TyQuoteHandler = std::function<void(const CQuote&)>;
 	using _TyDepthHandler = std::function<void(const CMarketDepth&)>;
@@ -77,7 +77,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 
 	void SetPendingQuoteLimit(std::size_t count);
 
-  private:
+	private:
 	using _TyRequestHandler = std::function<bool(const CRequest&)>;
 
 	void OnRequestReply(const CRequest& req);
@@ -98,7 +98,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	void QuoteWorkerLoop();
 	void FlushQuotes(std::unordered_map<std::string, CQuote>& quotes);
 
-  private:
+	private:
 	bool m_bInitialized{ false }; // 服务是否已初始化
 	std::unordered_map<std::string, _TyRequestHandler> m_request_handler;
 
@@ -142,7 +142,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 
 	_TyDataRowId m_nextQuoteRowId{ 1 }; // 下一个行情表行号
 
-  private:
+	private:
 	TMessagePump<CQuote> m_pump_quote;					   // 最新行情事件分发器
 	TMessagePump<CMarketDepth> m_pump_depth;			   // 盘口深度事件分发器
 	TMessagePump<CMarketHistoryEvent> m_pump_history;	   // 历史行情事件分发器
