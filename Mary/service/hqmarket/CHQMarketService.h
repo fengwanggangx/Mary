@@ -78,7 +78,15 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	void SetPendingQuoteLimit(std::size_t count);
 
   private:
+	using _TyRequestHandler = std::function<bool(const CRequest&)>;
+
 	void OnRequestReply(const CRequest& req);
+	bool OnSectorListReply(const CRequest& req);
+	bool OnSectorConstituentsReply(const CRequest& req);
+	bool OnSecurityListReply(const CRequest& req);
+	bool OnDepthReply(const CRequest& req);
+	bool OnHistoryReply(const CRequest& req);
+	bool OnQuoteReply(const CRequest& req);
 
 	bool Subscribe(const std::string& strKey, const request::_TyParams& param);
 	bool Unsubscribe(const std::string& strKey, const request::_TyParams& param);
@@ -92,6 +100,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 
   private:
 	bool m_bInitialized{ false }; // 服务是否已初始化
+	std::unordered_map<std::string, _TyRequestHandler> m_request_handler;
 
 	mutable std::shared_mutex m_mtx_quotes;
 	std::unordered_map<std::string, CQuote> m_quotes; // 各证券最新行情

@@ -90,14 +90,14 @@ namespace
 
 	std::uint64_t ParseSequence(const request::_TyParams& values)
 	{
-		const auto sequenceIter = values.find("sequence");
-		if (values.end() == sequenceIter)
+		const auto mIter = values.find("sequence");
+		if (values.end() == mIter)
 		{
 			return 0;
 		}
 		std::uint64_t sequence = 0;
-		const char* pBegin = sequenceIter->second.data();
-		const char* pEnd = pBegin + sequenceIter->second.size();
+		const char* pBegin = mIter->second.data();
+		const char* pEnd = pBegin + mIter->second.size();
 		std::from_chars_result result = std::from_chars(pBegin, pEnd, sequence);
 		return (std::errc() == result.ec) && (pEnd == result.ptr) ? sequence : 0;
 	}
@@ -122,6 +122,15 @@ namespace
 
 CHQMarketService::CHQMarketService()
 {
+	m_request_handler = {
+		{ "query_sectors", std::bind_front(&CHQMarketService::OnSectorListReply, this) },
+		{ "query_sector_constituents", std::bind_front(&CHQMarketService::OnSectorConstituentsReply, this) },
+		{ "query_securities", std::bind_front(&CHQMarketService::OnSecurityListReply, this) },
+		{ "depth", std::bind_front(&CHQMarketService::OnDepthReply, this) },
+		{ "query_response", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
+		{ "query_bars", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
+		{ "quote", std::bind_front(&CHQMarketService::OnQuoteReply, this) }
+	};
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Security), "代码", DataType::String });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), "名称", DataType::String });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::LastPrice), "最新价", DataType::Double });
@@ -175,9 +184,9 @@ void CHQMarketService::Initialize()
 					quotes.emplace_back(quote);
 				}
 			}
-			for (const auto& quote : quotes)
+			for (const auto& v : quotes)
 			{
-				EnqueueQuote(quote);
+				EnqueueQuote(v);
 			}
 		} });
 	if (CSession::InstanceRef().IsAuthenticated())
@@ -402,8 +411,8 @@ bool CHQMarketService::Subscribe(const std::string& strKey, const request::_TyPa
 	}
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
-		const auto existing = m_subscriptions.find(strKey);
-		if ((m_subscriptions.end() != existing) && (param == existing->second))
+		const auto mIter = m_subscriptions.find(strKey);
+		if ((m_subscriptions.end() != mIter) && (param == mIter->second))
 		{
 			return CSession::InstanceRef().IsAuthenticated();
 		}
@@ -431,9 +440,9 @@ void CHQMarketService::RestoreSubscriptions()
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
 		subscriptions = m_subscriptions;
 	}
-	for (const auto& item : subscriptions)
+	for (const auto& v : subscriptions)
 	{
-		CSession::InstanceRef().SendRequest(request::Subscription(item.second));
+		CSession::InstanceRef().SendRequest(request::Subscription(v.second));
 	}
 }
 
@@ -484,17 +493,17 @@ std::vector<CIndicatorPoint> CHQMarketService::CalculateMovingAverage(const std:
 
 	double fSum = 0.0;
 	std::deque<double> window;
-	for (const CMarketBar& bar : bars)
+	for (const auto& v : bars)
 	{
-		window.emplace_back(bar.m_fClose);
-		fSum += bar.m_fClose;
+		window.emplace_back(v.m_fClose);
+		fSum += v.m_fClose;
 		if (nPeriod < window.size())
 		{
 			fSum -= window.front();
 			window.pop_front();
 		}
 		bool bValid = nPeriod == window.size();
-		values.emplace_back(CIndicatorPoint{ bar.m_nBeginTime, bValid ? fSum / static_cast<double>(nPeriod) : 0.0, bValid });
+		values.emplace_back(CIndicatorPoint{ v.m_nBeginTime, bValid ? fSum / static_cast<double>(nPeriod) : 0.0, bValid });
 	}
 	return values;
 }
@@ -577,10 +586,10 @@ void CHQMarketService::EnqueueQuote(const CQuote& quote)
 	std::string strSecurity = quote.m_security.String();
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
-		const auto quoteIter = m_pendingQuotes.find(strSecurity);
-		if (m_pendingQuotes.end() != quoteIter)
+		const auto mIter = m_pendingQuotes.find(strSecurity);
+		if (m_pendingQuotes.end() != mIter)
 		{
-			quoteIter->second = quote;
+			mIter->second = quote;
 			++m_runtimeMetrics.m_nQuoteQueueOverwrites;
 		}
 		else if (m_runtimeMetrics.m_nPendingQuoteLimit.load() <= m_pendingQuotes.size())
@@ -617,10 +626,10 @@ void CHQMarketService::QuoteWorkerLoop()
 void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quotes)
 {
 	CDataTableWriter writer = m_quoteTable.BeginWrite();
-	for (const auto& item : quotes)
+	for (const auto& v : quotes)
 	{
-		const CQuote& quote = item.second;
-		const std::string& strSecurity = item.first;
+		const CQuote& quote = v.second;
+		const std::string& strSecurity = v.first;
 		const auto rowIter = m_quoteRowIds.find(strSecurity);
 		if (m_quoteRowIds.end() == rowIter)
 		{
@@ -691,197 +700,219 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 
 void CHQMarketService::OnRequestReply(const CRequest& req)
 {
-	std::string strCmd = req.GetCmd();
+	auto mIter = m_request_handler.find(req.GetCmd());
+	if (m_request_handler.end() != mIter)
+	{
+		mIter->second(req);
+	}
+}
+
+bool CHQMarketService::OnSectorListReply(const CRequest& req)
+{
+	if (req.GetId() != m_nLatestSectorListRequest.load())
+	{
+		return false;
+	}
+	CSectorListEvent ev;
+	ev.m_nRequestId = req.GetId();
+	ev.m_type = SectorType::industry;
+	std::optional<std::pair<int, std::string>> err = req.GetErrorInfo();
 	const _TyReqData& message = req.GetData();
-	if ("query_sectors" == strCmd)
+	if (err.has_value() && (0 != err->first))
 	{
-		if (req.GetId() != m_nLatestSectorListRequest.load())
-		{
-			return;
-		}
-		CSectorListEvent ev;
-		ev.m_nRequestId = req.GetId();
-		ev.m_type = SectorType::industry;
-		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
-		if (errorInfo.has_value() && (0 != errorInfo->first))
-		{
-			ev.m_strError = errorInfo->second.empty() ? "板块查询失败" : errorInfo->second;
-		}
-		else if (!message.has_sector_list())
-		{
-			ev.m_strError = "板块响应缺少数据";
-		}
-		else
-		{
-			const hqmarket::market::v1::SectorList& data = message.sector_list();
-			ev.m_type = static_cast<SectorType>(data.type());
-			ev.m_sectors.reserve(data.sectors_size());
-			for (const auto& value : data.sectors())
-			{
-				ev.m_sectors.emplace_back(ParseSector(value, ev.m_type));
-			}
-			{
-				std::unique_lock lock(m_mtx_sectors);
-				m_sectors = ev.m_sectors;
-			}
-		}
-		m_pump_sector_list.Notify(ev);
-		return;
+		ev.m_strError = err->second.empty() ? "板块查询失败" : err->second;
 	}
-	if ("query_sector_constituents" == strCmd)
+	else if (!message.has_sector_list())
 	{
-		if (req.GetId() != m_nLatestSectorConstituentsRequest.load())
-		{
-			return;
-		}
-		CSectorConstituentsEvent event;
-		event.m_nRequestId = req.GetId();
-		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
-		if (errorInfo.has_value() && (0 != errorInfo->first))
-		{
-			event.m_strError = errorInfo->second.empty() ? "成分股查询失败" : errorInfo->second;
-		}
-		else if (!message.has_sector_constituents())
-		{
-			event.m_strError = "成分股响应缺少数据";
-		}
-		else
-		{
-			const hqmarket::market::v1::SectorConstituents& data = message.sector_constituents();
-			SectorType type = static_cast<SectorType>(data.type());
-			event.m_sector = ParseSector(data.sector(), type);
-			event.m_securities.reserve(data.securities_size());
-			for (const auto& value : data.securities())
-			{
-				CSecurity security(value.security().symbol(), value.name(), ToExchange(value.security().exchange()), ParseMarketState(value.status()));
-				if (!security.IsValid())
-				{
-					continue;
-				}
-				event.m_securities.emplace_back(security);
-				RegisterSecurity(security);
-			}
-		}
-		m_pump_sector_constituents.Notify(event);
-		return;
+		ev.m_strError = "板块响应缺少数据";
 	}
-	if (("query_securities" == strCmd) && message.has_security_list())
+	else
 	{
-		const auto& data = message.security_list();
-		CSecurityListEvent ev;
-		ev.m_version = data.version();
-		ev.m_securities.reserve(data.securities_size());
+		const hqmarket::market::v1::SectorList& data = message.sector_list();
+		ev.m_type = static_cast<SectorType>(data.type());
+		ev.m_sectors.reserve(data.sectors_size());
+		for (const auto& v : data.sectors())
+		{
+			ev.m_sectors.emplace_back(ParseSector(v, ev.m_type));
+		}
+		{
+			std::unique_lock lock(m_mtx_sectors);
+			m_sectors = ev.m_sectors;
+		}
+	}
+	m_pump_sector_list.Notify(ev);
+	return true;
+}
+
+bool CHQMarketService::OnSectorConstituentsReply(const CRequest& req)
+{
+	if (req.GetId() != m_nLatestSectorConstituentsRequest.load())
+	{
+		return false;
+	}
+	CSectorConstituentsEvent event;
+	event.m_nRequestId = req.GetId();
+	std::optional<std::pair<int, std::string>> err = req.GetErrorInfo();
+	const _TyReqData& message = req.GetData();
+	if (err.has_value() && (0 != err->first))
+	{
+		event.m_strError = err->second.empty() ? "成分股查询失败" : err->second;
+	}
+	else if (!message.has_sector_constituents())
+	{
+		event.m_strError = "成分股响应缺少数据";
+	}
+	else
+	{
+		const hqmarket::market::v1::SectorConstituents& data = message.sector_constituents();
+		SectorType type = static_cast<SectorType>(data.type());
+		event.m_sector = ParseSector(data.sector(), type);
+		event.m_securities.reserve(data.securities_size());
 		for (const auto& v : data.securities())
 		{
-			std::string strExchange = ExchangeSuffix(v.security().exchange());
-			if (strExchange.empty())
+			CSecurity security(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
+			if (!security.IsValid())
 			{
 				continue;
 			}
-			ev.m_securities.emplace_back(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
-		}
-		{
-			std::unique_lock lock(m_mtx_securities);
-			m_securities = ev.m_securities;
-		}
-		for (const auto& security : ev.m_securities)
-		{
+			event.m_securities.emplace_back(security);
 			RegisterSecurity(security);
-			if (CSession::InstanceRef().IsAuthenticated())
-			{
-				SubscribeQuote(security);
-			}
 		}
-		m_pump_security_list.Notify(ev);
-		return;
 	}
+	m_pump_sector_constituents.Notify(event);
+	return true;
+}
 
-	if (("depth" == strCmd) && message.has_depth())
+bool CHQMarketService::OnSecurityListReply(const CRequest& req)
+{
+	const _TyReqData& message = req.GetData();
+	if (!message.has_security_list())
 	{
-		const _TyDepthData& data = message.depth();
-		CMarketDepth value;
-		value.m_security = CSecurity(data.security().symbol(), ToExchange(data.security().exchange()));
-		value.m_nExchangeTime = data.exchange_time_ms();
-		value.m_bStale = data.stale();
-		value.m_bids.reserve(data.bids_size());
-		value.m_asks.reserve(data.asks_size());
-		for (const auto& level : data.bids())
-		{
-			value.m_bids.emplace_back(CPriceLevel{ ScaledPrice(level.price(), level.price_scale()), level.volume() });
-		}
-		for (const auto& level : data.asks())
-		{
-			value.m_asks.emplace_back(CPriceLevel{ ScaledPrice(level.price(), level.price_scale()), level.volume() });
-		}
-		{
-			std::unique_lock lock(m_mtx_depths);
-			m_depths.insert_or_assign(value.m_security.String(), value);
-		}
-		m_pump_depth.Notify(value);
-		return;
+		return false;
 	}
-
-	if (("query_response" == strCmd) || ("query_bars" == strCmd))
+	const _TySecurityList& data = message.security_list();
+	CSecurityListEvent ev;
+	ev.m_version = data.version();
+	ev.m_securities.reserve(data.securities_size());
+	for (const auto& v : data.securities())
 	{
-		CMarketHistoryEvent event;
+		std::string strExchange = ExchangeSuffix(v.security().exchange());
+		if (strExchange.empty())
 		{
-			std::lock_guard<std::mutex> lock(m_mtx_historyRequests);
-			auto requestIter = m_historyRequests.find(req.GetId());
-			if (m_historyRequests.end() == requestIter)
-			{
-				return;
-			}
-			event = std::move(requestIter->second);
-			m_historyRequests.erase(requestIter);
+			continue;
 		}
-		std::optional<std::pair<int, std::string>> errorInfo = req.GetErrorInfo();
-		if (errorInfo.has_value() && (0 != errorInfo->first))
+		ev.m_securities.emplace_back(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
+	}
+	{
+		std::unique_lock lock(m_mtx_securities);
+		m_securities = ev.m_securities;
+	}
+	for (const auto& v : ev.m_securities)
+	{
+		RegisterSecurity(v);
+		if (CSession::InstanceRef().IsAuthenticated())
 		{
-			event.m_strError = errorInfo->second.empty() ? "历史行情查询失败" : errorInfo->second;
+			SubscribeQuote(v);
 		}
-		else if (!message.has_query_response())
+	}
+	m_pump_security_list.Notify(ev);
+	return true;
+}
+
+bool CHQMarketService::OnDepthReply(const CRequest& req)
+{
+	const _TyReqData& message = req.GetData();
+	if (!message.has_depth())
+	{
+		return false;
+	}
+	const _TyDepthData& data = message.depth();
+	CMarketDepth value;
+	value.m_security = CSecurity(data.security().symbol(), ToExchange(data.security().exchange()));
+	value.m_nExchangeTime = data.exchange_time_ms();
+	value.m_bStale = data.stale();
+	value.m_bids.reserve(data.bids_size());
+	value.m_asks.reserve(data.asks_size());
+	for (const auto& v : data.bids())
+	{
+		value.m_bids.emplace_back(CPriceLevel{ ScaledPrice(v.price(), v.price_scale()), v.volume() });
+	}
+	for (const auto& v : data.asks())
+	{
+		value.m_asks.emplace_back(CPriceLevel{ ScaledPrice(v.price(), v.price_scale()), v.volume() });
+	}
+	{
+		std::unique_lock lock(m_mtx_depths);
+		m_depths.insert_or_assign(value.m_security.String(), value);
+	}
+	m_pump_depth.Notify(value);
+	return true;
+}
+
+bool CHQMarketService::OnHistoryReply(const CRequest& req)
+{
+	CMarketHistoryEvent event;
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_historyRequests);
+		auto mIter = m_historyRequests.find(req.GetId());
+		if (m_historyRequests.end() == mIter)
 		{
-			event.m_strError = "历史行情响应缺少数据";
+			return false;
+		}
+		event = std::move(mIter->second);
+		m_historyRequests.erase(mIter);
+	}
+	std::optional<std::pair<int, std::string>> err = req.GetErrorInfo();
+	const _TyReqData& message = req.GetData();
+	if (err.has_value() && (0 != err->first))
+	{
+		event.m_strError = err->second.empty() ? "历史行情查询失败" : err->second;
+	}
+	else if (!message.has_query_response())
+	{
+		event.m_strError = "历史行情响应缺少数据";
+	}
+	else
+	{
+		const _TyQueryResponse& data = message.query_response();
+		MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == data.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
+		if ((event.m_strSecurity != SecurityName(data.security())) || (event.m_period != period))
+		{
+			event.m_strError = "历史行情响应与请求不匹配";
 		}
 		else
 		{
-			const _TyQueryResponse& data = message.query_response();
-			MarketBarPeriod period = hqmarket::market::v1::CHANNEL_BAR_1M == data.channel() ? MarketBarPeriod::Minute : MarketBarPeriod::Day;
-			if ((event.m_strSecurity != SecurityName(data.security())) || (event.m_period != period))
+			event.m_bars.reserve(data.bars_size());
+			for (const auto& v : data.bars())
 			{
-				event.m_strError = "历史行情响应与请求不匹配";
+				event.m_bars.emplace_back(CMarketBar{ v.begin_time_ms(), ScaledPrice(v.open_price(), v.price_scale()), ScaledPrice(v.high_price(), v.price_scale()), ScaledPrice(v.low_price(), v.price_scale()), ScaledPrice(v.close_price(), v.price_scale()), v.volume(), v.turnover() });
 			}
-			else
-			{
-				event.m_bars.reserve(data.bars_size());
-				for (const auto& bar : data.bars())
-				{
-					event.m_bars.emplace_back(CMarketBar{ bar.begin_time_ms(), ScaledPrice(bar.open_price(), bar.price_scale()), ScaledPrice(bar.high_price(), bar.price_scale()), ScaledPrice(bar.low_price(), bar.price_scale()), ScaledPrice(bar.close_price(), bar.price_scale()), bar.volume(), bar.turnover() });
-				}
-				std::unique_lock lock(m_mtx_history);
-				m_history.insert_or_assign(HistoryKey(event.m_strSecurity, event.m_period), event.m_bars);
-			}
+			std::unique_lock lock(m_mtx_history);
+			m_history.insert_or_assign(HistoryKey(event.m_strSecurity, event.m_period), event.m_bars);
 		}
-		m_pump_history.Notify(event);
-		return;
 	}
+	m_pump_history.Notify(event);
+	return true;
+}
 
-	if (("quote" != strCmd) || !message.has_quote())
+bool CHQMarketService::OnQuoteReply(const CRequest& req)
+{
+	const _TyReqData& message = req.GetData();
+	if (!message.has_quote())
 	{
-		return;
+		return false;
 	}
-
 	const _TyQuoteData& quote = message.quote();
 	++m_runtimeMetrics.m_nQuoteReceived;
 	std::uint64_t sequence = ParseSequence(req.GetReturnData());
 	if (!AcceptQuoteSequence(sequence))
 	{
-		return;
+		return false;
 	}
 	double fScale = std::pow(10.0, quote.price_scale());
 	if (0.0 >= fScale)
 	{
-		return;
+		return false;
 	}
 
 	CQuote value;
@@ -899,4 +930,5 @@ void CHQMarketService::OnRequestReply(const CRequest& req)
 	}
 
 	m_pump_quote.Notify(value);
+	return true;
 }
