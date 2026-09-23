@@ -36,7 +36,9 @@ enum class MarketQuoteColumn : _TyDataColumnId
 	Status,
 	Sequence,
 	ListingStatus,
-	Market
+	Market,
+	PinyinFullAliases,
+	PinyinShortAliases
 };
 
 enum class MarketBarPeriod

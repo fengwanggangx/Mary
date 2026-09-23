@@ -136,6 +136,8 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	std::unordered_map<std::string, CQuote> m_pendingQuotes;		 // 等待批量刷新的行情
 	std::unordered_map<std::string, _TyDataRowId> m_quoteRowIds;	 // 证券对应的数据表行号
 	std::unordered_map<std::string, std::string> m_securityNames;	 // 证券名称缓存
+	std::unordered_map<std::string, std::string> m_securityPinyinFullAliases;
+	std::unordered_map<std::string, std::string> m_securityPinyinShortAliases;
 	std::unordered_map<std::string, MarketState> m_securityStatuses; // 证券状态缓存
 	std::unordered_set<std::string> m_pendingSecurityUpdates;		 // 等待刷新的证券元数据
 	std::unordered_set<std::string> m_registeredSecurities;			 // 已注册证券集合

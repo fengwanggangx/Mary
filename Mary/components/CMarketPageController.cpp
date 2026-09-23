@@ -165,7 +165,9 @@ QString CMarketPageController::AddWatchlist(const QString& strInput)
 	{
 		QString strKey = m_model->index(nRow, 0).data().toString();
 		QString strName = m_model->index(nRow, 1).data().toString();
-		if ((0 == QString::compare(strKey, strInput, Qt::CaseInsensitive)) || (strKey.section('.', 0, 0) == strInput) || (0 == QString::compare(strName, strInput, Qt::CaseInsensitive)))
+		QString strPinyinFullAliases = m_model->index(nRow, static_cast<int>(MarketQuoteColumn::PinyinFullAliases) - 1).data().toString();
+		QString strPinyinShortAliases = m_model->index(nRow, static_cast<int>(MarketQuoteColumn::PinyinShortAliases) - 1).data().toString();
+		if ((0 == QString::compare(strKey, strInput, Qt::CaseInsensitive)) || (strKey.section('.', 0, 0) == strInput) || strName.contains(strInput, Qt::CaseInsensitive) || strPinyinFullAliases.contains(strInput, Qt::CaseInsensitive) || strPinyinShortAliases.contains(strInput, Qt::CaseInsensitive))
 		{
 			matches.emplace_back(strKey.toStdString());
 		}
@@ -176,7 +178,7 @@ QString CMarketPageController::AddWatchlist(const QString& strInput)
 	}
 	if (1 != matches.size())
 	{
-		return "匹配到多个证券，请输入完整市场代码";
+		return "匹配到多个证券，请输入更完整的名称、拼音或市场代码";
 	}
 	if (!m_watchlist.emplace(matches.front()).second)
 	{

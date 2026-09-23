@@ -169,7 +169,7 @@ std::string FmtSecurityString(const std::string& strCode, Exchange mk)
 	return strCode + "." + strMarket;
 }
 
-CSecurity::CSecurity(const CSecurity& arg) : m_strCode(arg.m_strCode), m_strName(arg.m_strName), m_market(arg.m_market), m_status(arg.m_status)
+CSecurity::CSecurity(const CSecurity& arg) : m_strCode(arg.m_strCode), m_strName(arg.m_strName), m_pinyinFullAliases(arg.m_pinyinFullAliases), m_pinyinShortAliases(arg.m_pinyinShortAliases), m_market(arg.m_market), m_status(arg.m_status)
 {
 }
 
@@ -188,6 +188,8 @@ CSecurity& CSecurity::operator=(const CSecurity& arg)
 	{
 		m_strCode = arg.m_strCode;
 		m_strName = arg.m_strName;
+		m_pinyinFullAliases = arg.m_pinyinFullAliases;
+		m_pinyinShortAliases = arg.m_pinyinShortAliases;
 		m_market = arg.m_market;
 		m_status = arg.m_status;
 	}

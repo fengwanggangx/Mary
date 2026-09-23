@@ -16,7 +16,7 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::m
 	m_ui->setupUi(this);
 	m_ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->table->sortByColumn(-1, Qt::AscendingOrder);
-	m_ui->table->SetSearchColumns({ 0, 1 });
+	m_ui->table->SetSearchColumns({ 0, 1, static_cast<int>(MarketQuoteColumn::PinyinFullAliases) - 1, static_cast<int>(MarketQuoteColumn::PinyinShortAliases) - 1 });
 	connect(m_ui->searchEdit, &QLineEdit::textChanged, m_ui->table, &CUITable::Search);
 	connect(m_ui->searchEdit, &QLineEdit::returnPressed, this, [this]()
 	{

@@ -2,6 +2,7 @@
 #define WIND_HQMARKET_MARKETTYPES_H
 
 #include <string>
+#include <vector>
 
 namespace hqmarket::market::v1
 {
@@ -84,6 +85,8 @@ struct CSecurity
 {
 	std::string m_strCode;
 	std::string m_strName;
+	std::vector<std::string> m_pinyinFullAliases;
+	std::vector<std::string> m_pinyinShortAliases;
 	Exchange m_market{ Exchange::unknown };
 	MarketState m_status{ MarketState::unknown };
 

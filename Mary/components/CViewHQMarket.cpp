@@ -118,6 +118,7 @@ void CViewHQMarket::OnTabChanged(int idx)
 			CHQMarketService::InstanceRef().SubscribeQuote(CSecurity("399001", Exchange::szse));
 			CHQMarketService::InstanceRef().SubscribeQuote(CSecurity("399006", Exchange::szse));
 			RequestSectors();
+			bRequested = true;
 		}
 	}
 	else if ((1 == idx) || (3 == idx))	//自选股、A股
@@ -126,6 +127,7 @@ void CViewHQMarket::OnTabChanged(int idx)
 		if (!bRequested)
 		{
 			CHQMarketService::InstanceRef().QuerySecurities();
+			bRequested = true;
 		}
 	}
 	else

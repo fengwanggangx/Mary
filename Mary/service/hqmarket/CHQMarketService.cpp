@@ -56,6 +56,20 @@ namespace
 		return strExchange.empty() ? security.symbol() : security.symbol() + "." + strExchange;
 	}
 
+	std::string JoinAliases(const std::vector<std::string>& aliases)
+	{
+		std::string result;
+		for (const std::string& strAlias : aliases)
+		{
+			if (!result.empty())
+			{
+				result += ' ';
+			}
+			result += strAlias;
+		}
+		return result;
+	}
+
 	std::string MarketCategory(const std::string& strSecurity)
 	{
 		std::size_t dot = strSecurity.rfind('.');
@@ -143,6 +157,8 @@ CHQMarketService::CHQMarketService()
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Sequence), "序列", DataType::UInt64 });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::ListingStatus), "证券状态", DataType::String });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Market), "市场", DataType::String });
+	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinFullAliases), "拼音全称", DataType::String });
+	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinShortAliases), "拼音简称", DataType::String });
 }
 
 CHQMarketService::~CHQMarketService()
@@ -273,6 +289,8 @@ void CHQMarketService::RegisterSecurity(const CSecurity& info)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
 		m_securityNames.insert_or_assign(strKey, info.m_strName);
+		m_securityPinyinFullAliases.insert_or_assign(strKey, JoinAliases(info.m_pinyinFullAliases));
+		m_securityPinyinShortAliases.insert_or_assign(strKey, JoinAliases(info.m_pinyinShortAliases));
 		m_securityStatuses.insert_or_assign(strKey, info.m_status);
 		m_pendingSecurityUpdates.emplace(strKey);
 		bRegistered = m_registeredSecurities.emplace(strKey).second;
@@ -665,10 +683,14 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			m_quoteRowIds.emplace(strSecurity, rowId);
 			std::string strName;
 			std::string strListingStatus;
+			std::string strPinyinFullAliases;
+			std::string strPinyinShortAliases;
 			{
 				std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
 				m_pendingSecurityUpdates.erase(strSecurity);
 				container::try_vfind(m_securityNames, strSecurity, strName);
+				container::try_vfind(m_securityPinyinFullAliases, strSecurity, strPinyinFullAliases);
+				container::try_vfind(m_securityPinyinShortAliases, strSecurity, strPinyinShortAliases);
 				MarketState status;
 				if (container::try_vfind(m_securityStatuses, strSecurity, status))
 				{
@@ -677,12 +699,14 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			}
 			double fChange = quote.m_fLastPrice - quote.m_fPreClose;
 			double fPercent = 0.0 == quote.m_fPreClose ? 0.0 : fChange * 100.0 / quote.m_fPreClose;
-			writer.AddRow(rowId, { strSecurity, strName, quote.m_fLastPrice, fChange, fPercent, quote.m_fPreClose, quote.m_nVolume, std::string(quote.m_bStale ? "已延迟" : "交易中"), quote.m_nSequence, strListingStatus, MarketCategory(strSecurity) });
+			writer.AddRow(rowId, { strSecurity, strName, quote.m_fLastPrice, fChange, fPercent, quote.m_fPreClose, quote.m_nVolume, std::string(quote.m_bStale ? "已延迟" : "交易中"), quote.m_nSequence, strListingStatus, MarketCategory(strSecurity), strPinyinFullAliases, strPinyinShortAliases });
 			continue;
 		}
 
 		std::string strName;
 		std::string strListingStatus;
+		std::string strPinyinFullAliases;
+		std::string strPinyinShortAliases;
 		bool bMetadataChanged = false;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_pendingQuotes);
@@ -690,6 +714,8 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			if (bMetadataChanged)
 			{
 				container::try_vfind(m_securityNames, strSecurity, strName);
+				container::try_vfind(m_securityPinyinFullAliases, strSecurity, strPinyinFullAliases);
+				container::try_vfind(m_securityPinyinShortAliases, strSecurity, strPinyinShortAliases);
 				MarketState status;
 				if (container::try_vfind(m_securityStatuses, strSecurity, status))
 				{
@@ -704,6 +730,8 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), strName);
 			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::ListingStatus), strListingStatus);
 			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Market), MarketCategory(strSecurity));
+			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinFullAliases), strPinyinFullAliases);
+			writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinShortAliases), strPinyinShortAliases);
 		}
 		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::LastPrice), quote.m_fLastPrice);
 		writer.SetValue(rowId, static_cast<_TyDataColumnId>(MarketQuoteColumn::Change), fChange);
@@ -791,6 +819,8 @@ bool CHQMarketService::OnSectorConstituentsReply(const CRequest& req)
 		for (const auto& v : data.securities())
 		{
 			CSecurity security(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
+			security.m_pinyinFullAliases.assign(v.pinyin_full_aliases().begin(), v.pinyin_full_aliases().end());
+			security.m_pinyinShortAliases.assign(v.pinyin_short_aliases().begin(), v.pinyin_short_aliases().end());
 			if (!security.IsValid())
 			{
 				continue;
@@ -821,7 +851,10 @@ bool CHQMarketService::OnSecurityListReply(const CRequest& req)
 		{
 			continue;
 		}
-		ev.m_securities.emplace_back(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
+		CSecurity security(v.security().symbol(), v.name(), ToExchange(v.security().exchange()), ParseMarketState(v.status()));
+		security.m_pinyinFullAliases.assign(v.pinyin_full_aliases().begin(), v.pinyin_full_aliases().end());
+		security.m_pinyinShortAliases.assign(v.pinyin_short_aliases().begin(), v.pinyin_short_aliases().end());
+		ev.m_securities.emplace_back(std::move(security));
 	}
 	{
 		std::unique_lock lock(m_mtx_securities);
