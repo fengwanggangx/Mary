@@ -158,7 +158,7 @@ void LoginWindow::mouseReleaseEvent(QMouseEvent* event)
 	QDialog::mouseReleaseEvent(event);
 }
 
-bool bTest = true;
+bool bTest = false;
 void LoginWindow::OnLoginBtnClicked()
 {
 	if (bTest)
