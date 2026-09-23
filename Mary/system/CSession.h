@@ -119,7 +119,11 @@ class CSession final : public ISingleton<CSession>
 	std::vector<ResponseCallback> m_responseCallbacks;
 	ErrorCallback m_errorCallback;
 
+#if defined(_DEBUG)
+	int m_heartbeatSeconds{ 7200 };
+#else
 	int m_heartbeatSeconds{ 15 };
+#endif
 	int m_timeoutSeconds{ 10 };
 	int m_maxReconnectSeconds{ 30 };
 };

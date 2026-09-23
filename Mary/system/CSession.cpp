@@ -410,7 +410,11 @@ void CSession::HandleResponse(const CRequest& response)
 				std::lock_guard<std::mutex> lock(m_mtx_client);
 				if (nullptr != m_client)
 				{
+#if defined(_DEBUG)
+					m_client->SetReadTimeout(7200);
+#else
 					m_client->SetReadTimeout(45);
+#endif
 				}
 			}
 			NotifyState(SessionState::Ready, "已认证");
