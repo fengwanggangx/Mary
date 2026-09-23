@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QString>
 #include <unordered_set>
+#include <vector>
 
 class CUITable;
 class CUICurve;
@@ -28,7 +29,8 @@ class CMarketPageController final : public QObject
 	~CMarketPageController() override;
 	void SetConstituents(const std::vector<CSecurity>& securities);
 	void SetMarket(int nIndex);
-	void ToggleWatchlist(const QString& strCode);
+	QString AddWatchlist(const QString& strInput);
+	QString RemoveSelectedWatchlist();
 	void SetCharts(QLabel* pTitle, QLabel* pPrice, QLabel* pState, CUICurve* pIntraday, CUICurve* pCandles);
 	void RequestHistory(CurveMode mode);
 
@@ -43,6 +45,7 @@ class CMarketPageController final : public QObject
 	MarketTableMode m_mode;
 	std::string m_selectedSecurity;
 	std::unordered_set<std::string> m_watchlist;
+	std::vector<std::string> m_watchlistOrder;
 	std::unordered_set<std::string> m_constituents;
 	CUITable* m_table{ nullptr };
 	CDataTableModel* m_model{ nullptr };

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace request
 {
@@ -21,6 +22,8 @@ namespace request
 	CRequest Auth(const std::string& strToken);
 	CRequest Subscription(const _TyParams& param);
 	CRequest UnSubscription(const _TyParams& param);
+	CRequest Subscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels);
+	CRequest UnSubscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels);
 	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime);
 	CRequest QueryMarketSecurities();
 	CRequest QueryMarketSectors(SectorType type);

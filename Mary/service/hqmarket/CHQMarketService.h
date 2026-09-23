@@ -56,6 +56,8 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	void RegisterSecurity(const CSecurity& info);
 	bool SubscribeQuote(const CSecurity& info);
 	bool UnsubscribeQuote(const CSecurity& info);
+	bool SubscribeQuotes(const std::vector<CSecurity>& securities);
+	bool UnsubscribeQuotes(const std::vector<CSecurity>& securities);
 	bool SubscribeDepth(const CSecurity& info);
 	bool UnsubscribeDepth(const CSecurity& info);
 
@@ -87,6 +89,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 	bool OnDepthReply(const CRequest& req);
 	bool OnHistoryReply(const CRequest& req);
 	bool OnQuoteReply(const CRequest& req);
+	bool OnSubscriptionAck(const CRequest& req);
 
 	bool Subscribe(const std::string& strKey, const request::_TyParams& param);
 	bool Unsubscribe(const std::string& strKey, const request::_TyParams& param);
@@ -115,6 +118,8 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 
 	std::mutex m_mtx_subscriptions;
 	std::unordered_map<std::string, request::_TyParams> m_subscriptions; // 当前有效订阅
+	std::unordered_set<std::string> m_confirmedSubscriptions;
+	std::unordered_set<std::string> m_failedSubscriptions;
 
 	mutable std::shared_mutex m_mtx_securities;
 	std::vector<CSecurity> m_securities; // 当前证券列表

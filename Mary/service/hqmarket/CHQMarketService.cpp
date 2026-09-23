@@ -129,7 +129,8 @@ CHQMarketService::CHQMarketService()
 		{ "depth", std::bind_front(&CHQMarketService::OnDepthReply, this) },
 		{ "query_response", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
 		{ "query_bars", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
-		{ "quote", std::bind_front(&CHQMarketService::OnQuoteReply, this) }
+		{ "quote", std::bind_front(&CHQMarketService::OnQuoteReply, this) },
+		{ "subscription_ack", std::bind_front(&CHQMarketService::OnSubscriptionAck, this) }
 	};
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Security), "代码", DataType::String });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), "名称", DataType::String });
@@ -323,6 +324,43 @@ bool CHQMarketService::UnsubscribeQuote(const CSecurity& info)
 	return Unsubscribe("watchlist:" + strSecurity, parameters);
 }
 
+bool CHQMarketService::SubscribeQuotes(const std::vector<CSecurity>& securities)
+{
+	if (securities.empty())
+	{
+		return true;
+	}
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
+		for (const CSecurity& security : securities)
+		{
+			std::string strKey = "watchlist:" + security.String();
+			m_subscriptions.insert_or_assign(strKey, request::_TyParams{ { "security", security.String() }, { "channel", "quote" } });
+			m_failedSubscriptions.erase(strKey);
+		}
+	}
+	return CSession::InstanceRef().SendRequest(request::Subscription(securities, std::vector<Channel>{ Channel::quote }));
+}
+
+bool CHQMarketService::UnsubscribeQuotes(const std::vector<CSecurity>& securities)
+{
+	if (securities.empty())
+	{
+		return true;
+	}
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
+		for (const CSecurity& security : securities)
+		{
+			std::string strKey = "watchlist:" + security.String();
+			m_subscriptions.erase(strKey);
+			m_confirmedSubscriptions.erase(strKey);
+			m_failedSubscriptions.erase(strKey);
+		}
+	}
+	return CSession::InstanceRef().SendRequest(request::UnSubscription(securities, std::vector<Channel>{ Channel::quote }));
+}
+
 bool CHQMarketService::SubscribeDepth(const CSecurity& info)
 {
 	std::string strSecurity = info.String();
@@ -434,9 +472,28 @@ void CHQMarketService::RestoreSubscriptions()
 		std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
 		subscriptions = m_subscriptions;
 	}
+	std::vector<CSecurity> quoteSubscriptions;
+	quoteSubscriptions.reserve(subscriptions.size());
 	for (const auto& v : subscriptions)
 	{
-		CSession::InstanceRef().SendRequest(request::Subscription(v.second));
+		const std::string& strSecurity = container::vfind(v.second, "security");
+		const std::string& strChannel = container::vfind(v.second, "channel");
+		CSecurity security = ParseSecurity(strSecurity);
+		if (security.IsValid() && ("quote" == strChannel))
+		{
+			quoteSubscriptions.emplace_back(std::move(security));
+		}
+		else
+		{
+			CSession::InstanceRef().SendRequest(request::Subscription(v.second));
+		}
+	}
+	constexpr std::size_t BatchSize = 200;
+	for (std::size_t nOffset = 0; quoteSubscriptions.size() > nOffset; nOffset += BatchSize)
+	{
+		std::size_t nEnd = (std::min)(quoteSubscriptions.size(), nOffset + BatchSize);
+		std::vector<CSecurity> batch(quoteSubscriptions.begin() + nOffset, quoteSubscriptions.begin() + nEnd);
+		CSession::InstanceRef().SendRequest(request::Subscription(batch, std::vector<Channel>{ Channel::quote }));
 	}
 }
 
@@ -775,12 +832,27 @@ bool CHQMarketService::OnSecurityListReply(const CRequest& req)
 		std::unique_lock lock(m_mtx_securities);
 		m_securities = ev.m_securities;
 	}
+	std::vector<CSecurity> subscriptions;
+	subscriptions.reserve(ev.m_securities.size());
 	for (const auto& v : ev.m_securities)
 	{
-		RegisterSecurity(v);
-		if (CSession::InstanceRef().IsAuthenticated())
+		if ((Exchange::sse != v.m_market) && (Exchange::szse != v.m_market) && (Exchange::bse != v.m_market))
 		{
-			SubscribeQuote(v);
+			continue;
+		}
+		RegisterSecurity(v);
+		if (MarketState::delisted != v.m_status)
+		{
+			subscriptions.emplace_back(v);
+		}
+	}
+	if (CSession::InstanceRef().IsAuthenticated())
+	{
+		constexpr std::size_t BatchSize = 200;
+		for (std::size_t nOffset = 0; subscriptions.size() > nOffset; nOffset += BatchSize)
+		{
+			std::size_t nEnd = (std::min)(subscriptions.size(), nOffset + BatchSize);
+			SubscribeQuotes(std::vector<CSecurity>(subscriptions.begin() + nOffset, subscriptions.begin() + nEnd));
 		}
 	}
 	m_pump_security_list.Notify(ev);
@@ -898,5 +970,36 @@ bool CHQMarketService::OnQuoteReply(const CRequest& req)
 	}
 
 	m_pump_quote.Notify(value);
+	return true;
+}
+
+bool CHQMarketService::OnSubscriptionAck(const CRequest& req)
+{
+	const _TyReqData& message = req.GetData();
+	if (!message.has_subscription_ack())
+	{
+		return false;
+	}
+	const _TySubscriptionAck& ack = message.subscription_ack();
+	std::lock_guard<std::mutex> lock(m_mtx_subscriptions);
+	for (const auto& result : ack.results())
+	{
+		if (hqmarket::market::v1::CHANNEL_QUOTE != result.channel())
+		{
+			continue;
+		}
+		CSecurity security(result.security().symbol(), ToExchange(result.security().exchange()));
+		std::string strKey = "watchlist:" + security.String();
+		if (result.accepted())
+		{
+			m_confirmedSubscriptions.emplace(strKey);
+			m_failedSubscriptions.erase(strKey);
+		}
+		else
+		{
+			m_confirmedSubscriptions.erase(strKey);
+			m_failedSubscriptions.emplace(strKey);
+		}
+	}
 	return true;
 }

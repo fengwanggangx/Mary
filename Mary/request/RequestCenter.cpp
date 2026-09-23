@@ -5,6 +5,46 @@
 
 namespace request
 {
+	namespace
+	{
+		CRequest MarketSubscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels, bool bSubscribe)
+		{
+			CRequest req;
+			req.SetType(CRequest::Type::HQMARKET);
+			req.SetCmd(bSubscribe ? "subscribe" : "unsubscribe");
+			if (bSubscribe)
+			{
+				hqmarket::market::v1::SubscribeRequest payload;
+				for (const CSecurity& security : securities)
+				{
+					hqmarket::market::v1::Security* pSecurity = payload.add_securities();
+					pSecurity->set_symbol(security.m_strCode);
+					pSecurity->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
+				}
+				for (Channel channel : channels)
+				{
+					payload.add_channels(static_cast<hqmarket::market::v1::Channel>(channel));
+				}
+				req.SetData(payload);
+			}
+			else
+			{
+				hqmarket::market::v1::UnsubscribeRequest payload;
+				for (const CSecurity& security : securities)
+				{
+					hqmarket::market::v1::Security* pSecurity = payload.add_securities();
+					pSecurity->set_symbol(security.m_strCode);
+					pSecurity->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
+				}
+				for (Channel channel : channels)
+				{
+					payload.add_channels(static_cast<hqmarket::market::v1::Channel>(channel));
+				}
+				req.SetData(payload);
+			}
+			return req;
+		}
+	}
 	CRequest Auth(AuthAction action, const std::string& strAccount, const std::string& strPassword)
 	{
 		CRequest req;
@@ -58,6 +98,16 @@ namespace request
 		payload.add_channels(static_cast<hqmarket::market::v1::Channel>(ParseChannel(req.GetExtraData("channel"))));
 		req.SetData(payload);
 		return req;
+	}
+
+	CRequest Subscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels)
+	{
+		return MarketSubscription(securities, channels, true);
+	}
+
+	CRequest UnSubscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels)
+	{
+		return MarketSubscription(securities, channels, false);
 	}
 
 	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime)

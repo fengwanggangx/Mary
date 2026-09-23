@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QHeaderView>
 #include <QInputDialog>
+#include <QMessageBox>
+#include <QShortcut>
 #include <QTimer>
 
 CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CViewWatchlistClass>())
@@ -42,11 +44,18 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::m
 	connect(m_ui->addButton, &QPushButton::clicked, this, [this]()
 	{
 		bool bAccepted = false;
-		QString strCode = QInputDialog::getText(this, "自选股", "输入证券代码（已在自选中则移除）", QLineEdit::Normal, QString(), &bAccepted).trimmed();
+		QString strCode = QInputDialog::getText(this, "添加自选股", "输入证券代码、完整市场代码或证券名称", QLineEdit::Normal, QString(), &bAccepted).trimmed();
 		if (bAccepted && !strCode.isEmpty())
 		{
-			m_controller->ToggleWatchlist(strCode);
+			QString strResult = m_controller->AddWatchlist(strCode);
+			QMessageBox::information(this, "自选股", strResult);
 		}
+	});
+	QShortcut* pDeleteShortcut = new QShortcut(QKeySequence::Delete, m_ui->table);
+	connect(pDeleteShortcut, &QShortcut::activated, this, [this]()
+	{
+		QString strResult = m_controller->RemoveSelectedWatchlist();
+		QMessageBox::information(this, "自选股", strResult);
 	});
 	ApplyTheme();
 }
