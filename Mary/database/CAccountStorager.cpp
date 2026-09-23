@@ -43,7 +43,7 @@ std::vector<CAccountInfo> CAccountStorager::LoadAccounts() const
 
 	db::_TyDBPtr db = CDBEngine::InstanceRef().GetDBPtr(db::em_database::sqlite);
 	const db::CQueryTable& table = db->ExecQuery(strSql);
-	if (table.m_rows.empty())
+	if (table.IsEmpty())
 	{
 		return {};
 	}
