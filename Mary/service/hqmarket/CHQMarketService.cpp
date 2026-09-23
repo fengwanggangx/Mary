@@ -171,7 +171,6 @@ void CHQMarketService::Initialize()
 		{
 			m_runtimeMetrics.m_nLastQuoteSequence.store(0);
 			RestoreSubscriptions();
-			QuerySecurities();
 		}
 		else if ((SessionState::Disconnected == state) || (SessionState::Reconnecting == state) || (SessionState::Stopping == state))
 		{
@@ -190,10 +189,6 @@ void CHQMarketService::Initialize()
 				EnqueueQuote(v);
 			}
 		} });
-	if (CSession::InstanceRef().IsAuthenticated())
-	{
-		QuerySecurities();
-	}
 }
 
 CHQMarketService::_TyHandlerToken CHQMarketService::AddQuoteHandler(_TyQuoteHandler&& handler)

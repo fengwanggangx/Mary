@@ -23,20 +23,20 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	m_ui->rankingTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->rankingTable->horizontalHeader()->setFixedHeight(24);
 	ApplyTheme();
+
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
+
+	RefreshQuotes(service.GetQuoteTableView());
+
 	QPointer<CViewHQMarket> pInstance(this);
 	m_nQuoteTableToken = service.AddQuoteTableHandler(std::bind_front(&CViewHQMarket::OnQuoteTableUpdate, pInstance));
 	m_nSectorListToken = service.AddSectorListHandler(std::bind_front(&CViewHQMarket::OnSectorListUpdate, pInstance));
 	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler(std::bind_front(&CViewHQMarket::OnSectorConstituentsUpdate, pInstance));
+	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::OnSessionStateChanged, pInstance));
+
 	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, &CViewHQMarket::OnTabChanged);
 	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, &CViewHQMarket::OnRankingCellClicked);
-	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::OnSessionStateChanged, pInstance));
-	RefreshQuotes(service.GetQuoteTableView());
-	service.SubscribeQuote(CSecurity("000001", Exchange::sse));
-	service.SubscribeQuote(CSecurity("399001", Exchange::szse));
-	service.SubscribeQuote(CSecurity("399006", Exchange::szse));
-	RequestSectors();
 }
 
 void CViewHQMarket::OnQuoteTableUpdate(QPointer<CViewHQMarket> pInstance, const CDataTableView& view, const CDataChangeSet&)
@@ -109,9 +109,24 @@ CViewHQMarket::~CViewHQMarket()
 
 void CViewHQMarket::OnTabChanged(int idx)
 {
-	if (0 == idx)
+	if (0 == idx)	//概览
 	{
-		RequestSectors();
+		static bool bRequested = false;
+		if (!bRequested)
+		{
+			CHQMarketService::InstanceRef().SubscribeQuote(CSecurity("000001", Exchange::sse));
+			CHQMarketService::InstanceRef().SubscribeQuote(CSecurity("399001", Exchange::szse));
+			CHQMarketService::InstanceRef().SubscribeQuote(CSecurity("399006", Exchange::szse));
+			RequestSectors();
+		}
+	}
+	else if ((1 == idx) || (3 == idx))	//自选股、A股
+	{
+		static bool bRequested = false;
+		if (!bRequested)
+		{
+			CHQMarketService::InstanceRef().QuerySecurities();
+		}
 	}
 	else
 	{
