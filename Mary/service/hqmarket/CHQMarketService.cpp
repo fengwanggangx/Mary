@@ -607,7 +607,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 		const CQuote& quote = v.second;
 		const std::string& strSecurity = v.first;
 		_TyDataRowId rowId = -1;
-		if (container::try_vfind(m_quoteRowIds, strSecurity, rowId))
+		if (!container::try_vfind(m_quoteRowIds, strSecurity, rowId))
 		{
 			rowId = m_nextQuoteRowId++;
 			m_quoteRowIds.emplace(strSecurity, rowId);
