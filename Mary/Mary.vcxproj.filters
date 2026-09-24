@@ -369,6 +369,9 @@
     <ClInclude Include="components\CMarketPageController.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
+    <ClInclude Include="components\CQuoteTableUpdateState.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
     <ClInclude Include="components\CUIStyle.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>

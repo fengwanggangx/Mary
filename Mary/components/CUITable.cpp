@@ -5,47 +5,48 @@
 
 class CTableSearchProxyModel final : public QSortFilterProxyModel
 {
-	public:
-		explicit CTableSearchProxyModel(QObject* pParent) : QSortFilterProxyModel(pParent)
-		{
-		}
-		QString m_strSearch;
-		QList<int> m_searchColumns;
+  public:
+	explicit CTableSearchProxyModel(QObject* pParent) : QSortFilterProxyModel(pParent)
+	{
+		setDynamicSortFilter(false);
+	}
+	QString m_strSearch;
+	QList<int> m_searchColumns;
 
-		void Refresh()
-		{
-			invalidateFilter();
-		}
+	void Refresh()
+	{
+		invalidateFilter();
+	}
 
-	protected:
-		bool filterAcceptsRow(int nRow, const QModelIndex& parent) const override
+  protected:
+	bool filterAcceptsRow(int nRow, const QModelIndex& parent) const override
+	{
+		if (m_strSearch.isEmpty())
 		{
-			if (m_strSearch.isEmpty())
+			return true;
+		}
+		if (m_searchColumns.isEmpty())
+		{
+			for (int nColumn = 0; sourceModel()->columnCount(parent) > nColumn; ++nColumn)
 			{
-				return true;
-			}
-			if (m_searchColumns.isEmpty())
-			{
-				for (int nColumn = 0; sourceModel()->columnCount(parent) > nColumn; ++nColumn)
+				if (sourceModel()->index(nRow, nColumn, parent).data().toString().contains(m_strSearch, Qt::CaseInsensitive))
 				{
-					if (sourceModel()->index(nRow, nColumn, parent).data().toString().contains(m_strSearch, Qt::CaseInsensitive))
-					{
-						return true;
-					}
+					return true;
 				}
 			}
-			else
+		}
+		else
+		{
+			for (const auto& nColumn : m_searchColumns)
 			{
-				for (const auto& nColumn : m_searchColumns)
+				if ((0 <= nColumn) && (sourceModel()->columnCount(parent) > nColumn) && sourceModel()->index(nRow, nColumn, parent).data().toString().contains(m_strSearch, Qt::CaseInsensitive))
 				{
-					if ((0 <= nColumn) && (sourceModel()->columnCount(parent) > nColumn) && sourceModel()->index(nRow, nColumn, parent).data().toString().contains(m_strSearch, Qt::CaseInsensitive))
-					{
-						return true;
-					}
+					return true;
 				}
 			}
-			return false;
 		}
+		return false;
+	}
 };
 
 CUITable::CUITable(QWidget* pParent) : QTableView(pParent), m_searchProxy(new CTableSearchProxyModel(this))

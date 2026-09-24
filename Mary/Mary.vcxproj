@@ -260,6 +260,7 @@
     <ClInclude Include="basic\TMessagePump.h" />
     <ClInclude Include="basic\QtCallbackBridge.h" />
     <ClInclude Include="components\CMarketPageController.h" />
+    <ClInclude Include="components\CQuoteTableUpdateState.h" />
     <ClInclude Include="components\CUIStyle.h" />
     <ClInclude Include="components\CViewConstituents.h" />
     <ClInclude Include="components\CViewWatchlist.h" />

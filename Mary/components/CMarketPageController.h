@@ -4,6 +4,7 @@
 #include "../service/hqmarket/CHQMarketService.h"
 #include <QObject>
 #include <QString>
+#include <memory>
 #include <unordered_set>
 #include <vector>
 
@@ -56,6 +57,7 @@ class CMarketPageController final : public QObject
 	QLabel* m_price{ nullptr };
 	QLabel* m_chartState{ nullptr };
 	std::uint64_t m_quoteTableToken{ 0 };
+	std::shared_ptr<class CQuoteTableUpdateState> m_quoteUpdateState;
 	std::uint64_t m_historyToken{ 0 };
 	std::uint64_t m_minuteRequestId{ 0 };
 	std::uint64_t m_dayRequestId{ 0 };

@@ -2,6 +2,7 @@
 #include "CUITable.h"
 #include "../system/CSession.h"
 #include "CDataTableModel.h"
+#include "CQuoteTableUpdateState.h"
 #include "CUICurve.h"
 
 #include <QDateTime>
@@ -12,6 +13,7 @@
 #include <QStyledItemDelegate>
 #include <QStyle>
 #include <QSettings>
+#include <QTimer>
 #include <algorithm>
 
 namespace
@@ -67,6 +69,7 @@ class CMarketFilterProxyModel final : public QSortFilterProxyModel
   public:
 	explicit CMarketFilterProxyModel(QObject* parent) : QSortFilterProxyModel(parent)
 	{
+		setDynamicSortFilter(false);
 	}
 	int m_market{ -1 };
 	const std::unordered_set<std::string>* m_watchlist{ nullptr };
@@ -122,6 +125,19 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 	}
 	m_table->setModel(m_proxy);
 	m_table->setItemDelegate(new CMarketTableDelegate(m_table));
+	m_quoteUpdateState = std::make_shared<CQuoteTableUpdateState>();
+	QTimer* pQuoteTimer = new QTimer(this);
+	pQuoteTimer->setInterval(250);
+	connect(pQuoteTimer, &QTimer::timeout, this, [this]()
+	{
+		CDataTableView view;
+		CDataChangeSet changes;
+		if (m_quoteUpdateState->Take(view, changes))
+		{
+			OnQuoteTableUpdate(view, changes);
+		}
+	});
+	pQuoteTimer->start();
 	connect(m_table, &CUITable::RowSelected, this, [this]()
 			{ RefreshSelection(); });
 	connect(m_table, &CUITable::ResultsChanged, this, [this]()
@@ -219,20 +235,12 @@ void CMarketPageController::BindService()
 {
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
+	std::shared_ptr<CQuoteTableUpdateState> quoteUpdateState = m_quoteUpdateState;
+	m_quoteTableToken = service.AddQuoteTableHandler([quoteUpdateState](const CDataTableView& view, const CDataChangeSet& changes)
+	{
+		quoteUpdateState->Publish(view, changes);
+	});
 	QPointer<CMarketPageController> safeThis(this);
-	m_quoteTableToken = service.AddQuoteTableHandler([safeThis](const CDataTableView& view, const CDataChangeSet& changes)
-													 {
-		if (safeThis.isNull())
-		{
-			return;
-		}
-		QMetaObject::invokeMethod(safeThis.data(), [safeThis, view, changes]()
-		{
-			if (!safeThis.isNull())
-			{
-				safeThis->OnQuoteTableUpdate(view, changes);
-			}
-		}, Qt::QueuedConnection); });
 	m_historyToken = service.AddHistoryHandler([safeThis](std::uint64_t nId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
 											   {
 		if (safeThis.isNull())
@@ -318,11 +326,25 @@ CSecurity CMarketPageController::GetSecurity(const QModelIndex& index) const
 void CMarketPageController::OnQuoteTableUpdate(const CDataTableView& view, const CDataChangeSet& changes)
 {
 	m_model->SetView(view, changes);
+	bool bFilterChanged = changes.m_bStructureChanged || !changes.m_insertedRows.empty() || !changes.m_deletedRows.empty();
+	if (!bFilterChanged)
+	{
+		bFilterChanged = std::any_of(changes.m_changedCells.begin(), changes.m_changedCells.end(), [](const CDataCellChange& change)
+									 { return (static_cast<_TyDataColumnId>(MarketQuoteColumn::Security) == change.m_columnId) ||
+											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::Name) == change.m_columnId) ||
+											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::Market) == change.m_columnId) ||
+											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinFullAliases) == change.m_columnId) ||
+											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinShortAliases) == change.m_columnId); });
+	}
 	for (int nColumn = 0; m_model->columnCount() > nColumn; ++nColumn)
 	{
 		m_table->setColumnHidden(nColumn, MarketTableMode::Constituents == m_mode ? ((5 == nColumn) || (7 <= nColumn)) : ((3 == nColumn) || (5 <= nColumn)));
 	}
-	m_table->Update();
+	if (bFilterChanged)
+	{
+		m_proxy->Refresh();
+		m_table->Update();
+	}
 	EnsureSelection();
 }
 

@@ -1,6 +1,7 @@
 #include "CViewHQMarket.h"
 #include "CUIStyle.h"
 #include "CDataTableModel.h"
+#include "CQuoteTableUpdateState.h"
 #include "../system/CSession.h"
 #include "ui_CViewHQMarket.h"
 
@@ -11,6 +12,7 @@
 #include <QPushButton>
 #include <QTabBar>
 #include <QTableWidgetItem>
+#include <QTimer>
 #include <cmath>
 #include <algorithm>
 #include <functional>
@@ -30,28 +32,30 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	RefreshQuotes(service.GetQuoteTableView());
 
 	QPointer<CViewHQMarket> pInstance(this);
-	m_nQuoteTableToken = service.AddQuoteTableHandler(std::bind_front(&CViewHQMarket::OnQuoteTableUpdate, pInstance));
+	m_quoteUpdateState = std::make_shared<CQuoteTableUpdateState>();
+	std::shared_ptr<CQuoteTableUpdateState> quoteUpdateState = m_quoteUpdateState;
+	m_nQuoteTableToken = service.AddQuoteTableHandler([quoteUpdateState](const CDataTableView& view, const CDataChangeSet& changes)
+	{
+		quoteUpdateState->Publish(view, changes);
+	});
+	QTimer* pQuoteTimer = new QTimer(this);
+	pQuoteTimer->setInterval(250);
+	connect(pQuoteTimer, &QTimer::timeout, this, [this]()
+	{
+		CDataTableView view;
+		CDataChangeSet changes;
+		if (m_quoteUpdateState->Take(view, changes))
+		{
+			RefreshQuotes(view);
+		}
+	});
+	pQuoteTimer->start();
 	m_nSectorListToken = service.AddSectorListHandler(std::bind_front(&CViewHQMarket::OnSectorListUpdate, pInstance));
 	m_nSectorConstituentsToken = service.AddSectorConstituentsHandler(std::bind_front(&CViewHQMarket::OnSectorConstituentsUpdate, pInstance));
 	CSession::InstanceRef().RegisterStateHandler(std::bind_front(&CViewHQMarket::OnSessionStateChanged, pInstance));
 
 	connect(m_ui->marketTabs, &QTabWidget::currentChanged, this, &CViewHQMarket::OnTabChanged);
 	connect(m_ui->rankingTable, &QTableWidget::cellClicked, this, &CViewHQMarket::OnRankingCellClicked);
-}
-
-void CViewHQMarket::OnQuoteTableUpdate(QPointer<CViewHQMarket> pInstance, const CDataTableView& view, const CDataChangeSet&)
-{
-	if (pInstance.isNull())
-	{
-		return;
-	}
-	QMetaObject::invokeMethod(pInstance.data(), [pInstance, view]()
-	{
-		if (!pInstance.isNull())
-		{
-			pInstance->RefreshQuotes(view);
-		}
-	}, Qt::QueuedConnection);
 }
 
 void CViewHQMarket::OnSectorListUpdate(QPointer<CViewHQMarket> pInstance, const CSectorListEvent& ev)

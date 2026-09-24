@@ -62,6 +62,7 @@ const CDataTableView& CDataTableModel::GetView() const noexcept
 
 void CDataTableModel::SetView(CDataTableView view, const CDataChangeSet& changes)
 {
+	_TyDataVersion nPreviousVersion = m_view.GetVersion();
 	if (!m_view.IsValid() || changes.m_bStructureChanged || (m_view.GetColumnCount() != view.GetColumnCount()) || (m_view.GetRowCount() != view.GetRowCount()))
 	{
 		beginResetModel();
@@ -70,6 +71,14 @@ void CDataTableModel::SetView(CDataTableView view, const CDataChangeSet& changes
 		return;
 	}
 	m_view = std::move(view);
+	if ((0 != nPreviousVersion) && (nPreviousVersion + 1 < changes.m_version))
+	{
+		if ((0 < rowCount()) && (0 < columnCount()))
+		{
+			emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1), { Qt::DisplayRole });
+		}
+		return;
+	}
 	if (changes.m_changedCells.empty())
 	{
 		return;

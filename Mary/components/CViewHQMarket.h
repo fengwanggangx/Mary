@@ -24,7 +24,6 @@ class CViewHQMarket final : public QWidget
 	~CViewHQMarket() override;
 
 private:
-	static void OnQuoteTableUpdate(QPointer<CViewHQMarket> pInstance, const CDataTableView& view, const CDataChangeSet& changes);
 	static void OnSectorListUpdate(QPointer<CViewHQMarket> pInstance, const CSectorListEvent& ev);
 	static void OnSectorConstituentsUpdate(QPointer<CViewHQMarket> pInstance, const CSectorConstituentsEvent& ev);
 	static void OnSessionStateChanged(QPointer<CViewHQMarket> pInstance, SessionState state, const std::string& strMessage);
@@ -47,6 +46,7 @@ private:
 	CHQMarketService::_TyHandlerToken m_nQuoteTableToken{ 0 };
 	CHQMarketService::_TyHandlerToken m_nSectorListToken{ 0 };
 	CHQMarketService::_TyHandlerToken m_nSectorConstituentsToken{ 0 };
+	std::shared_ptr<class CQuoteTableUpdateState> m_quoteUpdateState;
 	std::vector<CSectorInfo> m_sectors;
 	QString m_strSelectedSectorCode;
 	bool m_bOverviewRequested{ false };
