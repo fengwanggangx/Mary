@@ -33,7 +33,6 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	m_pStatus = m_ui->statusCombo;
 	for (const auto& tabs : QList<QTabWidget*>{ m_ui->strategyTabs, m_ui->detailsTabs })
 	{
-		tabs->tabBar()->setMinimumHeight(38);
 		tabs->tabBar()->setDrawBase(false);
 		tabs->tabBar()->setExpanding(false);
 	}
