@@ -36,5 +36,6 @@ class CMainWindow final : public QMainWindow
 		std::unique_ptr<Ui::CMainWindowClass> m_ui;
 		QPoint m_dragPosition;
 		bool m_bDarkTheme{ false };
+		bool m_bThemeInitialized{ false };
 		bool m_bDragging{ false };
 };

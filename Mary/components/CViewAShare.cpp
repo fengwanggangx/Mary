@@ -2,9 +2,6 @@
 #include "CMarketPageController.h"
 #include "ui_CViewAShare.h"
 
-#include <QApplication>
-#include <QEvent>
-#include <QFile>
 #include <QHeaderView>
 #include <QTimer>
 
@@ -44,7 +41,6 @@ CViewAShare::CViewAShare(QWidget* pParent) : QWidget(pParent), m_ui(std::make_un
 		m_controller->SetMarket(nIndex);
 	});
 	m_controller->SetMarket(0);
-	ApplyTheme();
 }
 
 CViewAShare::~CViewAShare() = default;
@@ -60,24 +56,5 @@ void CViewAShare::showEvent(QShowEvent* pEvent)
 			int nWidth = m_ui->splitter->width() - m_ui->splitter->handleWidth();
 			m_ui->splitter->setSizes({ nWidth * 55 / 100, nWidth * 45 / 100 });
 		});
-	}
-}
-
-void CViewAShare::changeEvent(QEvent* pEvent)
-{
-	QWidget::changeEvent(pEvent);
-	if (QEvent::PaletteChange == pEvent->type())
-	{
-		ApplyTheme();
-	}
-}
-
-void CViewAShare::ApplyTheme()
-{
-	setProperty("darkTheme", 128 > qApp->palette().color(QPalette::Window).lightness());
-	QFile file(":/styles/market-pages.qss");
-	if (file.open(QIODevice::ReadOnly))
-	{
-		setStyleSheet(QString::fromUtf8(file.readAll()));
 	}
 }

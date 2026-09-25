@@ -11,6 +11,7 @@
 #include <QPalette>
 #include <QPen>
 #include <QScopedValueRollback>
+#include <QTimer>
 
 #include <algorithm>
 #include <limits>
@@ -215,8 +216,22 @@ void CUICurve::changeEvent(QEvent* pEvent)
 	QWidget::changeEvent(pEvent);
 	if ((QEvent::PaletteChange == pEvent->type()) || (QEvent::StyleChange == pEvent->type()))
 	{
-		ApplyPalette();
+		SchedulePaletteUpdate();
 	}
+}
+
+void CUICurve::SchedulePaletteUpdate()
+{
+	if (m_bPaletteUpdatePending)
+	{
+		return;
+	}
+	m_bPaletteUpdatePending = true;
+	QTimer::singleShot(0, this, [this]()
+	{
+		m_bPaletteUpdatePending = false;
+		ApplyPalette();
+	});
 }
 
 void CUICurve::ApplyPalette()

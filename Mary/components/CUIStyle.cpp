@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QHash>
 #include <QStyle>
 #include <QWidget>
 
@@ -9,13 +10,21 @@ namespace UIStyle
 {
 	QString Load(const QString& strResource)
 	{
+		static QHash<QString, QString> styles;
+		QHash<QString, QString>::const_iterator style = styles.constFind(strResource);
+		if (styles.constEnd() != style)
+		{
+			return style.value();
+		}
 		QFile file(strResource);
 		if (!file.open(QIODevice::ReadOnly))
 		{
 			qWarning() << "Cannot load QSS:" << strResource;
 			return QString();
 		}
-		return QString::fromUtf8(file.readAll());
+		QString strStyle = QString::fromUtf8(file.readAll());
+		styles.insert(strResource, strStyle);
+		return strStyle;
 	}
 
 	void Apply(QWidget& widget, const QString& strResource)

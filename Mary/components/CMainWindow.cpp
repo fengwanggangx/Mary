@@ -130,7 +130,19 @@ void CMainWindow::OnDarkTheme()
 
 void CMainWindow::ApplyTheme(bool bDark)
 {
+	if (m_bThemeInitialized && (bDark == m_bDarkTheme))
+	{
+		return;
+	}
+	setUpdatesEnabled(false);
+	if (!m_bThemeInitialized)
+	{
+		qApp->setStyleSheet(UIStyle::Load(":/styles/theme.qss"));
+	}
 	m_bDarkTheme = bDark;
+	m_bThemeInitialized = true;
+	setProperty("darkTheme", bDark);
+	m_ui->skinMenu->setProperty("darkTheme", bDark);
 	QPalette palette = qApp->style()->standardPalette();
 	if (bDark)
 	{
@@ -148,9 +160,32 @@ void CMainWindow::ApplyTheme(bool bDark)
 		palette.setColor(QPalette::PlaceholderText, QColor("#718ba0"));
 		palette.setColor(QPalette::Disabled, QPalette::Text, QColor("#718ba0"));
 		palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#718ba0"));
+		palette.setColor(QPalette::Mid, QColor("#203b52"));
+		palette.setColor(QPalette::Dark, QColor("#37546c"));
+		palette.setColor(QPalette::Link, QColor("#1683ff"));
+	}
+	else
+	{
+		palette.setColor(QPalette::Window, QColor("#f4f7fb"));
+		palette.setColor(QPalette::WindowText, QColor("#162033"));
+		palette.setColor(QPalette::Base, QColor("#ffffff"));
+		palette.setColor(QPalette::AlternateBase, QColor("#f8fafd"));
+		palette.setColor(QPalette::Text, QColor("#344258"));
+		palette.setColor(QPalette::Button, QColor("#ffffff"));
+		palette.setColor(QPalette::ButtonText, QColor("#536176"));
+		palette.setColor(QPalette::Highlight, QColor("#4d82f9"));
+		palette.setColor(QPalette::HighlightedText, QColor("#ffffff"));
+		palette.setColor(QPalette::ToolTipBase, QColor("#ffffff"));
+		palette.setColor(QPalette::ToolTipText, QColor("#344258"));
+		palette.setColor(QPalette::PlaceholderText, QColor("#68778c"));
+		palette.setColor(QPalette::Disabled, QPalette::Text, QColor("#8b98aa"));
+		palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#8b98aa"));
+		palette.setColor(QPalette::Mid, QColor("#e4eaf2"));
+		palette.setColor(QPalette::Dark, QColor("#68778c"));
+		palette.setColor(QPalette::Link, QColor("#1677ff"));
 	}
 	qApp->setPalette(palette);
-	qApp->setStyleSheet(UIStyle::Load(bDark ? ":/styles/theme-dark.qss" : ":/styles/theme-light.qss"));
+	UIStyle::Refresh(*this);
 	m_ui->lightThemeAction->setChecked(!bDark);
 	m_ui->darkThemeAction->setChecked(bDark);
 	UpdateWindowButtonIcons();
@@ -164,6 +199,8 @@ void CMainWindow::ApplyTheme(bool bDark)
 			pItem->setIcon(0, QIcon(NavigationIcons[nIndex].arg(strTheme)));
 		}
 	}
+	setUpdatesEnabled(true);
+	update();
 }
 
 void CMainWindow::UpdateClock()

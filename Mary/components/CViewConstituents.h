@@ -22,8 +22,6 @@ class CViewConstituents final : public QWidget
 	void SetSector(const CSectorInfo& sector, const std::vector<CSecurity>& securities);
 
   private:
-	void ApplyTheme();
-	void changeEvent(QEvent* pEvent) override;
 
 	std::unique_ptr<Ui::CViewConstituentsClass> m_ui;
 	std::unique_ptr<CMarketPageController> m_controller;

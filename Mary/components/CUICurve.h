@@ -42,6 +42,7 @@ class CUICurve final : public QWidget
 
 	private:
 		void ApplyPalette();
+		void SchedulePaletteUpdate();
 		void InitializePlots();
 		void Refresh();
 		std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;
@@ -50,6 +51,7 @@ class CUICurve final : public QWidget
 	private:
 		std::unique_ptr<Ui::CUICurveClass> m_ui;
 		bool m_bApplyingPalette{ false };
+		bool m_bPaletteUpdatePending{ false };
 		CurveMode m_mode{ CurveMode::Day };
 		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
 		QwtPlot* m_pPricePlot{ nullptr };

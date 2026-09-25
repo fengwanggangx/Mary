@@ -5,8 +5,6 @@
 #include "../system/CSession.h"
 #include "ui_CViewHQMarket.h"
 
-#include <QApplication>
-#include <QEvent>
 #include <QHeaderView>
 #include <QMetaObject>
 #include <QPushButton>
@@ -24,7 +22,6 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	m_ui->marketTabs->tabBar()->setExpanding(false);
 	m_ui->rankingTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->rankingTable->horizontalHeader()->setFixedHeight(24);
-	ApplyTheme();
 
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	service.Initialize();
@@ -323,25 +320,4 @@ void CViewHQMarket::RefreshQuotes(const CDataTableView& view)
 	m_ui->metric2Value->setText(bHasQuotes ? QString::number(nFalling) : "--");
 	m_ui->metric3Value->setText(bHasQuotes ? QString::number(nFlat) : "--");
 	m_ui->distributionChart->SetValues(bHasQuotes ? distribution : QVector<int>{});
-}
-
-void CViewHQMarket::changeEvent(QEvent* pEvent)
-{
-	QWidget::changeEvent(pEvent);
-	if (QEvent::PaletteChange == pEvent->type())
-	{
-		ApplyTheme();
-	}
-}
-
-void CViewHQMarket::ApplyTheme()
-{
-	bool bDarkTheme = 128 > qApp->palette().color(QPalette::Window).lightness();
-	if (property("darkTheme").isValid() && (bDarkTheme == property("darkTheme").toBool()))
-	{
-		return;
-	}
-	setProperty("darkTheme", bDarkTheme);
-	UIStyle::Apply(*this, ":/styles/market-overview.qss");
-	UIStyle::Refresh(*this);
 }

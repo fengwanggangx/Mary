@@ -17,8 +17,6 @@ class CViewWatchlist final : public QWidget
 		~CViewWatchlist() override;
 
 	private:
-		void ApplyTheme();
-		void changeEvent(QEvent* pEvent) override;
 		void showEvent(QShowEvent* pEvent) override;
 
 		std::unique_ptr<Ui::CViewWatchlistClass> m_ui;

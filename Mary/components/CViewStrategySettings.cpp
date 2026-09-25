@@ -1,11 +1,8 @@
 #include "CViewStrategySettings.h"
-#include "CUIStyle.h"
 #include "CStrategyEditDialog.h"
 #include "../system/CSession.h"
 #include "ui_CViewStrategySettings.h"
 
-#include <QApplication>
-#include <QEvent>
 #include <QHeaderView>
 #include <QTableWidget>
 #include <QTabBar>
@@ -49,7 +46,6 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	connect(m_pSearch, &QLineEdit::textChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pStatus, &QComboBox::currentIndexChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pInstances, &QTableWidget::itemSelectionChanged, this, &CViewStrategySettings::RefreshDetails);
-	ApplyTheme();
 	CStrategyService& service = CStrategyService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewStrategySettings> safeThis(this);
@@ -126,36 +122,6 @@ void CViewStrategySettings::RefreshDetails()
 		AppendRow(m_ui->parametersTable, { QString::fromStdString(strName), QString::fromStdString(strValue), QString() });
 	}
 	RefreshConnection();
-}
-
-void CViewStrategySettings::changeEvent(QEvent* pEvent)
-{
-	QWidget::changeEvent(pEvent);
-	if (QEvent::PaletteChange == pEvent->type())
-	{
-		ApplyTheme();
-	}
-}
-
-void CViewStrategySettings::ApplyTheme()
-{
-	bool bDarkTheme = 128 > qApp->palette().color(QPalette::Window).lightness();
-	if (property("darkTheme").isValid() && (bDarkTheme == property("darkTheme").toBool()))
-	{
-		return;
-	}
-	setProperty("darkTheme", bDarkTheme);
-	UIStyle::Apply(*this, ":/styles/strategy-pages.qss");
-	UIStyle::Refresh(*this);
-	m_ui->runningCountValue->ensurePolished();
-	m_ui->totalProfitValue->ensurePolished();
-	QColor risingColor = m_ui->totalProfitValue->palette().color(QPalette::WindowText);
-	QColor fallingColor = m_ui->runningCountValue->palette().color(QPalette::WindowText);
-	for (int nRow = 0; m_pInstances->rowCount() > nRow; ++nRow)
-	{
-		QTableWidgetItem* profit = m_pInstances->item(nRow, 7);
-		profit->setForeground(profit->text().startsWith('-') ? fallingColor : risingColor);
-	}
 }
 
 void CViewStrategySettings::RefreshStrategies(const CStrategyService::_TyStrategyList& strategies, const std::string& strError)

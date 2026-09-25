@@ -1,0 +1,133 @@
+QMainWindow, #centralWidget { background: #f4f7fb; color: #162033; }
+#titleBar { background: #ffffff; border-bottom: 1px solid #e4eaf2; }
+#appIconLabel { background: transparent; }
+#appTitleLabel { color: #162033; font-size: 15px; font-weight: 600; }
+#navigationFrame { background: #ffffff; border-right: 1px solid #e4eaf2; }
+QTreeWidget { background: transparent; border: none; outline: none; color: #536176; font-size: 14px; }
+QTreeWidget::item { height: 42px; padding-left: 10px; }
+QTreeWidget::item:selected { background: #4d82f9; color: #ffffff; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+QTabBar { background: #ffffff; border: 0; border-bottom: 1px solid #e6ebf2; padding: 0; margin: 0; }
+QTabBar::tab { min-width: 72px; height: 36px; color: #65748a; background: #ffffff; border: 1px solid #e6ebf2; border-top: 0; border-bottom-width: 2px; margin-left: -1px; margin-bottom: -1px; padding: 0 8px; }
+QTabBar::tab:first { margin-left: 0; }
+QTabBar::tab:selected { color: #1677ff; background: #edf5fd; border-bottom: 2px solid #1677ff; font-weight: 600; }
+QFrame#shanghaiCard, QFrame#shenzhenCard, QFrame#chinextCard, QFrame#chartFrame, QFrame#depthFrame, QFrame#watchlistFrame { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 7px; }
+QFrame[summaryCard="true"] { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 7px; }
+#shanghaiPrice, #shenzhenPrice, #chinextPrice { color: #f04455; font-size: 23px; font-weight: 700; }
+#chartTitle, #depthTitle, #watchlistTitle { color: #1d2a3c; font-size: 14px; font-weight: 600; }
+#chartPlaceholder { color: #8b98aa; background: #fafcff; border: 1px dashed #dce4ef; }
+QTableWidget { background: #ffffff; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; }
+QTableView { background: #ffffff; alternate-background-color: #f8fafd; border: none; gridline-color: #edf1f6; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
+QTabWidget::pane { background: #f4f7fb; border: 1px solid #e4eaf2; top: -1px; }
+QComboBox { background: #ffffff; color: #344258; border: 1px solid #dce3ed; border-radius: 5px; padding: 5px 9px; }
+QComboBox QAbstractItemView { background: #ffffff; color: #344258; selection-background-color: #edf5fd; selection-color: #162033; }
+QScrollBar:vertical { width: 12px; margin: 0; }
+QScrollBar:horizontal { height: 12px; margin: 0; }
+QScrollBar::handle { border-radius: 4px; min-width: 12px; min-height: 12px; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
+QHeaderView::section { background: #f7f9fc; color: #68778c; border: none; border-bottom: 1px solid #e6ebf2; padding: 6px; }
+QLineEdit { background: #ffffff; border: 1px solid #dce3ed; border-radius: 5px; padding: 6px 9px; }
+QPushButton { border: 1px solid #dce3ed; border-radius: 5px; background: #ffffff; color: #536176; padding: 5px 10px; }
+QPushButton:hover { border-color: #1677ff; color: #1677ff; }
+#addButton { background: #1677ff; color: #ffffff; border-color: #1677ff; }
+#skinButton { background: transparent; color: #536176; border: 1px solid transparent; border-radius: 6px; padding: 0; }
+#skinButton:hover, #skinButton:pressed { color: #1677ff; background: #eef3f8; border-color: #dce3ed; }
+#skinButton::menu-indicator { image: none; width: 0; height: 0; }
+#minimizeButton, #maximizeButton, #closeButton { border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 0; font-size: 15px; }
+#minimizeButton:hover, #maximizeButton:hover { background: #eef3f8; border-color: #dce3ed; }
+#closeButton:hover { background: #f04455; color: #ffffff; }
+QMenu { background: #ffffff; color: #344258; border: 1px solid #dce3ed; border-radius: 6px; padding: 4px; }
+QMenu::item { min-width: 80px; padding: 6px 16px; border-radius: 4px; }
+QMenu::item:selected { background: #eef6ff; color: #1677ff; }
+QMenu#skinMenu::item { padding: 6px 8px 6px 20px; }
+QMenu#skinMenu::indicator { width: 14px; height: 14px; subcontrol-origin: padding; subcontrol-position: left center; left: 4px; }
+QMenu#skinMenu::indicator:checked, QMenu#skinMenu::indicator:exclusive:checked { image: url(:/navigation/check-white.png); }
+QMenu#skinMenu::indicator:unchecked { image: none; }
+#globalStatusBar { background: #ffffff; border-top: 1px solid #e4eaf2; color: #69778b; }
+#connectionDot { color: #18bd8b; font-size: 11px; }
+#connectionDot[ready="true"] { color: #20c997; }
+#connectionDot[ready="false"] { color: #f0ad4e; }
+
+CMainWindow[darkTheme="true"], CMainWindow[darkTheme="true"] #centralWidget { background: #122130; color: #dce8f6; }
+CMainWindow[darkTheme="true"] #titleBar { background: #0f1e2d; border-bottom-color: #203b52; }
+CMainWindow[darkTheme="true"] #appTitleLabel { color: #f2f7ff; }
+CMainWindow[darkTheme="true"] #navigationFrame { background: #122130; border-right-color: #203b52; }
+CMainWindow[darkTheme="true"] QTreeWidget { color: #a9bdd0; }
+CMainWindow[darkTheme="true"] QTreeWidget::item:selected { background: #3a6ef7; color: #ffffff; }
+CMainWindow[darkTheme="true"] QTabBar { background: #0f1e2d; border-bottom-color: #203b52; }
+CMainWindow[darkTheme="true"] QTabBar::tab { color: #9eb3c7; background: #0f1e2d; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QTabBar::tab:selected { color: #ffffff; background: #1e3e81; border-bottom-color: #1683ff; }
+CMainWindow[darkTheme="true"] QFrame#shanghaiCard, CMainWindow[darkTheme="true"] QFrame#shenzhenCard, CMainWindow[darkTheme="true"] QFrame#chinextCard, CMainWindow[darkTheme="true"] QFrame#chartFrame, CMainWindow[darkTheme="true"] QFrame#depthFrame, CMainWindow[darkTheme="true"] QFrame#watchlistFrame, CMainWindow[darkTheme="true"] QFrame[summaryCard="true"] { background: #132130; border-color: #203b52; }
+CMainWindow[darkTheme="true"] #shanghaiPrice, CMainWindow[darkTheme="true"] #shenzhenPrice, CMainWindow[darkTheme="true"] #chinextPrice { color: #ff4d61; }
+CMainWindow[darkTheme="true"] #chartTitle, CMainWindow[darkTheme="true"] #depthTitle, CMainWindow[darkTheme="true"] #watchlistTitle { color: #edf6ff; }
+CMainWindow[darkTheme="true"] #chartPlaceholder { color: #718ba0; background: #12202f; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QTableWidget { background: #0e192b; alternate-background-color: #122130; gridline-color: #203b52; color: #c8d8e7; }
+CMainWindow[darkTheme="true"] QTableView { background: #0e192b; alternate-background-color: #122130; gridline-color: #203b52; color: #c8d8e7; selection-background-color: #1e3e81; selection-color: #ffffff; }
+CMainWindow[darkTheme="true"] QLabel { color: #dce8f6; }
+CMainWindow[darkTheme="true"] QTabWidget::pane { background: #122130; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QComboBox { background: #0f1e2d; color: #dce8f6; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QComboBox QAbstractItemView { background: #0f1e2d; color: #dce8f6; selection-background-color: #1e3e81; selection-color: #ffffff; }
+CMainWindow[darkTheme="true"] QScrollBar:vertical, CMainWindow[darkTheme="true"] QScrollBar:horizontal { background: #0f1e2d; }
+CMainWindow[darkTheme="true"] QScrollBar::handle { background: #37546c; }
+CMainWindow[darkTheme="true"] QScrollBar::handle:hover { background: #526f88; }
+CMainWindow[darkTheme="true"] QPushButton:disabled { color: #718ba0; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QHeaderView::section { background: #14283a; color: #8fa8bc; border-bottom-color: #203b52; }
+CMainWindow[darkTheme="true"] QLineEdit { background: #0f1e2d; border-color: #203b52; color: #dce8f6; }
+CMainWindow[darkTheme="true"] QPushButton { border-color: #203b52; background: #122130; color: #a9bdd0; }
+CMainWindow[darkTheme="true"] QPushButton:hover { border-color: #1683ff; color: #ffffff; }
+CMainWindow[darkTheme="true"] #addButton { background: #1683ff; color: #ffffff; border-color: #1683ff; }
+CMainWindow[darkTheme="true"] #skinButton { background: transparent; color: #b8cad9; border-color: transparent; }
+CMainWindow[darkTheme="true"] #skinButton:hover, CMainWindow[darkTheme="true"] #skinButton:pressed { color: #ffffff; background: #14283a; border-color: #203b52; }
+CMainWindow[darkTheme="true"] #minimizeButton, CMainWindow[darkTheme="true"] #maximizeButton, CMainWindow[darkTheme="true"] #closeButton { background: transparent; color: #b8cad9; border-color: transparent; }
+CMainWindow[darkTheme="true"] #minimizeButton:hover, CMainWindow[darkTheme="true"] #maximizeButton:hover { background: #14283a; border-color: #203b52; }
+CMainWindow[darkTheme="true"] #closeButton:hover { background: #f04455; color: #ffffff; }
+CMainWindow[darkTheme="true"] QMenu { background: #122130; color: #c8d8e7; border-color: #203b52; }
+CMainWindow[darkTheme="true"] QMenu::item:selected { background: #0d4d83; color: #ffffff; }
+QMenu#skinMenu[darkTheme="true"] { background: #122130; color: #c8d8e7; border-color: #203b52; }
+QMenu#skinMenu[darkTheme="true"]::item:selected { background: #0d4d83; color: #ffffff; }
+QMenu#skinMenu[darkTheme="true"]::indicator:checked, QMenu#skinMenu[darkTheme="true"]::indicator:exclusive:checked { image: url(:/navigation/check-black.png); }
+CMainWindow[darkTheme="true"] #globalStatusBar { background: #0f1e2d; border-top-color: #203b52; color: #8fa8bc; }
+CMainWindow[darkTheme="true"] #connectionDot { color: #20d39b; }
+CMainWindow[darkTheme="true"] #connectionDot[ready="true"] { color: #20c997; }
+CMainWindow[darkTheme="true"] #connectionDot[ready="false"] { color: #f0ad4e; }
+
+QWidget[marketPage="true"] QFrame[marketPanel="true"] { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 0; }
+CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QFrame[marketPanel="true"] { background: #131f32; border-color: #24334a; }
+QLabel[marketHeading="true"] { font-size: 15px; font-weight: 600; }
+QLabel[marketMuted="true"] { color: #68778c; }
+CMainWindow[darkTheme="true"] QLabel[marketMuted="true"] { color: #8c9db6; }
+QLabel#priceLabel { font-size: 20px; font-weight: 600; color: #00b987; }
+QLabel#priceLabel[rising="true"] { color: #f04455; }
+QPushButton#searchButton { padding: 0; font-size: 16px; }
+QWidget[marketPage="true"] QTabWidget#marketTabs::pane, QWidget[marketPage="true"] QTabWidget#periodTabs::pane { border: 0; }
+QWidget[marketPage="true"] QTabWidget#marketTabs QTabBar::tab { min-width: 65px; height: 20px; padding: 0 10px; }
+QWidget[marketPage="true"] QSplitter::handle { background: #e4eaf2; }
+CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QSplitter::handle { background: #24334a; }
+
+QFrame[overviewPanel="true"] { background: #ffffff; border: 1px solid #e4eaf2; border-radius: 5px; }
+CMainWindow[darkTheme="true"] QFrame[overviewPanel="true"] { background: #131f32; border-color: #24334a; }
+CMainWindow[darkTheme="true"] CViewHQMarket QFrame#shanghaiCard, CMainWindow[darkTheme="true"] CViewHQMarket QFrame#shenzhenCard, CMainWindow[darkTheme="true"] CViewHQMarket QFrame#chinextCard, CMainWindow[darkTheme="true"] CViewHQMarket QFrame#chartFrame, CMainWindow[darkTheme="true"] CViewHQMarket QFrame#depthFrame, CMainWindow[darkTheme="true"] CViewHQMarket QFrame#watchlistFrame { background: #131f32; border-color: #24334a; }
+QLabel[overviewHeading="true"] { font-size: 13px; font-weight: 600; color: #344258; }
+QLabel[overviewMuted="true"] { font-size: 12px; color: #68778c; }
+QLabel[overviewValue="true"] { font-size: 16px; font-weight: 600; color: #344258; }
+CMainWindow[darkTheme="true"] QLabel[overviewHeading="true"], CMainWindow[darkTheme="true"] QLabel[overviewValue="true"] { color: #c8d8e7; }
+CMainWindow[darkTheme="true"] QLabel[overviewMuted="true"] { color: #8c9db6; }
+QLabel[overviewValue="true"][rising="true"], QLabel[overviewPrice="true"][rising="true"], QLabel[overviewChange="true"][rising="true"] { color: #f04455; }
+QLabel[overviewValue="true"][falling="true"], QLabel[overviewPrice="true"][rising="false"], QLabel[overviewChange="true"][rising="false"] { color: #00b987; }
+QLabel[overviewPrice="true"] { font-size: 23px; font-weight: 600; }
+QLabel[overviewBadge="true"] { font-size: 11px; color: #3686ff; background: #edf5fd; border-radius: 5px; }
+CMainWindow[darkTheme="true"] QLabel[overviewBadge="true"] { background: #163454; }
+QFrame[overviewSeparator="true"] { background: #e4eaf2; border: 0; }
+CMainWindow[darkTheme="true"] QFrame[overviewSeparator="true"] { background: #24334a; }
+QPushButton[sectorTile="true"] { background: #ffe0e4; color: #f04455; border: 1px solid transparent; border-radius: 2px; }
+QPushButton[sectorTile="true"][negative="true"] { background: #d4f3e9; color: #00b987; }
+CMainWindow[darkTheme="true"] QPushButton[sectorTile="true"] { background: #342332; }
+CMainWindow[darkTheme="true"] QPushButton[sectorTile="true"][negative="true"] { background: #123b3d; }
+QPushButton[sectorTile="true"]:checked { border: 2px solid #3686ff; }
+CDistributionChart { qproperty-risingColor: #f04455; qproperty-fallingColor: #00b987; }
+
+QLabel[strategyMetric="true"] { font-size: 23px; font-weight: 600; }
+QLabel[strategyMetric="true"][rising="true"] { color: #ef4354; }
+QLabel[strategyMetric="true"][falling="true"] { color: #00bfa5; }
+CMainWindow[darkTheme="true"] CViewStrategySettings QFrame[summaryCard="true"] { background: #131f32; border-color: #24334a; }
+CViewStrategySettings QTabBar::tab { min-height: 36px; }

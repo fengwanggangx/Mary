@@ -2,9 +2,6 @@
 #include "CMarketPageController.h"
 #include "ui_CViewWatchlist.h"
 
-#include <QApplication>
-#include <QEvent>
-#include <QFile>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -57,7 +54,6 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::m
 		QString strResult = m_controller->RemoveSelectedWatchlist();
 		QMessageBox::information(this, "自选股", strResult);
 	});
-	ApplyTheme();
 }
 
 CViewWatchlist::~CViewWatchlist() = default;
@@ -73,24 +69,5 @@ void CViewWatchlist::showEvent(QShowEvent* pEvent)
 			int nWidth = m_ui->splitter->width() - m_ui->splitter->handleWidth();
 			m_ui->splitter->setSizes({ nWidth * 55 / 100, nWidth * 45 / 100 });
 		});
-	}
-}
-
-void CViewWatchlist::changeEvent(QEvent* pEvent)
-{
-	QWidget::changeEvent(pEvent);
-	if (QEvent::PaletteChange == pEvent->type())
-	{
-		ApplyTheme();
-	}
-}
-
-void CViewWatchlist::ApplyTheme()
-{
-	setProperty("darkTheme", 128 > qApp->palette().color(QPalette::Window).lightness());
-	QFile file(":/styles/market-pages.qss");
-	if (file.open(QIODevice::ReadOnly))
-	{
-		setStyleSheet(QString::fromUtf8(file.readAll()));
 	}
 }

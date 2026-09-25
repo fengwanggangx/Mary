@@ -17,8 +17,6 @@ class CViewAShare final : public QWidget
 		~CViewAShare() override;
 
 	private:
-		void ApplyTheme();
-		void changeEvent(QEvent* pEvent) override;
 		void showEvent(QShowEvent* pEvent) override;
 
 		std::unique_ptr<Ui::CViewAShareClass> m_ui;

@@ -23,8 +23,6 @@ class CViewStrategySettings final : public QWidget
 		~CViewStrategySettings() override;
 
 	private:
-		void ApplyTheme();
-		void changeEvent(QEvent* pEvent) override;
 		std::unique_ptr<Ui::CViewStrategySettingsClass> m_ui;
 		void RefreshFilter();
 		void RefreshDetails();

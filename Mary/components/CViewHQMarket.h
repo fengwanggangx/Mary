@@ -33,14 +33,12 @@ private:
 	void OnRankingCellClicked(int nRow, int nColumn);
 
   private:
-	void ApplyTheme();
 	void OnSectorButtonClicked();
 	void RefreshQuotes(const CDataTableView& view);
 	void RequestSectors();
 	void RefreshSectors(const CSectorListEvent& ev);
 	void RefreshConstituents(const CSectorConstituentsEvent& ev);
 	void SelectSector(const QString& strSectorCode);
-	void changeEvent(QEvent* pEvent) override;
 
 private:
 	CHQMarketService::_TyHandlerToken m_nQuoteTableToken{ 0 };
