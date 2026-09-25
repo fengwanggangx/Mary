@@ -24,8 +24,8 @@ class CViewConstituents final : public QWidget
   private:
 
 	std::unique_ptr<Ui::CViewConstituentsClass> m_ui;
-	std::unique_ptr<CMarketPageController> m_controller;
 	QString m_strSector;
+	std::unique_ptr<CMarketPageController> m_controller;
 };
 
 #endif

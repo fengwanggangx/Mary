@@ -13,6 +13,7 @@
 #include <QStyledItemDelegate>
 #include <QStyle>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QTimer>
 #include <algorithm>
 
@@ -147,15 +148,21 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 
 CMarketPageController::~CMarketPageController()
 {
-	m_table->setModel(nullptr);
 	CHQMarketService& service = CHQMarketService::InstanceRef();
 	if (0 != m_quoteTableToken)
 	{
 		service.RemoveQuoteTableHandler(m_quoteTableToken);
+		m_quoteTableToken = 0;
 	}
 	if (0 != m_historyToken)
 	{
 		service.RemoveHistoryHandler(m_historyToken);
+		m_historyToken = 0;
+	}
+	if (nullptr != m_table)
+	{
+		QSignalBlocker tableSignals(m_table);
+		m_table->setModel(nullptr);
 	}
 }
 
