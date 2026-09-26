@@ -136,7 +136,8 @@ namespace
 				fLow = (std::min)(fLow, bar.m_fLow);
 				fHigh = (std::max)(fHigh, bar.m_fHigh);
 			}
-			return QRectF(-0.5, fLow, static_cast<double>(m_bars->size()), fHigh - fLow);
+			// QwtPlotTradingCurve exchanges the rectangle axes in vertical orientation.
+			return QRectF(fLow, -0.5, fHigh - fLow, static_cast<double>(m_bars->size()));
 		}
 	  private:
 		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
@@ -614,10 +615,15 @@ void CUICurve::Refresh()
 	static_cast<CPriceScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::YLeft))->SetReferencePrice(m_fReferencePrice, bIntraday);
 	static_cast<CCurvePicker*>(m_pPicker)->SetBars(bars, m_mode);
 	m_pPricePlot->enableAxis(QwtAxis::YRight, bIntraday);
-	m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft);
-	m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft);
-	if (!bars->empty())
+	if (bars->empty())
 	{
+		m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft);
+		m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft);
+	}
+	else
+	{
+		m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft, false);
+		m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft, false);
 		double fMaximumX = static_cast<double>(bars->size()) - 0.5;
 		double fMinimumX = -0.5;
 		std::size_t nVisibleStart = 0;
