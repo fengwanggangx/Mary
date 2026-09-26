@@ -228,8 +228,10 @@ QWidget* CMarketPageController::CreateIntradayControls(QWidget* pParent)
 {
 	QWidget* pControls = new QWidget(pParent);
 	pControls->setObjectName("intradayPeriodBar");
+	pControls->setAttribute(Qt::WA_StyledBackground, true);
+	pControls->setFixedHeight(30);
 	QHBoxLayout* pLayout = new QHBoxLayout(pControls);
-	pLayout->setContentsMargins(0, 0, 0, 0);
+	pLayout->setContentsMargins(0, 1, 0, 1);
 	pLayout->setSpacing(0);
 	QButtonGroup* pGroup = new QButtonGroup(pControls);
 	pGroup->setExclusive(true);

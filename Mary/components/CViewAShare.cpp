@@ -6,6 +6,7 @@
 #include <QMargins>
 #include <QTabBar>
 #include <QTimer>
+#include <QVBoxLayout>
 
 namespace
 {
@@ -51,19 +52,34 @@ CViewAShare::CViewAShare(QWidget* pParent) : QWidget(pParent), m_ui(std::make_un
 	QMargins intradayMargins = m_ui->intradayFrameLayout->contentsMargins();
 	int nIntradayLeft = intradayMargins.left();
 	intradayMargins.setLeft(0);
+	intradayMargins.setRight(0);
 	intradayMargins.setBottom(0);
 	m_ui->intradayFrameLayout->setContentsMargins(intradayMargins);
 	QMargins stockMargins = m_ui->stockInfoLayout->contentsMargins();
 	stockMargins.setLeft(nIntradayLeft);
 	m_ui->stockInfoLayout->setContentsMargins(stockMargins);
-	m_ui->intradayCurve->setContentsMargins(nIntradayLeft, 0, 0, 0);
+	m_ui->intradayCurve->setContentsMargins(nIntradayLeft, 0, nIntradayLeft, 0);
 	QMargins candleMargins = m_ui->candleFrameLayout->contentsMargins();
 	int nCandleLeft = candleMargins.left();
 	candleMargins.setLeft(0);
+	candleMargins.setRight(0);
 	candleMargins.setTop(0);
+	candleMargins.setBottom(candleMargins.bottom() / 2);
 	m_ui->candleFrameLayout->setContentsMargins(candleMargins);
-	m_ui->candleCurve->setContentsMargins(nCandleLeft, 0, 0, 0);
-	m_ui->chartSplitter->setHandleWidth(1);
+	m_ui->candleCurve->setContentsMargins(nCandleLeft, 0, nCandleLeft, 0);
+	m_ui->chartSplitter->setHandleWidth(24);
+	QWidget* pPeriodBar = new QWidget(m_ui->candleFrame);
+	pPeriodBar->setObjectName("candlePeriodBar");
+	pPeriodBar->setAttribute(Qt::WA_StyledBackground, true);
+	pPeriodBar->setFixedHeight(30);
+	QVBoxLayout* pPeriodLayout = new QVBoxLayout(pPeriodBar);
+	pPeriodLayout->setContentsMargins(0, 1, 0, 1);
+	pPeriodLayout->setSpacing(0);
+	m_ui->candleFrameLayout->removeWidget(m_ui->periodTabs);
+	m_ui->periodTabs->setFixedHeight(28);
+	pPeriodLayout->addWidget(m_ui->periodTabs);
+	m_ui->candleFrameLayout->insertWidget(0, pPeriodBar);
+	m_ui->periodTabs->tabBar()->setDrawBase(false);
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "5分");
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "15分");
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "30分");
