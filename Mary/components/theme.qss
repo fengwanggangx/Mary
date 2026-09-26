@@ -103,6 +103,11 @@ QLabel#priceLabel[rising="true"] { color: #f04455; }
 QPushButton#searchButton { padding: 0; font-size: 16px; }
 QWidget[marketPage="true"] QTabWidget#marketTabs::pane, QWidget[marketPage="true"] QTabWidget#periodTabs::pane { border: 0; }
 QWidget[marketPage="true"] QTabWidget#marketTabs QTabBar::tab { min-width: 65px; height: 20px; margin-top: 9px; margin-bottom: -1px; padding: 0 10px; }
+QWidget[marketPage="true"] QTabWidget#periodTabs QTabBar::tab { min-width: 48px; max-width: 48px; height: 28px; padding: 0; }
+QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"], QWidget[marketPage="true"] QWidget#intradayPeriodBar QToolButton#intradayMoreButton { padding: 0; color: #50647d; background: #ffffff; border: 1px solid #dce5f0; border-radius: 0; }
+QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"]:checked, QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"][selected="true"], QWidget[marketPage="true"] QWidget#intradayPeriodBar QToolButton#intradayMoreButton[selected="true"] { color: #ffffff; background: #3187f5; border-color: #3187f5; }
+CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"], CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QWidget#intradayPeriodBar QToolButton#intradayMoreButton { color: #a8bdd7; background: #131f32; border-color: #29415e; }
+CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"]:checked, CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QWidget#intradayPeriodBar QPushButton[chartPeriodButton="true"][selected="true"], CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QWidget#intradayPeriodBar QToolButton#intradayMoreButton[selected="true"] { color: #ffffff; background: #27498b; border-color: #3187f5; }
 QWidget[marketPage="true"] QSplitter::handle { background: #e4eaf2; }
 CMainWindow[darkTheme="true"] QWidget[marketPage="true"] QSplitter::handle { background: #24334a; }
 

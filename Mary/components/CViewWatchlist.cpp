@@ -6,7 +6,26 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QTabBar>
 #include <QTimer>
+
+namespace
+{
+	CurveMode CurveModeFromTab(int nIndex)
+	{
+		switch (nIndex)
+		{
+		case 0: return CurveMode::Day;
+		case 1: return CurveMode::Week;
+		case 2: return CurveMode::Month;
+		case 3: return CurveMode::Minute5;
+		case 4: return CurveMode::Minute15;
+		case 5: return CurveMode::Minute30;
+		case 6: return CurveMode::Minute60;
+		default: return CurveMode::Day;
+		}
+	}
+}
 
 CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CViewWatchlistClass>())
 {
@@ -29,10 +48,16 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::m
 	});
 	m_controller = std::make_unique<CMarketPageController>(MarketTableMode::Watchlist, m_ui->table, this);
 	m_controller->SetCharts(m_ui->stockTitle, m_ui->priceLabel, m_ui->chartState, m_ui->intradayCurve, m_ui->candleCurve);
+	m_ui->intradayLabel->hide();
+	m_ui->intradayFrameLayout->insertWidget(1, m_controller->CreateIntradayControls(m_ui->intradayFrame));
+	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "5分");
+	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "15分");
+	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "30分");
+	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "60分");
+	m_ui->periodTabs->tabBar()->setExpanding(false);
 	connect(m_ui->periodTabs, &QTabWidget::currentChanged, this, [this](int nIndex)
 	{
-		m_controller->RequestHistory(0 == nIndex ? CurveMode::Day : 1 == nIndex ? CurveMode::Week
-																				: CurveMode::Month);
+		m_controller->RequestHistory(CurveModeFromTab(nIndex));
 	});
 	m_ui->splitter->setStretchFactor(0, 55);
 	m_ui->splitter->setStretchFactor(1, 45);

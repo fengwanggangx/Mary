@@ -230,28 +230,45 @@
 							</property>
 							<layout class="QVBoxLayout" name="intradayFrameLayout">
 								<item>
-									<widget class="QLabel" name="stockTitle">
-										<property name="text">
-											<string>选择证券</string>
+									<layout class="QHBoxLayout" name="stockInfoLayout">
+										<property name="spacing">
+											<number>16</number>
 										</property>
-										<property name="marketHeading" stdset="0">
-											<bool>true</bool>
-										</property>
-									</widget>
-								</item>
-								<item>
-									<widget class="QLabel" name="priceLabel">
-										<property name="text">
-											<string>--</string>
-										</property>
-									</widget>
-								</item>
-								<item>
-									<widget class="QLabel" name="chartState">
-										<property name="marketMuted" stdset="0">
-											<bool>true</bool>
-										</property>
-									</widget>
+										<item>
+											<widget class="QLabel" name="stockTitle">
+												<property name="text">
+													<string>选择证券</string>
+												</property>
+												<property name="marketHeading" stdset="0">
+													<bool>true</bool>
+												</property>
+											</widget>
+										</item>
+										<item>
+											<widget class="QLabel" name="priceLabel">
+												<property name="text">
+													<string>--</string>
+												</property>
+											</widget>
+										</item>
+										<item>
+											<widget class="QLabel" name="chartState">
+												<property name="marketMuted" stdset="0">
+													<bool>true</bool>
+												</property>
+											</widget>
+										</item>
+										<item>
+											<spacer name="stockInfoSpacer">
+												<property name="orientation">
+													<enum>Qt::Horizontal</enum>
+												</property>
+												<property name="sizeHint" stdset="0">
+													<size><width>0</width><height>20</height></size>
+												</property>
+											</spacer>
+										</item>
+									</layout>
 								</item>
 								<item>
 									<widget class="QLabel" name="intradayLabel">

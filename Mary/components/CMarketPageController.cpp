@@ -5,9 +5,15 @@
 #include "CQuoteTableUpdateState.h"
 #include "CUICurve.h"
 
+#include <QAbstractButton>
+#include <QAction>
+#include <QButtonGroup>
 #include <QDateTime>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QMenu>
 #include <QMetaObject>
+#include <QPushButton>
 #include <QPointer>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
@@ -15,11 +21,44 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QTimer>
+#include <QToolButton>
+#include <QWidget>
 #include <algorithm>
+#include <map>
 #include <iterator>
 
 namespace
 {
+	void MergeBars(std::vector<CMarketBar>& destination, const std::vector<CMarketBar>& source)
+	{
+		std::map<std::int64_t, CMarketBar> values;
+		for (const CMarketBar& bar : destination)
+		{
+			values.insert_or_assign(bar.m_nBeginTime, bar);
+		}
+		for (const CMarketBar& bar : source)
+		{
+			values.insert_or_assign(bar.m_nBeginTime, bar);
+		}
+		destination.clear();
+		destination.reserve(values.size());
+		for (const auto& value : values)
+		{
+			destination.emplace_back(value.second);
+		}
+	}
+
+	bool IsTradingTime(const QDateTime& value)
+	{
+		int nDay = value.date().dayOfWeek();
+		if ((Qt::Saturday == nDay) || (Qt::Sunday == nDay))
+		{
+			return false;
+		}
+		QTime time = value.time();
+		return ((QTime(9, 30) <= time) && (QTime(11, 30) >= time)) || ((QTime(13, 0) <= time) && (QTime(15, 0) >= time));
+	}
+
 	class CMarketTableDelegate final : public QStyledItemDelegate
 	{
 	  public:
@@ -145,6 +184,13 @@ CMarketPageController::CMarketPageController(MarketTableMode mode, CUITable* pTa
 	connect(m_table, &CUITable::ResultsChanged, this, [this]()
 			{ EnsureSelection(); });
 	BindService();
+	m_pHistoryTimer = new QTimer(this);
+	m_pHistoryTimer->setInterval(60000);
+	connect(m_pHistoryTimer, &QTimer::timeout, this, [this]()
+	{
+		RefreshMinuteHistory();
+	});
+	m_pHistoryTimer->start();
 }
 
 CMarketPageController::~CMarketPageController()
@@ -178,6 +224,87 @@ void CMarketPageController::SetCharts(QLabel* pTitle, QLabel* pPrice, QLabel* pS
 	RefreshSelection();
 }
 
+QWidget* CMarketPageController::CreateIntradayControls(QWidget* pParent)
+{
+	QWidget* pControls = new QWidget(pParent);
+	pControls->setObjectName("intradayPeriodBar");
+	QHBoxLayout* pLayout = new QHBoxLayout(pControls);
+	pLayout->setContentsMargins(0, 0, 0, 0);
+	pLayout->setSpacing(0);
+	QButtonGroup* pGroup = new QButtonGroup(pControls);
+	pGroup->setExclusive(true);
+	for (int nDays = 1; 5 >= nDays; ++nDays)
+	{
+		QPushButton* pButton = new QPushButton(QString("%1日").arg(nDays), pControls);
+		pButton->setCheckable(true);
+		pButton->setProperty("chartPeriodButton", true);
+		pButton->setProperty("selected", 1 == nDays);
+		pButton->setFixedSize(48, 28);
+		pGroup->addButton(pButton, nDays);
+		pLayout->addWidget(pButton);
+		if (1 == nDays)
+		{
+			pButton->setChecked(true);
+		}
+	}
+	QToolButton* pMore = new QToolButton(pControls);
+	pMore->setObjectName("intradayMoreButton");
+	pMore->setText("6-10日");
+	pMore->setProperty("selected", false);
+	pMore->setPopupMode(QToolButton::InstantPopup);
+	pMore->setFixedSize(72, 28);
+	connect(pGroup, &QButtonGroup::idClicked, this, [this, pGroup, pMore](int nDays)
+	{
+		for (QAbstractButton* pButton : pGroup->buttons())
+		{
+			pButton->setProperty("selected", pGroup->id(pButton) == nDays);
+			pButton->style()->unpolish(pButton);
+			pButton->style()->polish(pButton);
+		}
+		pMore->setText("6-10日");
+		pMore->setProperty("selected", false);
+		pMore->style()->unpolish(pMore);
+		pMore->style()->polish(pMore);
+		SetIntradayDays(nDays);
+	});
+	QMenu* pMenu = new QMenu(pMore);
+	for (int nDays = 6; 10 >= nDays; ++nDays)
+	{
+		QAction* pAction = pMenu->addAction(QString("%1日").arg(nDays));
+		connect(pAction, &QAction::triggered, this, [this, pGroup, pMore, nDays]()
+		{
+			pGroup->setExclusive(false);
+			for (QAbstractButton* pButton : pGroup->buttons())
+			{
+				pButton->setChecked(false);
+				pButton->setProperty("selected", false);
+				pButton->style()->unpolish(pButton);
+				pButton->style()->polish(pButton);
+			}
+			pGroup->setExclusive(true);
+			pMore->setText(QString("%1日").arg(nDays));
+			pMore->setProperty("selected", true);
+			pMore->style()->unpolish(pMore);
+			pMore->style()->polish(pMore);
+			SetIntradayDays(nDays);
+		});
+	}
+	pMore->setMenu(pMenu);
+	pLayout->addWidget(pMore);
+	pLayout->addStretch(1);
+	return pControls;
+}
+
+void CMarketPageController::SetIntradayDays(int nDays)
+{
+	m_nIntradayDays = (std::clamp)(nDays, 1, 10);
+	if (nullptr != m_intraday)
+	{
+		m_intraday->SetIntradayDays(m_nIntradayDays);
+		UpdateIntradayState();
+	}
+}
+
 QString CMarketPageController::AddWatchlist(const QString& strInput)
 {
 	if (0 == m_model->rowCount())
@@ -185,7 +312,8 @@ QString CMarketPageController::AddWatchlist(const QString& strInput)
 		return "证券清单尚未加载，请稍后重试";
 	}
 	std::vector<std::string> matches;
-	for (int nRow = 0; m_model->rowCount() > nRow; ++nRow)
+	int nRowCount = m_model->rowCount();
+	for (int nRow = 0; nRowCount > nRow; ++nRow)
 	{
 		QString strKey = m_model->index(nRow, 0).data().toString();
 		QString strName = m_model->index(nRow, 1).data().toString();
@@ -344,7 +472,8 @@ void CMarketPageController::OnQuoteTableUpdate(const CDataTableView& view, const
 											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinFullAliases) == change.m_columnId) ||
 											  (static_cast<_TyDataColumnId>(MarketQuoteColumn::PinyinShortAliases) == change.m_columnId); });
 	}
-	for (int nColumn = 0; m_model->columnCount() > nColumn; ++nColumn)
+	int nColumnCount = m_model->columnCount();
+	for (int nColumn = 0; nColumnCount > nColumn; ++nColumn)
 	{
 		m_table->setColumnHidden(nColumn, MarketTableMode::Constituents == m_mode ? ((5 == nColumn) || (7 <= nColumn)) : ((3 == nColumn) || (5 <= nColumn)));
 	}
@@ -372,6 +501,8 @@ void CMarketPageController::RefreshSelection()
 		m_chartState->setText(CSession::InstanceRef().IsAuthenticated() ? "暂无证券数据" : "连接不可用");
 		m_intraday->Clear();
 		m_candles->Clear();
+		m_minuteBars.clear();
+		m_dayBars.clear();
 		m_minuteRequestId = 0;
 		m_dayRequestId = 0;
 		return;
@@ -379,6 +510,17 @@ void CMarketPageController::RefreshSelection()
 	m_stockTitle->setText(QString::fromStdString(security.m_strName + "  " + security.String()));
 	double fPrice = current.siblingAtColumn(2).data().toDouble();
 	double fPercent = current.siblingAtColumn(4).data().toDouble();
+	CQuote quote;
+	double fReferencePrice = 0.0;
+	if (CHQMarketService::InstanceRef().FindQuote(security, quote))
+	{
+		fReferencePrice = quote.m_fPreClose;
+	}
+	if ((0.0 >= fReferencePrice) && (0.0 < fPrice) && (-100.0 < fPercent))
+	{
+		fReferencePrice = fPrice / (1.0 + fPercent / 100.0);
+	}
+	m_intraday->SetReferencePrice(fReferencePrice);
 	m_price->setText(0.0 < fPrice ? QString("%1    %2%3%").arg(fPrice, 0, 'f', 2).arg(0 <= fPercent ? "+" : "").arg(fPercent, 0, 'f', 2) : "--");
 	m_price->setProperty("rising", 0 <= fPercent);
 	m_price->style()->unpolish(m_price);
@@ -388,6 +530,10 @@ void CMarketPageController::RefreshSelection()
 		return;
 	}
 	m_selectedSecurity = security.String();
+	m_minuteBars.clear();
+	m_dayBars.clear();
+	m_minuteRequestId = 0;
+	m_dayRequestId = 0;
 	m_chartState->setText("正在查询历史行情");
 	RequestHistory(CurveMode::Intraday);
 	RequestHistory(m_candles->GetMode());
@@ -400,22 +546,103 @@ void CMarketPageController::RequestHistory(CurveMode mode)
 	{
 		return;
 	}
-	bool bMinute = CurveMode::Intraday == mode;
+	bool bMinute = (CurveMode::Intraday == mode) || (CurveMode::Minute5 == mode) || (CurveMode::Minute15 == mode) || (CurveMode::Minute30 == mode) || (CurveMode::Minute60 == mode);
 	CUICurve* curve = bMinute ? m_intraday : m_candles;
+	if (CurveMode::Intraday != mode)
+	{
+		curve = m_candles;
+	}
 	if (nullptr == curve)
 	{
 		return;
 	}
 	curve->SetMode(mode);
+	if (bMinute)
+	{
+		if (!m_minuteBars.empty())
+		{
+			curve->SetBars(m_minuteBars);
+			return;
+		}
+		RequestMinuteHistory(false);
+		return;
+	}
+	if (!m_dayBars.empty())
+	{
+		curve->SetBars(m_dayBars);
+		return;
+	}
 	curve->Clear();
-	std::uint64_t& nId = bMinute ? m_minuteRequestId : m_dayRequestId;
-	nId = 0;
+	m_dayRequestId = 0;
 	QDateTime now = QDateTime::currentDateTime();
-	std::int64_t nBegin = bMinute ? now.addDays(-7).toMSecsSinceEpoch() : now.addYears(-10).toMSecsSinceEpoch();
-	if (!CHQMarketService::InstanceRef().QueryHistory(security, bMinute ? MarketBarPeriod::Minute : MarketBarPeriod::Day, nBegin, now.toMSecsSinceEpoch(), &nId))
+	std::int64_t nBegin = now.addYears(-10).toMSecsSinceEpoch();
+	if (!CHQMarketService::InstanceRef().QueryHistory(security, MarketBarPeriod::Day, nBegin, now.toMSecsSinceEpoch(), &m_dayRequestId))
 	{
 		m_chartState->setText("历史查询未发送，请检查连接");
 	}
+}
+
+void CMarketPageController::RequestMinuteHistory(bool bIncremental)
+{
+	if (0 != m_minuteRequestId)
+	{
+		return;
+	}
+	CSecurity security = GetSecurity(m_table->currentIndex());
+	if (!security.IsValid())
+	{
+		return;
+	}
+	QDateTime now = QDateTime::currentDateTime();
+	std::int64_t nBegin = now.addDays(-21).toMSecsSinceEpoch();
+	if (bIncremental && !m_minuteBars.empty())
+	{
+		nBegin = m_minuteBars.back().m_nBeginTime + 1;
+	}
+	m_bMinuteIncrementalRequest = bIncremental;
+	if (!CHQMarketService::InstanceRef().QueryHistory(security, MarketBarPeriod::Minute, nBegin, now.toMSecsSinceEpoch(), &m_minuteRequestId))
+	{
+		m_minuteRequestId = 0;
+		m_bMinuteIncrementalRequest = false;
+		m_chartState->setText("历史查询未发送，请检查连接");
+	}
+}
+
+void CMarketPageController::RefreshMinuteHistory()
+{
+	if ((nullptr == m_table) || !m_table->isVisible() || m_selectedSecurity.empty() || !IsTradingTime(QDateTime::currentDateTime()))
+	{
+		return;
+	}
+	RequestMinuteHistory(true);
+}
+
+void CMarketPageController::UpdateMinuteCharts()
+{
+	if (nullptr != m_intraday)
+	{
+		m_intraday->SetBars(m_minuteBars);
+	}
+	if ((nullptr != m_candles) && m_candles->IsMinuteMode())
+	{
+		m_candles->SetBars(m_minuteBars);
+	}
+	UpdateIntradayState();
+}
+
+void CMarketPageController::UpdateIntradayState()
+{
+	if ((nullptr == m_intraday) || (nullptr == m_chartState))
+	{
+		return;
+	}
+	int nAvailable = m_intraday->AvailableTradingDays();
+	if (0 == nAvailable)
+	{
+		m_chartState->setText("暂无分时行情");
+		return;
+	}
+	m_chartState->setText(nAvailable < m_nIntradayDays ? QString("仅有 %1 日数据").arg(nAvailable) : QString("%1 日分时已加载").arg(m_nIntradayDays));
 }
 
 void CMarketPageController::HandleHistory(std::uint64_t nId, const std::string& strSecurity, MarketBarPeriod period, const std::vector<CMarketBar>& bars, const std::string& strError)
@@ -432,34 +659,38 @@ void CMarketPageController::HandleHistory(std::uint64_t nId, const std::string& 
 	CUICurve* curve = bMinute ? m_intraday : m_candles;
 	if (!strError.empty())
 	{
-		curve->Clear();
+		bool bIncremental = bMinute && m_bMinuteIncrementalRequest;
+		if (!bIncremental)
+		{
+			curve->Clear();
+		}
 		if (bMinute)
 		{
+			m_minuteRequestId = 0;
+			m_bMinuteIncrementalRequest = false;
+			m_chartState->setText(bIncremental ? "分时自动更新失败" : QString::fromStdString(strError));
+		}
+		else
+		{
+			m_dayRequestId = 0;
 			m_chartState->setText(QString::fromStdString(strError));
 		}
 		return;
 	}
-	if (bMinute && !bars.empty())
+	if (bMinute)
 	{
-		std::vector<CMarketBar>::const_iterator latest = std::max_element(bars.begin(), bars.end(), [](const CMarketBar& left, const CMarketBar& right)
-		{
-			return left.m_nBeginTime < right.m_nBeginTime;
-		});
-		QDate latestDate = QDateTime::fromMSecsSinceEpoch(latest->m_nBeginTime).date();
-		std::vector<CMarketBar> latestBars;
-		latestBars.reserve(bars.size());
-		std::copy_if(bars.begin(), bars.end(), std::back_inserter(latestBars), [latestDate](const CMarketBar& bar)
-		{
-			return latestDate == QDateTime::fromMSecsSinceEpoch(bar.m_nBeginTime).date();
-		});
-		curve->SetBars(latestBars);
+		MergeBars(m_minuteBars, bars);
+		m_minuteRequestId = 0;
+		m_bMinuteIncrementalRequest = false;
+		UpdateMinuteCharts();
 	}
 	else
 	{
-		curve->SetBars(bars);
-	}
-	if (bMinute)
-	{
-		m_chartState->setText(bars.empty() ? "暂无分时行情" : "分时行情已加载");
+		m_dayBars = bars;
+		m_dayRequestId = 0;
+		if (!m_candles->IsMinuteMode())
+		{
+			m_candles->SetBars(m_dayBars);
+		}
 	}
 }
