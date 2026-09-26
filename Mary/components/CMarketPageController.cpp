@@ -249,10 +249,10 @@ QWidget* CMarketPageController::CreateIntradayControls(QWidget* pParent)
 	}
 	QToolButton* pMore = new QToolButton(pControls);
 	pMore->setObjectName("intradayMoreButton");
-	pMore->setText("6-10日");
+	pMore->setText("6日");
 	pMore->setProperty("selected", false);
 	pMore->setPopupMode(QToolButton::InstantPopup);
-	pMore->setFixedSize(72, 28);
+	pMore->setFixedSize(58, 28);
 	connect(pGroup, &QButtonGroup::idClicked, this, [this, pGroup, pMore](int nDays)
 	{
 		for (QAbstractButton* pButton : pGroup->buttons())
@@ -261,13 +261,17 @@ QWidget* CMarketPageController::CreateIntradayControls(QWidget* pParent)
 			pButton->style()->unpolish(pButton);
 			pButton->style()->polish(pButton);
 		}
-		pMore->setText("6-10日");
 		pMore->setProperty("selected", false);
 		pMore->style()->unpolish(pMore);
 		pMore->style()->polish(pMore);
 		SetIntradayDays(nDays);
 	});
 	QMenu* pMenu = new QMenu(pMore);
+	pMenu->setObjectName("intradayDaysMenu");
+	connect(pMenu, &QMenu::aboutToShow, pMore, [pMenu, pMore]()
+	{
+		pMenu->setFixedWidth(pMore->width());
+	});
 	for (int nDays = 6; 10 >= nDays; ++nDays)
 	{
 		QAction* pAction = pMenu->addAction(QString("%1日").arg(nDays));
