@@ -3,6 +3,7 @@
 #include "ui_CViewAShare.h"
 
 #include <QHeaderView>
+#include <QMargins>
 #include <QTabBar>
 #include <QTimer>
 
@@ -47,6 +48,13 @@ CViewAShare::CViewAShare(QWidget* pParent) : QWidget(pParent), m_ui(std::make_un
 	m_controller->SetCharts(m_ui->stockTitle, m_ui->priceLabel, m_ui->chartState, m_ui->intradayCurve, m_ui->candleCurve);
 	m_ui->intradayLabel->hide();
 	m_ui->intradayFrameLayout->insertWidget(1, m_controller->CreateIntradayControls(m_ui->intradayFrame));
+	QMargins intradayMargins = m_ui->intradayFrameLayout->contentsMargins();
+	intradayMargins.setBottom(0);
+	m_ui->intradayFrameLayout->setContentsMargins(intradayMargins);
+	QMargins candleMargins = m_ui->candleFrameLayout->contentsMargins();
+	candleMargins.setTop(0);
+	m_ui->candleFrameLayout->setContentsMargins(candleMargins);
+	m_ui->chartSplitter->setHandleWidth(1);
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "5分");
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "15分");
 	m_ui->periodTabs->addTab(new QWidget(m_ui->periodTabs), "30分");

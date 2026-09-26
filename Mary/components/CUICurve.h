@@ -19,6 +19,8 @@ class QwtPlotHistogram;
 class QwtPlotTradingCurve;
 class QwtPlotGrid;
 class QwtPlotPicker;
+class QwtPlotMarker;
+class QLabel;
 
 enum class CurveMode
 {
@@ -49,12 +51,15 @@ class CUICurve final : public QWidget
 
 	protected:
 		void changeEvent(QEvent* pEvent) override;
+		bool eventFilter(QObject* pObject, QEvent* pEvent) override;
 
 	private:
 		void ApplyPalette();
 		void SchedulePaletteUpdate();
 		void InitializePlots();
 		void Refresh();
+		void HideCrosshair();
+		void UpdateLegends();
 		std::shared_ptr<const std::vector<CMarketBar>> ModeBars() const;
 		std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;
 		std::shared_ptr<const std::vector<CMarketBar>> AggregateBars(bool bMonthly) const;
@@ -69,6 +74,9 @@ class CUICurve final : public QWidget
 		int m_nIntradayDays{ 1 };
 		double m_fReferencePrice{ 0.0 };
 		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+		std::shared_ptr<const std::vector<CMarketBar>> m_hoverBars;
+		int m_nHoverIndex{ -1 };
+		double m_fHoverPrice{ 0.0 };
 		QwtPlot* m_pPricePlot{ nullptr };
 		QwtPlot* m_pVolumePlot{ nullptr };
 		QwtPlotTradingCurve* m_pTradingCurve{ nullptr };
@@ -78,10 +86,19 @@ class CUICurve final : public QWidget
 		QwtPlotCurve* m_pMovingAverage10{ nullptr };
 		QwtPlotCurve* m_pMovingAverage20{ nullptr };
 		QwtPlotCurve* m_pMovingAverage60{ nullptr };
+		QwtPlotCurve* m_pVolumeAverage5{ nullptr };
+		QwtPlotCurve* m_pVolumeAverage10{ nullptr };
 		QwtPlotHistogram* m_pVolumeCurve{ nullptr };
+		QLabel* m_pPriceLegend{ nullptr };
+		QLabel* m_pVolumeLegend{ nullptr };
+		QwtPlotMarker* m_pHighMarker{ nullptr };
+		QwtPlotMarker* m_pLowMarker{ nullptr };
 		QwtPlotGrid* m_pPriceGrid{ nullptr };
 		QwtPlotGrid* m_pVolumeGrid{ nullptr };
 		QwtPlotPicker* m_pPicker{ nullptr };
+		QwtPlotMarker* m_pPriceVerticalMarker{ nullptr };
+		QwtPlotMarker* m_pPriceHorizontalMarker{ nullptr };
+		QwtPlotMarker* m_pVolumeMarker{ nullptr };
 };
 
 #endif
