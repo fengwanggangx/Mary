@@ -820,7 +820,7 @@ void CUICurve::Refresh()
 	if (bIntraday && (1 == m_nIntradayDays) && !bars->empty())
 	{
 		QTime times[] = { QTime(9, 30), QTime(10, 30), QTime(13, 0), QTime(14, 0), QTime(15, 0) };
-		QString labels[] = { "09:30", "10:30", "11:30/13:00", "14:00", "15:00" };
+		QString labels[] = { "09:30", "10:30", "11:30", "14:00", "15:00" };
 		for (int nTarget = 0; 5 > nTarget; ++nTarget)
 		{
 			int nBestIndex = -1;
