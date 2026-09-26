@@ -179,19 +179,54 @@ namespace
 	class CColoredHistogram final : public QwtPlotHistogram
 	{
 	  public:
-		void SetBars(const std::shared_ptr<const std::vector<CMarketBar>>& bars)
+		void SetBars(const std::shared_ptr<const std::vector<CMarketBar>>& bars, bool bIntraday, double fReferencePrice)
 		{
-			m_bars = bars;
+			m_rising.clear();
+			if (nullptr == bars)
+			{
+				return;
+			}
+			m_rising.reserve(bars->size());
+			QDate previousDate;
+			QDate latestDate = bars->empty() ? QDate() : BarDate(bars->back());
+			double fPreviousClose = 0.0;
+			bool bRising = true;
+			for (const CMarketBar& bar : *bars)
+			{
+				QDate date = BarDate(bar);
+				if (date != previousDate)
+				{
+					if (bIntraday && (date == latestDate) && (0.0 < fReferencePrice))
+					{
+						fPreviousClose = fReferencePrice;
+					}
+					else if (!previousDate.isValid())
+					{
+						fPreviousClose = bar.m_fOpen;
+					}
+				}
+				double fComparison = bIntraday ? fPreviousClose : bar.m_fOpen;
+				if (bar.m_fClose > fComparison)
+				{
+					bRising = true;
+				}
+				else if (bar.m_fClose < fComparison)
+				{
+					bRising = false;
+				}
+				m_rising.emplace_back(bRising);
+				fPreviousClose = bar.m_fClose;
+				previousDate = date;
+			}
 		}
 	  protected:
 		void drawColumn(QPainter* pPainter, const QwtColumnRect& rect, const QwtIntervalSample& sample) const override
 		{
 			int nIndex = qRound((sample.interval.minValue() + sample.interval.maxValue()) * 0.5);
 			QColor color("#00b987");
-			if ((nullptr != m_bars) && (0 <= nIndex) && (static_cast<std::size_t>(nIndex) < m_bars->size()))
+			if ((0 <= nIndex) && (static_cast<std::size_t>(nIndex) < m_rising.size()))
 			{
-				const CMarketBar& bar = (*m_bars)[static_cast<std::size_t>(nIndex)];
-				color = bar.m_fClose >= bar.m_fOpen ? QColor("#f04455") : QColor("#00b987");
+				color = m_rising[static_cast<std::size_t>(nIndex)] ? RisingColor : FallingColor;
 			}
 			pPainter->save();
 			pPainter->setPen(Qt::NoPen);
@@ -200,7 +235,7 @@ namespace
 			pPainter->restore();
 		}
 	  private:
-		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
+		std::vector<bool> m_rising;
 	};
 
 	class CTimeScaleDraw final : public QwtScaleDraw
@@ -212,8 +247,19 @@ namespace
 			m_mode = mode;
 			m_nDays = nDays;
 		}
+		void SetFixedLabels(std::vector<std::pair<int, QString>> labels)
+		{
+			m_fixedLabels = std::move(labels);
+		}
 		QwtText label(double fValue) const override
 		{
+			for (const auto& value : m_fixedLabels)
+			{
+				if (0.01 > std::abs(fValue - static_cast<double>(value.first)))
+				{
+					return QwtText(value.second);
+				}
+			}
 			if ((nullptr == m_bars) || m_bars->empty())
 			{
 				return QwtText();
@@ -234,6 +280,7 @@ namespace
 		std::shared_ptr<const std::vector<CMarketBar>> m_bars;
 		CurveMode m_mode{ CurveMode::Day };
 		int m_nDays{ 1 };
+		std::vector<std::pair<int, QString>> m_fixedLabels;
 	};
 
 	class CPercentScaleDraw final : public QwtScaleDraw
@@ -413,6 +460,13 @@ void CUICurve::SetReferencePrice(double fPrice)
 void CUICurve::SetBars(const std::vector<CMarketBar>& bars)
 {
 	std::shared_ptr<std::vector<CMarketBar>> values = std::make_shared<std::vector<CMarketBar>>(bars);
+	if ((CurveMode::Intraday == m_mode) || IsMinuteCurveMode(m_mode))
+	{
+		values->erase(std::remove_if(values->begin(), values->end(), [](const CMarketBar& bar)
+		{
+			return 0 > SessionMinute(BarDateTime(bar).time());
+		}), values->end());
+	}
 	std::sort(values->begin(), values->end(), [](const CMarketBar& left, const CMarketBar& right)
 	{
 		return left.m_nBeginTime < right.m_nBeginTime;
@@ -608,10 +662,37 @@ void CUICurve::Refresh()
 	m_pMovingAverage10->setSamples(MovingAveragePoints(fullBars, bars, 10));
 	m_pMovingAverage20->setSamples(MovingAveragePoints(fullBars, bars, 20));
 	m_pMovingAverage60->setSamples(MovingAveragePoints(fullBars, bars, 60));
-	static_cast<CColoredHistogram*>(m_pVolumeCurve)->SetBars(bars);
+	static_cast<CColoredHistogram*>(m_pVolumeCurve)->SetBars(bars, bIntraday, m_fReferencePrice);
 	m_pVolumeCurve->setSamples(new CBarVolumeSeriesData(bars));
 	static_cast<CTimeScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::XBottom))->SetBars(bars, m_mode, m_nIntradayDays);
 	static_cast<CTimeScaleDraw*>(m_pVolumePlot->axisScaleDraw(QwtAxis::XBottom))->SetBars(bars, m_mode, m_nIntradayDays);
+	std::vector<std::pair<int, QString>> intradayLabels;
+	if (bIntraday && (1 == m_nIntradayDays) && !bars->empty())
+	{
+		QTime times[] = { QTime(9, 30), QTime(10, 30), QTime(13, 0), QTime(14, 0), QTime(15, 0) };
+		QString labels[] = { "09:30", "10:30", "11:30/13:00", "14:00", "15:00" };
+		for (int nTarget = 0; 5 > nTarget; ++nTarget)
+		{
+			int nBestIndex = -1;
+			int nBestDistance = 6 * 60;
+			std::size_t nBarCount = bars->size();
+			for (std::size_t nIndex = 0; nBarCount > nIndex; ++nIndex)
+			{
+				int nDistance = std::abs(times[nTarget].secsTo(BarDateTime((*bars)[nIndex]).time()));
+				if (nDistance < nBestDistance)
+				{
+					nBestDistance = nDistance;
+					nBestIndex = static_cast<int>(nIndex);
+				}
+			}
+			if ((0 <= nBestIndex) && (intradayLabels.empty() || (intradayLabels.back().first != nBestIndex)))
+			{
+				intradayLabels.emplace_back(nBestIndex, labels[nTarget]);
+			}
+		}
+	}
+	static_cast<CTimeScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::XBottom))->SetFixedLabels(intradayLabels);
+	static_cast<CTimeScaleDraw*>(m_pVolumePlot->axisScaleDraw(QwtAxis::XBottom))->SetFixedLabels(intradayLabels);
 	static_cast<CPriceScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::YLeft))->SetReferencePrice(m_fReferencePrice, bIntraday);
 	static_cast<CCurvePicker*>(m_pPicker)->SetBars(bars, m_mode);
 	m_pPricePlot->enableAxis(QwtAxis::YRight, bIntraday);
@@ -634,6 +715,17 @@ void CUICurve::Refresh()
 		}
 		m_pPricePlot->setAxisScale(QwtAxis::XBottom, fMinimumX, fMaximumX);
 		m_pVolumePlot->setAxisScale(QwtAxis::XBottom, fMinimumX, fMaximumX);
+		if (1U < intradayLabels.size())
+		{
+			QList<double> majorTicks;
+			for (const auto& value : intradayLabels)
+			{
+				majorTicks.append(static_cast<double>(value.first));
+			}
+			QwtScaleDiv scale(fMinimumX, fMaximumX, QList<double>{}, QList<double>{}, majorTicks);
+			m_pPricePlot->setAxisScaleDiv(QwtAxis::XBottom, scale);
+			m_pVolumePlot->setAxisScaleDiv(QwtAxis::XBottom, scale);
+		}
 		std::int64_t nMaximumVolume = 0;
 		std::size_t nSize = bars->size();
 		for (std::size_t nIndex = nVisibleStart; nSize > nIndex; ++nIndex)
