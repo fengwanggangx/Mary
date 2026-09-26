@@ -292,11 +292,17 @@ void CUICurve::Refresh()
 
 std::shared_ptr<const std::vector<CMarketBar>> CUICurve::DisplayBars() const
 {
-	if ((CurveMode::Day == m_mode) || (CurveMode::Intraday == m_mode))
+	if (CurveMode::Intraday == m_mode)
 	{
 		return m_bars;
 	}
-	return AggregateBars(CurveMode::Month == m_mode);
+	std::shared_ptr<const std::vector<CMarketBar>> bars = CurveMode::Day == m_mode ? m_bars : AggregateBars(CurveMode::Month == m_mode);
+	std::size_t nMaximum = CurveMode::Day == m_mode ? 120 : (CurveMode::Week == m_mode ? 156 : 120);
+	if (nMaximum >= bars->size())
+	{
+		return bars;
+	}
+	return std::make_shared<const std::vector<CMarketBar>>(bars->end() - static_cast<std::ptrdiff_t>(nMaximum), bars->end());
 }
 
 std::shared_ptr<const std::vector<CMarketBar>> CUICurve::AggregateBars(bool bMonthly) const

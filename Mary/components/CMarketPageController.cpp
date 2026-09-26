@@ -16,6 +16,7 @@
 #include <QSignalBlocker>
 #include <QTimer>
 #include <algorithm>
+#include <iterator>
 
 namespace
 {
@@ -410,7 +411,7 @@ void CMarketPageController::RequestHistory(CurveMode mode)
 	std::uint64_t& nId = bMinute ? m_minuteRequestId : m_dayRequestId;
 	nId = 0;
 	QDateTime now = QDateTime::currentDateTime();
-	std::int64_t nBegin = bMinute ? QDateTime(QDate::currentDate(), QTime(0, 0)).toMSecsSinceEpoch() : now.addYears(-10).toMSecsSinceEpoch();
+	std::int64_t nBegin = bMinute ? now.addDays(-7).toMSecsSinceEpoch() : now.addYears(-10).toMSecsSinceEpoch();
 	if (!CHQMarketService::InstanceRef().QueryHistory(security, bMinute ? MarketBarPeriod::Minute : MarketBarPeriod::Day, nBegin, now.toMSecsSinceEpoch(), &nId))
 	{
 		m_chartState->setText("历史查询未发送，请检查连接");
@@ -432,9 +433,33 @@ void CMarketPageController::HandleHistory(std::uint64_t nId, const std::string& 
 	if (!strError.empty())
 	{
 		curve->Clear();
-		m_chartState->setText(QString::fromStdString(strError));
+		if (bMinute)
+		{
+			m_chartState->setText(QString::fromStdString(strError));
+		}
 		return;
 	}
-	curve->SetBars(bars);
-	m_chartState->setText(bars.empty() ? "暂无历史行情" : "历史行情已加载");
+	if (bMinute && !bars.empty())
+	{
+		std::vector<CMarketBar>::const_iterator latest = std::max_element(bars.begin(), bars.end(), [](const CMarketBar& left, const CMarketBar& right)
+		{
+			return left.m_nBeginTime < right.m_nBeginTime;
+		});
+		QDate latestDate = QDateTime::fromMSecsSinceEpoch(latest->m_nBeginTime).date();
+		std::vector<CMarketBar> latestBars;
+		latestBars.reserve(bars.size());
+		std::copy_if(bars.begin(), bars.end(), std::back_inserter(latestBars), [latestDate](const CMarketBar& bar)
+		{
+			return latestDate == QDateTime::fromMSecsSinceEpoch(bar.m_nBeginTime).date();
+		});
+		curve->SetBars(latestBars);
+	}
+	else
+	{
+		curve->SetBars(bars);
+	}
+	if (bMinute)
+	{
+		m_chartState->setText(bars.empty() ? "暂无分时行情" : "分时行情已加载");
+	}
 }

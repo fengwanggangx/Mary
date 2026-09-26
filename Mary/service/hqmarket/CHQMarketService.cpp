@@ -876,10 +876,11 @@ bool CHQMarketService::OnSecurityListReply(const CRequest& req)
 	}
 	if (CSession::InstanceRef().IsAuthenticated())
 	{
-		constexpr std::size_t BatchSize = 200;
-		for (std::size_t nOffset = 0; subscriptions.size() > nOffset; nOffset += BatchSize)
+		constexpr std::size_t BatchSize = 1000;
+		std::size_t nSize = subscriptions.size();
+		for (std::size_t nOffset = 0; nSize > nOffset; nOffset += BatchSize)
 		{
-			std::size_t nEnd = (std::min)(subscriptions.size(), nOffset + BatchSize);
+			std::size_t nEnd = (std::min)(nSize, nOffset + BatchSize);
 			SubscribeQuotes(std::vector<CSecurity>(subscriptions.begin() + nOffset, subscriptions.begin() + nEnd));
 		}
 	}
