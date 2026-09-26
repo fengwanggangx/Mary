@@ -92,8 +92,8 @@ CViewWatchlist::CViewWatchlist(QWidget* pParent) : QWidget(pParent), m_ui(std::m
 	{
 		m_controller->RequestHistory(CurveModeFromTab(nIndex));
 	});
-	m_ui->splitter->setStretchFactor(0, 55);
-	m_ui->splitter->setStretchFactor(1, 45);
+	m_ui->splitter->setStretchFactor(0, 50);
+	m_ui->splitter->setStretchFactor(1, 50);
 	m_ui->chartSplitter->setSizes({ 420, 420 });
 
 	connect(m_ui->addButton, &QPushButton::clicked, this, [this]()
@@ -125,7 +125,7 @@ void CViewWatchlist::showEvent(QShowEvent* pEvent)
 		QTimer::singleShot(0, this, [this]()
 		{
 			int nWidth = m_ui->splitter->width() - m_ui->splitter->handleWidth();
-			m_ui->splitter->setSizes({ nWidth * 55 / 100, nWidth * 45 / 100 });
+			m_ui->splitter->setSizes({ nWidth / 2, nWidth / 2 });
 		});
 	}
 }

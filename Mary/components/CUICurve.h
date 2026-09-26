@@ -56,6 +56,7 @@ class CUICurve final : public QWidget
 		void ApplyPalette();
 		void SchedulePaletteUpdate();
 		void InitializePlots();
+		void AlignLeftAxes();
 		void Refresh();
 		void HideCrosshair();
 		std::shared_ptr<const std::vector<CMarketBar>> ModeBars() const;

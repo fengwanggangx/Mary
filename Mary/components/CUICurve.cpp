@@ -626,7 +626,7 @@ void CUICurve::InitializePlots()
 void CUICurve::changeEvent(QEvent* pEvent)
 {
 	QWidget::changeEvent(pEvent);
-	if ((QEvent::PaletteChange == pEvent->type()) || (QEvent::StyleChange == pEvent->type()))
+	if ((QEvent::PaletteChange == pEvent->type()) || (QEvent::StyleChange == pEvent->type()) || (QEvent::FontChange == pEvent->type()))
 	{
 		SchedulePaletteUpdate();
 	}
@@ -759,6 +759,24 @@ void CUICurve::ApplyPalette()
 		}
 		pPlot->replot();
 	}
+	AlignLeftAxes();
+}
+
+void CUICurve::AlignLeftAxes()
+{
+	QwtScaleDraw* pPriceScale = m_pPricePlot->axisScaleDraw(QwtAxis::YLeft);
+	QwtScaleDraw* pVolumeScale = m_pVolumePlot->axisScaleDraw(QwtAxis::YLeft);
+	m_pPricePlot->updateAxes();
+	m_pVolumePlot->updateAxes();
+	pPriceScale->setMinimumExtent(0.0);
+	pVolumeScale->setMinimumExtent(0.0);
+	double fExtent = (std::max)(pPriceScale->extent(m_pPricePlot->axisWidget(QwtAxis::YLeft)->font()), pVolumeScale->extent(m_pVolumePlot->axisWidget(QwtAxis::YLeft)->font()));
+	pPriceScale->setMinimumExtent(fExtent);
+	pVolumeScale->setMinimumExtent(fExtent);
+	m_pPricePlot->updateLayout();
+	m_pVolumePlot->updateLayout();
+	m_pPricePlot->replot();
+	m_pVolumePlot->replot();
 }
 
 void CUICurve::Refresh()
@@ -947,8 +965,7 @@ void CUICurve::Refresh()
 			}
 		}
 	}
-	m_pPricePlot->replot();
-	m_pVolumePlot->replot();
+	AlignLeftAxes();
 }
 
 std::shared_ptr<const std::vector<CMarketBar>> CUICurve::ModeBars() const
