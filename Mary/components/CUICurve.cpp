@@ -7,7 +7,6 @@
 #include <QApplication>
 #include <QDateTime>
 #include <QEvent>
-#include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
@@ -26,7 +25,6 @@ namespace
 	constexpr double InvalidValue = std::numeric_limits<double>::quiet_NaN();
 	const QColor RisingColor("#f04455");
 	const QColor FallingColor("#00b987");
-	QString FormatVolume(double fVolume);
 
 	QColor FinancialColor(double fDifference)
 	{
@@ -327,26 +325,12 @@ namespace
 	class CPercentScaleDraw final : public QwtScaleDraw
 	{
 	  public:
-		void SetPriceMode(bool bPriceMode)
-		{
-			m_bPriceMode = bPriceMode;
-		}
-
 		QwtText label(double fValue) const override
 		{
-			if (m_bPriceMode)
-			{
-				QwtText text(QString::number(fValue, 'f', 2));
-				text.setColor(RisingColor);
-				return text;
-			}
 			QwtText text(QString("%1%2%").arg(0.0 < fValue ? "+" : "").arg(fValue, 0, 'f', 2));
 			text.setColor(FinancialColor(fValue));
 			return text;
 		}
-
-	  private:
-		bool m_bPriceMode{ false };
 	};
 
 	class CPriceScaleDraw final : public QwtScaleDraw
@@ -368,15 +352,6 @@ namespace
 	  private:
 		double m_fReferencePrice{ 0.0 };
 		bool m_bColorize{ false };
-	};
-
-	class CVolumeScaleDraw final : public QwtScaleDraw
-	{
-	  public:
-		QwtText label(double fValue) const override
-		{
-			return QwtText(FormatVolume(fValue));
-		}
 	};
 
 	class CCurvePicker final : public QwtPlotPicker
@@ -425,7 +400,7 @@ namespace
 		CurveMode m_mode{ CurveMode::Day };
 	};
 
-	QVector<QPointF> MovingAveragePoints(const std::shared_ptr<const std::vector<CMarketBar>>& fullBars, const std::shared_ptr<const std::vector<CMarketBar>>& visibleBars, std::size_t nPeriod, bool bVolume = false)
+	QVector<QPointF> MovingAveragePoints(const std::shared_ptr<const std::vector<CMarketBar>>& fullBars, const std::shared_ptr<const std::vector<CMarketBar>>& visibleBars, std::size_t nPeriod)
 	{
 		QVector<QPointF> points;
 		if ((nullptr == fullBars) || (nullptr == visibleBars) || visibleBars->empty() || (0 == nPeriod))
@@ -441,7 +416,7 @@ namespace
 		std::size_t nSize = fullBars->size();
 		for (std::size_t nIndex = 0; nSize > nIndex; ++nIndex)
 		{
-			prefix[nIndex + 1] = prefix[nIndex] + (bVolume ? static_cast<double>((*fullBars)[nIndex].m_nVolume) : (*fullBars)[nIndex].m_fClose);
+			prefix[nIndex + 1] = prefix[nIndex] + (*fullBars)[nIndex].m_fClose;
 		}
 		std::size_t nVisibleSize = visibleBars->size();
 		points.reserve(static_cast<int>(nVisibleSize));
@@ -456,19 +431,6 @@ namespace
 			points.emplace_back(static_cast<double>(nIndex), fValue);
 		}
 		return points;
-	}
-
-	QString FormatVolume(double fVolume)
-	{
-		if (100000000.0 <= fVolume)
-		{
-			return QString("%1亿").arg(fVolume / 100000000.0, 0, 'f', 2);
-		}
-		if (10000.0 <= fVolume)
-		{
-			return QString("%1万").arg(fVolume / 10000.0, 0, 'f', 2);
-		}
-		return QString::number(fVolume, 'f', 0);
 	}
 } // namespace
 
@@ -566,10 +528,7 @@ void CUICurve::InitializePlots()
 	m_pVolumePlot->canvas()->setObjectName("curveCanvas");
 	m_pVolumePlot->setAxisMaxMajor(QwtAxis::YLeft, 2);
 	m_pVolumePlot->setAxisMaxMinor(QwtAxis::YLeft, 0);
-	m_pVolumePlot->setAxisMaxMajor(QwtAxis::YRight, 2);
-	m_pVolumePlot->setAxisMaxMinor(QwtAxis::YRight, 0);
 	m_pTradingCurve = new CFinancialTradingCurve("K线");
-	m_pTradingCurve->setYAxis(QwtAxis::YRight);
 	m_pTradingCurve->setMinSymbolWidth(3.0);
 	m_pTradingCurve->setMaxSymbolWidth(9.0);
 	m_pTradingCurve->attach(m_pPricePlot);
@@ -586,19 +545,12 @@ void CUICurve::InitializePlots()
 	{
 		*movingAverages[nIndex] = new QwtPlotCurve(QString("MA%1").arg(periods[nIndex]));
 		(*movingAverages[nIndex])->setPen(QPen(colors[nIndex], 1.0));
-		(*movingAverages[nIndex])->setYAxis(QwtAxis::YRight);
 		(*movingAverages[nIndex])->attach(m_pPricePlot);
 	}
 	CColoredHistogram* pVolume = new CColoredHistogram();
 	pVolume->setTitle("成交量");
 	pVolume->attach(m_pVolumePlot);
 	m_pVolumeCurve = pVolume;
-	m_pVolumeAverage5 = new QwtPlotCurve("MAVOL5");
-	m_pVolumeAverage5->setYAxis(QwtAxis::YRight);
-	m_pVolumeAverage5->attach(m_pVolumePlot);
-	m_pVolumeAverage10 = new QwtPlotCurve("MAVOL10");
-	m_pVolumeAverage10->setYAxis(QwtAxis::YRight);
-	m_pVolumeAverage10->attach(m_pVolumePlot);
 	m_pPriceGrid = new QwtPlotGrid();
 	m_pPriceGrid->enableX(true);
 	m_pPriceGrid->enableY(true);
@@ -611,25 +563,13 @@ void CUICurve::InitializePlots()
 	m_pVolumePlot->setAxisScaleDraw(QwtAxis::XBottom, new CTimeScaleDraw());
 	m_pPricePlot->setAxisScaleDraw(QwtAxis::YLeft, new CPriceScaleDraw());
 	m_pPricePlot->setAxisScaleDraw(QwtAxis::YRight, new CPercentScaleDraw());
-	m_pVolumePlot->setAxisScaleDraw(QwtAxis::YLeft, new CVolumeScaleDraw());
-	m_pVolumePlot->setAxisScaleDraw(QwtAxis::YRight, new CVolumeScaleDraw());
 	m_pPricePlot->enableAxis(QwtAxis::XBottom, true);
 	m_pVolumePlot->enableAxis(QwtAxis::XBottom, false);
-	m_pPriceLegend = new QLabel(m_pPricePlot->canvas());
-	m_pPriceLegend->setAttribute(Qt::WA_TransparentForMouseEvents);
-	m_pPriceLegend->setStyleSheet("background: transparent; font-size: 11px;");
-	m_pPriceLegend->setGeometry(5, 2, (std::max)(0, m_pPricePlot->canvas()->width() - 10), 18);
-	m_pVolumeLegend = new QLabel(m_pVolumePlot->canvas());
-	m_pVolumeLegend->setAttribute(Qt::WA_TransparentForMouseEvents);
-	m_pVolumeLegend->setStyleSheet("background: transparent; font-size: 11px;");
-	m_pVolumeLegend->setGeometry(5, 2, (std::max)(0, m_pVolumePlot->canvas()->width() - 10), 18);
 	m_pHighMarker = new QwtPlotMarker();
-	m_pHighMarker->setYAxis(QwtAxis::YRight);
 	m_pHighMarker->setZ(90.0);
 	m_pHighMarker->setVisible(false);
 	m_pHighMarker->attach(m_pPricePlot);
 	m_pLowMarker = new QwtPlotMarker();
-	m_pLowMarker->setYAxis(QwtAxis::YRight);
 	m_pLowMarker->setZ(90.0);
 	m_pLowMarker->setVisible(false);
 	m_pLowMarker->attach(m_pPricePlot);
@@ -655,7 +595,11 @@ void CUICurve::InitializePlots()
 	m_pPricePlot->canvas()->installEventFilter(this);
 	m_pVolumePlot->canvas()->installEventFilter(this);
 	QwtPlotPanner* pPanner = new QwtPlotPanner(m_pPricePlot->canvas());
-	new QwtPlotMagnifier(m_pPricePlot->canvas());
+	pPanner->setOrientations(Qt::Horizontal);
+	QwtPlotMagnifier* pMagnifier = new QwtPlotMagnifier(m_pPricePlot->canvas());
+	pMagnifier->setAxisEnabled(QwtAxis::YLeft, false);
+	pMagnifier->setAxisEnabled(QwtAxis::YRight, false);
+	pMagnifier->setAxisEnabled(QwtAxis::XTop, false);
 	connect(pPanner, &QwtPlotPanner::panned, this, [this]()
 	{
 		if (m_bSynchronizingScale)
@@ -694,12 +638,7 @@ bool CUICurve::eventFilter(QObject* pObject, QEvent* pEvent)
 	bool bVolumeCanvas = pObject == m_pVolumePlot->canvas();
 	if (bPriceCanvas || bVolumeCanvas)
 	{
-		if (QEvent::Resize == pEvent->type())
-		{
-			QLabel* pLegend = bPriceCanvas ? m_pPriceLegend : m_pVolumeLegend;
-			pLegend->setGeometry(5, 2, (std::max)(0, static_cast<QWidget*>(pObject)->width() - 10), 18);
-		}
-		else if (QEvent::Leave == pEvent->type())
+		if (QEvent::Leave == pEvent->type())
 		{
 			HideCrosshair();
 		}
@@ -708,7 +647,7 @@ bool CUICurve::eventFilter(QObject* pObject, QEvent* pEvent)
 			QMouseEvent* pMouse = static_cast<QMouseEvent*>(pEvent);
 			QwtPlot* pPlot = bPriceCanvas ? m_pPricePlot : m_pVolumePlot;
 			int nIndex = (std::clamp)(qRound(pPlot->invTransform(QwtAxis::XBottom, pMouse->position().x())), 0, static_cast<int>(m_hoverBars->size()) - 1);
-			double fPrice = bPriceCanvas ? m_pPricePlot->invTransform(CurveMode::Intraday == m_mode ? QwtAxis::YLeft : QwtAxis::YRight, pMouse->position().y()) : (*m_hoverBars)[static_cast<std::size_t>(nIndex)].m_fClose;
+			double fPrice = bPriceCanvas ? m_pPricePlot->invTransform(QwtAxis::YLeft, pMouse->position().y()) : (*m_hoverBars)[static_cast<std::size_t>(nIndex)].m_fClose;
 			bool bIndexChanged = nIndex != m_nHoverIndex;
 			if (bIndexChanged || (0.0001 < std::abs(fPrice - m_fHoverPrice)))
 			{
@@ -723,7 +662,6 @@ bool CUICurve::eventFilter(QObject* pObject, QEvent* pEvent)
 				m_pPricePlot->replot();
 				if (bIndexChanged)
 				{
-					UpdateLegends();
 					m_pVolumePlot->replot();
 				}
 			}
@@ -744,42 +682,6 @@ void CUICurve::HideCrosshair()
 	m_pVolumeMarker->setVisible(false);
 	m_pPricePlot->replot();
 	m_pVolumePlot->replot();
-	UpdateLegends();
-}
-
-void CUICurve::UpdateLegends()
-{
-	if ((CurveMode::Intraday == m_mode) || (nullptr == m_hoverBars) || m_hoverBars->empty())
-	{
-		m_pPriceLegend->clear();
-		m_pVolumeLegend->clear();
-		return;
-	}
-	int nIndex = 0 <= m_nHoverIndex ? m_nHoverIndex : static_cast<int>(m_hoverBars->size()) - 1;
-	QwtPlotCurve* priceAverages[] = { m_pMovingAverage5, m_pMovingAverage10, m_pMovingAverage20, m_pMovingAverage60 };
-	int periods[] = { 5, 10, 20, 60 };
-	QString strPrice;
-	for (int nAverage = 0; 4 > nAverage; ++nAverage)
-	{
-		double fValue = priceAverages[nAverage]->sample(nIndex).y();
-		QString strValue = std::isfinite(fValue) ? QString::number(fValue, 'f', 2) : "--";
-		strPrice += QString("<span style='color:%1'>MA%2: %3</span>  ")
-			.arg(priceAverages[nAverage]->pen().color().name()).arg(periods[nAverage]).arg(strValue);
-	}
-	m_pPriceLegend->setText(strPrice);
-	QColor foreground = qApp->palette().color(QPalette::Text);
-	QwtPlotCurve* volumeAverages[] = { m_pVolumeAverage5, m_pVolumeAverage10 };
-	int volumePeriods[] = { 5, 10 };
-	QString strVolume = QString("<span style='color:%1'>成交量: %2</span>  ")
-		.arg(foreground.name()).arg(FormatVolume(static_cast<double>((*m_hoverBars)[static_cast<std::size_t>(nIndex)].m_nVolume)));
-	for (int nAverage = 0; 2 > nAverage; ++nAverage)
-	{
-		double fValue = volumeAverages[nAverage]->sample(nIndex).y();
-		QString strValue = std::isfinite(fValue) ? FormatVolume(fValue) : "--";
-		strVolume += QString("<span style='color:%1'>MAVOL%2: %3</span>  ")
-			.arg(volumeAverages[nAverage]->pen().color().name()).arg(volumePeriods[nAverage]).arg(strValue);
-	}
-	m_pVolumeLegend->setText(strVolume);
 }
 
 void CUICurve::SchedulePaletteUpdate()
@@ -822,8 +724,6 @@ void CUICurve::ApplyPalette()
 	{
 		priceAverages[nIndex]->setPen(QPen(priceColors[nIndex], 1.15));
 	}
-	m_pVolumeAverage5->setPen(QPen(bDark ? QColor("#ffe900") : QColor("#c92d35"), 1.0));
-	m_pVolumeAverage10->setPen(QPen(bDark ? QColor("#f4f4f4") : QColor("#0088ad"), 1.0));
 	QwtText highLabel = m_pHighMarker->label();
 	QwtText lowLabel = m_pLowMarker->label();
 	highLabel.setColor(foreground);
@@ -859,7 +759,6 @@ void CUICurve::ApplyPalette()
 		}
 		pPlot->replot();
 	}
-	UpdateLegends();
 }
 
 void CUICurve::Refresh()
@@ -913,10 +812,6 @@ void CUICurve::Refresh()
 	m_pMovingAverage10->setSamples(MovingAveragePoints(fullBars, bars, 10));
 	m_pMovingAverage20->setSamples(MovingAveragePoints(fullBars, bars, 20));
 	m_pMovingAverage60->setSamples(MovingAveragePoints(fullBars, bars, 60));
-	m_pVolumeAverage5->setVisible(!bIntraday);
-	m_pVolumeAverage10->setVisible(!bIntraday);
-	m_pVolumeAverage5->setSamples(MovingAveragePoints(fullBars, bars, 5, true));
-	m_pVolumeAverage10->setSamples(MovingAveragePoints(fullBars, bars, 10, true));
 	static_cast<CColoredHistogram*>(m_pVolumeCurve)->SetBars(bars, bIntraday, m_fReferencePrice);
 	m_pVolumeCurve->setSamples(new CBarVolumeSeriesData(bars));
 	static_cast<CTimeScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::XBottom))->SetBars(bars, m_mode, m_nIntradayDays);
@@ -949,31 +844,22 @@ void CUICurve::Refresh()
 	static_cast<CTimeScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::XBottom))->SetFixedLabels(intradayLabels);
 	static_cast<CTimeScaleDraw*>(m_pVolumePlot->axisScaleDraw(QwtAxis::XBottom))->SetFixedLabels(intradayLabels);
 	static_cast<CPriceScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::YLeft))->SetReferencePrice(m_fReferencePrice, bIntraday);
-	static_cast<CPercentScaleDraw*>(m_pPricePlot->axisScaleDraw(QwtAxis::YRight))->SetPriceMode(!bIntraday);
 	static_cast<CCurvePicker*>(m_pPicker)->SetBars(bars, m_mode);
-	m_pPriceLegend->setVisible(!bIntraday && !bars->empty());
-	m_pVolumeLegend->setVisible(!bIntraday && !bars->empty());
 	m_pHighMarker->setVisible(false);
 	m_pLowMarker->setVisible(false);
-	m_pPricePlot->enableAxis(QwtAxis::YLeft, bIntraday);
-	m_pPricePlot->enableAxis(QwtAxis::YRight, true);
-	m_pPriceGrid->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-	m_pPriceVerticalMarker->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-	m_pPriceHorizontalMarker->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-	m_pVolumePlot->enableAxis(QwtAxis::YLeft, bIntraday);
-	m_pVolumePlot->enableAxis(QwtAxis::YRight, !bIntraday);
-	m_pVolumeCurve->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-	m_pVolumeGrid->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-	m_pVolumeMarker->setYAxis(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
+	m_pPricePlot->enableAxis(QwtAxis::YLeft, true);
+	m_pPricePlot->enableAxis(QwtAxis::YRight, bIntraday);
+	m_pVolumePlot->enableAxis(QwtAxis::YLeft, true);
+	m_pVolumePlot->enableAxis(QwtAxis::YRight, false);
 	if (bars->empty())
 	{
-		m_pPricePlot->setAxisAutoScale(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
-		m_pVolumePlot->setAxisAutoScale(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight);
+		m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft);
+		m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft);
 	}
 	else
 	{
-		m_pPricePlot->setAxisAutoScale(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight, false);
-		m_pVolumePlot->setAxisAutoScale(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight, false);
+		m_pPricePlot->setAxisAutoScale(QwtAxis::YLeft, false);
+		m_pVolumePlot->setAxisAutoScale(QwtAxis::YLeft, false);
 		double fMaximumX = static_cast<double>(bars->size()) - 0.5;
 		double fMinimumX = -0.5;
 		std::size_t nVisibleStart = 0;
@@ -1003,7 +889,7 @@ void CUICurve::Refresh()
 		}
 		double fVolumeStep = NiceStep(static_cast<double>(nMaximumVolume) / 4.0);
 		double fMaximumVolume = (std::max)(fVolumeStep, std::ceil(static_cast<double>(nMaximumVolume) / fVolumeStep) * fVolumeStep);
-		m_pVolumePlot->setAxisScale(bIntraday ? QwtAxis::YLeft : QwtAxis::YRight, 0.0, fMaximumVolume, fVolumeStep);
+		m_pVolumePlot->setAxisScale(QwtAxis::YLeft, 0.0, fMaximumVolume, fVolumeStep);
 		if (bIntraday)
 		{
 			double fReference = 0.0 < m_fReferencePrice ? m_fReferencePrice : bars->front().m_fOpen;
@@ -1045,7 +931,7 @@ void CUICurve::Refresh()
 			if (fMinimumPrice <= fMaximumPrice)
 			{
 				double fPadding = (std::max)(0.01, (fMaximumPrice - fMinimumPrice) * 0.13);
-				m_pPricePlot->setAxisScale(QwtAxis::YRight, fMinimumPrice - fPadding, fMaximumPrice + fPadding);
+				m_pPricePlot->setAxisScale(QwtAxis::YLeft, fMinimumPrice - fPadding, fMaximumPrice + fPadding);
 				QwtText highLabel(QString("← %1").arg(fMaximumPrice, 0, 'f', 2));
 				QwtText lowLabel(QString("← %1").arg(fMinimumPrice, 0, 'f', 2));
 				highLabel.setColor(qApp->palette().color(QPalette::Text));
@@ -1061,7 +947,6 @@ void CUICurve::Refresh()
 			}
 		}
 	}
-	UpdateLegends();
 	m_pPricePlot->replot();
 	m_pVolumePlot->replot();
 }

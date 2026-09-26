@@ -20,7 +20,6 @@ class QwtPlotTradingCurve;
 class QwtPlotGrid;
 class QwtPlotPicker;
 class QwtPlotMarker;
-class QLabel;
 
 enum class CurveMode
 {
@@ -59,7 +58,6 @@ class CUICurve final : public QWidget
 		void InitializePlots();
 		void Refresh();
 		void HideCrosshair();
-		void UpdateLegends();
 		std::shared_ptr<const std::vector<CMarketBar>> ModeBars() const;
 		std::shared_ptr<const std::vector<CMarketBar>> DisplayBars() const;
 		std::shared_ptr<const std::vector<CMarketBar>> AggregateBars(bool bMonthly) const;
@@ -86,11 +84,7 @@ class CUICurve final : public QWidget
 		QwtPlotCurve* m_pMovingAverage10{ nullptr };
 		QwtPlotCurve* m_pMovingAverage20{ nullptr };
 		QwtPlotCurve* m_pMovingAverage60{ nullptr };
-		QwtPlotCurve* m_pVolumeAverage5{ nullptr };
-		QwtPlotCurve* m_pVolumeAverage10{ nullptr };
 		QwtPlotHistogram* m_pVolumeCurve{ nullptr };
-		QLabel* m_pPriceLegend{ nullptr };
-		QLabel* m_pVolumeLegend{ nullptr };
 		QwtPlotMarker* m_pHighMarker{ nullptr };
 		QwtPlotMarker* m_pLowMarker{ nullptr };
 		QwtPlotGrid* m_pPriceGrid{ nullptr };
