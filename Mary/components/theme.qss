@@ -105,6 +105,17 @@ QLabel#priceLabel[rising="true"] { color: #f04455; }
 QPushButton#searchButton { padding: 0; font-size: 16px; }
 QWidget[marketPage="true"] QTabWidget#marketTabs::pane, QWidget[marketPage="true"] QTabWidget#periodTabs::pane { border: 0; }
 QWidget[marketPage="true"] QTabWidget#marketTabs QTabBar::tab { min-width: 65px; height: 20px; margin-top: 9px; margin-bottom: -1px; padding: 0 10px; }
+QWidget#keyboardSprite { background: #ffffff; border: 1px solid #969696; }
+QWidget#keyboardSpriteTitle { background: #444444; color: #ffffff; }
+QWidget#keyboardSpriteTitle QLabel { color: #ffffff; }
+QPushButton#keyboardSpriteClose { background: transparent; color: #bcbcbc; border: 0; font-size: 21px; }
+QLineEdit#keyboardSpriteSearch { background: #ffffff; color: #101010; border: 0; border-bottom: 2px solid #aaaaaa; padding: 0 8px; font-size: 19px; }
+QTableWidget#keyboardSpriteResults { background: #ffffff; color: #101010; border: 0; font-size: 18px; }
+QTableWidget#keyboardSpriteResults::item { padding: 0 5px; }
+QTableWidget#keyboardSpriteResults::item:selected { background: #8dd5fa; color: #101010; }
+QLabel#keyboardSpriteMessage { background: #ffffff; color: #8b8b8b; font-size: 16px; }
+QWidget#keyboardSprite[darkTheme="true"] { background: #191919; border-color: #666666; }
+QWidget#keyboardSprite[darkTheme="true"] QLineEdit#keyboardSpriteSearch, QWidget#keyboardSprite[darkTheme="true"] QTableWidget#keyboardSpriteResults, QWidget#keyboardSprite[darkTheme="true"] QLabel#keyboardSpriteMessage { background: #191919; color: #eeeeee; }
 QWidget[marketPage="true"] QTabWidget#periodTabs { border: 0; }
 QWidget[marketPage="true"] QTabWidget#periodTabs QTabBar::tab { min-width: 48px; max-width: 48px; height: 28px; padding: 0; margin: 0; border-top: 0; border-bottom: 0; border-left: 0; }
 QWidget[marketPage="true"] QWidget#intradayPeriodBar, QWidget[marketPage="true"] QWidget#candlePeriodBar { border: 0; border-top: 1px solid #dce5f0; border-bottom: 1px solid #dce5f0; }

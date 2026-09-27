@@ -1,5 +1,6 @@
 #include "CMainWindow.h"
 #include "CUIStyle.h"
+#include "CKeyboardSprite.h"
 #include "ui_CMainWindow.h"
 
 #include "CRiskSettings.h"
@@ -12,6 +13,14 @@
 #include <QApplication>
 #include <QDateTime>
 #include <QEvent>
+#include <QGuiApplication>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QPlainTextEdit>
+#include <QTextEdit>
+#include <QComboBox>
+#include <QAbstractItemView>
+#include <QScreen>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPointer>
@@ -23,6 +32,7 @@
 #include <QToolButton>
 
 #include <cstddef>
+#include <algorithm>
 #include <vector>
 
 namespace
@@ -44,10 +54,36 @@ CMainWindow::CMainWindow(QWidget* pParent) : QMainWindow(pParent), m_ui(std::mak
 	setWindowIcon(QIcon(":/branding/mary-app-icon.png"));
 	UIInitialized();
 	ConnectSlots();
+	m_pKeyboardSprite = new CKeyboardSprite(this);
+	m_pKeyboardSprite->setProperty("darkTheme", m_bDarkTheme);
+	QPointer<CKeyboardSprite> safeSprite(m_pKeyboardSprite);
+	m_nSecurityListToken = CHQMarketService::InstanceRef().AddSecurityListHandler([safeSprite](const CSecurityListEvent& ev)
+	{
+		if (!safeSprite.isNull())
+		{
+			QMetaObject::invokeMethod(safeSprite.data(), [safeSprite, securities = ev.m_securities]()
+			{
+				if (!safeSprite.isNull())
+				{
+					safeSprite->SetSecurities(securities);
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
+	m_pKeyboardSprite->SetSecurities(CHQMarketService::InstanceRef().GetSecurities());
+	connect(m_pKeyboardSprite, &CKeyboardSprite::SecuritySelected, this, [this](const CSecurity& security)
+	{
+		m_ui->treeWidget->setCurrentItem(m_ui->treeWidget->topLevelItem(0));
+		m_ui->stackedWidget->setCurrentWidget(m_ui->marketPage);
+		m_ui->marketPage->OpenSecurityTab(security);
+	});
+	qApp->installEventFilter(this);
 }
 
 CMainWindow::~CMainWindow()
 {
+	qApp->removeEventFilter(this);
+	CHQMarketService::InstanceRef().RemoveSecurityListHandler(m_nSecurityListToken);
 	CSession::InstanceRef().SetStateCallback({});
 }
 
@@ -142,6 +178,11 @@ void CMainWindow::ApplyTheme(bool bDark)
 	m_bDarkTheme = bDark;
 	m_bThemeInitialized = true;
 	setProperty("darkTheme", bDark);
+	if (nullptr != m_pKeyboardSprite)
+	{
+		m_pKeyboardSprite->setProperty("darkTheme", bDark);
+		UIStyle::Refresh(*m_pKeyboardSprite);
+	}
 	m_ui->skinMenu->setProperty("darkTheme", bDark);
 	QPalette palette = qApp->style()->standardPalette();
 	if (bDark)
@@ -244,6 +285,30 @@ void CMainWindow::changeEvent(QEvent* pEvent)
 
 bool CMainWindow::eventFilter(QObject* pObject, QEvent* pEvent)
 {
+	QWidget* pEventWidget = qobject_cast<QWidget*>(pObject);
+	if ((nullptr != m_pKeyboardSprite) && (QEvent::MouseButtonPress == pEvent->type()) && m_pKeyboardSprite->isVisible() && (nullptr != pEventWidget) && (m_pKeyboardSprite != pEventWidget) && !m_pKeyboardSprite->isAncestorOf(pEventWidget))
+	{
+		m_pKeyboardSprite->hide();
+	}
+	if ((nullptr != m_pKeyboardSprite) && (QEvent::KeyPress == pEvent->type()) && isActiveWindow())
+	{
+		QKeyEvent* pKey = static_cast<QKeyEvent*>(pEvent);
+		if ((Qt::ControlModifier == pKey->modifiers()) && (Qt::Key_K == pKey->key()))
+		{
+			PositionKeyboardSprite();
+			m_pKeyboardSprite->Open();
+			return true;
+		}
+		QWidget* pFocus = qApp->focusWidget();
+		bool bEditing = (nullptr != qobject_cast<QLineEdit*>(pFocus)) || (nullptr != qobject_cast<QTextEdit*>(pFocus)) || (nullptr != qobject_cast<QPlainTextEdit*>(pFocus)) || (nullptr != qobject_cast<QComboBox*>(pFocus)) || (nullptr != qobject_cast<QAbstractItemView*>(pFocus));
+		QString strInput = pKey->text();
+		if (!bEditing && !m_pKeyboardSprite->isVisible() && ((Qt::NoModifier == pKey->modifiers()) || (Qt::ShiftModifier == pKey->modifiers())) && (1 == strInput.size()) && strInput.at(0).isLetterOrNumber() && (strInput.at(0).unicode() < 128))
+		{
+			PositionKeyboardSprite();
+			m_pKeyboardSprite->Open(strInput);
+			return true;
+		}
+	}
 	if (m_ui->titleBar != pObject)
 	{
 		return QMainWindow::eventFilter(pObject, pEvent);
@@ -277,4 +342,39 @@ bool CMainWindow::eventFilter(QObject* pObject, QEvent* pEvent)
 		return true;
 	}
 	return QMainWindow::eventFilter(pObject, pEvent);
+}
+
+void CMainWindow::PositionKeyboardSprite()
+{
+	QRect desired(mapToGlobal(QPoint(width() - m_pKeyboardSprite->width() - 8, height() - m_pKeyboardSprite->height() - 8)), m_pKeyboardSprite->size());
+	QScreen* pScreen = QGuiApplication::screenAt(desired.center());
+	if (nullptr == pScreen)
+	{
+		pScreen = screen();
+	}
+	if (nullptr != pScreen)
+	{
+		QRect available = pScreen->availableGeometry();
+		desired.moveLeft((std::clamp)(desired.left(), available.left(), available.right() - desired.width() + 1));
+		desired.moveTop((std::clamp)(desired.top(), available.top(), available.bottom() - desired.height() + 1));
+	}
+	m_pKeyboardSprite->move(desired.topLeft());
+}
+
+void CMainWindow::moveEvent(QMoveEvent* pEvent)
+{
+	QMainWindow::moveEvent(pEvent);
+	if (nullptr != m_pKeyboardSprite)
+	{
+		PositionKeyboardSprite();
+	}
+}
+
+void CMainWindow::resizeEvent(QResizeEvent* pEvent)
+{
+	QMainWindow::resizeEvent(pEvent);
+	if (nullptr != m_pKeyboardSprite)
+	{
+		PositionKeyboardSprite();
+	}
 }

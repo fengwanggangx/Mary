@@ -20,6 +20,23 @@ CViewHQMarket::CViewHQMarket(QWidget* pParent) : QWidget(pParent), m_ui(std::mak
 	m_ui->setupUi(this);
 	m_ui->marketTabs->tabBar()->setDrawBase(false);
 	m_ui->marketTabs->tabBar()->setExpanding(false);
+	m_ui->marketTabs->tabBar()->setUsesScrollButtons(true);
+	m_nFixedTabCount = m_ui->marketTabs->count();
+	connect(m_ui->marketTabs, &QTabWidget::tabCloseRequested, this, [this](int nIndex)
+	{
+		if (m_nFixedTabCount > nIndex)
+		{
+			return;
+		}
+		bool bCurrent = m_ui->marketTabs->currentIndex() == nIndex;
+		QWidget* pPage = m_ui->marketTabs->widget(nIndex);
+		m_ui->marketTabs->removeTab(nIndex);
+		pPage->deleteLater();
+		if (bCurrent)
+		{
+			m_ui->marketTabs->setCurrentIndex(m_ui->marketTabs->count() > m_nFixedTabCount ? (std::min)(nIndex, m_ui->marketTabs->count() - 1) : 3);
+		}
+	});
 	m_ui->rankingTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	m_ui->rankingTable->horizontalHeader()->setFixedHeight(24);
 
@@ -320,4 +337,29 @@ void CViewHQMarket::RefreshQuotes(const CDataTableView& view)
 	m_ui->metric2Value->setText(bHasQuotes ? QString::number(nFalling) : "--");
 	m_ui->metric3Value->setText(bHasQuotes ? QString::number(nFlat) : "--");
 	m_ui->distributionChart->SetValues(bHasQuotes ? distribution : QVector<int>{});
+}
+
+void CViewHQMarket::OpenSecurityTab(const CSecurity& security)
+{
+	QString strKey = QString::fromStdString(security.String());
+	for (int nIndex = m_nFixedTabCount; m_ui->marketTabs->count() > nIndex; ++nIndex)
+	{
+		if (strKey == m_ui->marketTabs->widget(nIndex)->property("securityKey").toString())
+		{
+			m_ui->marketTabs->setCurrentIndex(nIndex);
+			return;
+		}
+	}
+	QWidget* pPage = new QWidget(m_ui->marketTabs);
+	pPage->setProperty("securityKey", strKey);
+	int nIndex = m_ui->marketTabs->addTab(pPage, QString::fromStdString(security.m_strCode + " " + security.m_strName));
+	QPushButton* pClose = new QPushButton(QStringLiteral("×"), m_ui->marketTabs->tabBar());
+	pClose->setFixedSize(18, 18);
+	pClose->setToolTip(QStringLiteral("关闭证券页"));
+	m_ui->marketTabs->tabBar()->setTabButton(nIndex, QTabBar::RightSide, pClose);
+	connect(pClose, &QPushButton::clicked, m_ui->marketTabs, [this, pPage]()
+	{
+		m_ui->marketTabs->tabCloseRequested(m_ui->marketTabs->indexOf(pPage));
+	});
+	m_ui->marketTabs->setCurrentIndex(nIndex);
 }

@@ -138,6 +138,7 @@
     <ClCompile Include="components\CServerSiteDialog.cpp" />
     <ClCompile Include="components\CServerSettingsDialog.cpp" />
     <ClCompile Include="components\CMainWindow.cpp" />
+    <ClCompile Include="components\CKeyboardSprite.cpp" />
     <ClCompile Include="components\CRiskSettings.cpp" />
     <ClCompile Include="components\CSystemSettings.cpp" />
     <ClCompile Include="components\CViewHQMarket.cpp" />
@@ -193,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="components\CMainWindow.h" />
+    <QtMoc Include="components\CKeyboardSprite.h" />
     <QtMoc Include="components\CViewStrategySettings.h" />
     <QtMoc Include="components\CStrategyEditDialog.h" />
     <QtMoc Include="components\CUITable.h" />

@@ -22,6 +22,7 @@ class CViewHQMarket final : public QWidget
   public:
 	explicit CViewHQMarket(QWidget* pParent = nullptr);
 	~CViewHQMarket() override;
+	void OpenSecurityTab(const CSecurity& security);
 
 private:
 	static void OnSectorListUpdate(QPointer<CViewHQMarket> pInstance, const CSectorListEvent& ev);
@@ -49,6 +50,7 @@ private:
 	QString m_strSelectedSectorCode;
 	bool m_bOverviewRequested{ false };
 	std::unique_ptr<Ui::CViewHQMarketClass> m_ui;
+	int m_nFixedTabCount{ 0 };
 };
 
 #endif

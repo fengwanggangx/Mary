@@ -115,6 +115,9 @@
     <ClCompile Include="components\CMainWindow.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
+    <ClCompile Include="components\CKeyboardSprite.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
     <ClCompile Include="components\CRiskSettings.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
@@ -295,6 +298,9 @@
       <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CMainWindow.h">
+      <Filter>Source Files\components</Filter>
+    </QtMoc>
+    <QtMoc Include="components\CKeyboardSprite.h">
       <Filter>Source Files\components</Filter>
     </QtMoc>
     <QtMoc Include="components\CViewStrategySettings.h">
