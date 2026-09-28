@@ -136,9 +136,9 @@
 													<number>1</number>
 												</property>
 												<item>
-													<widget class="QLabel" name="runningCountTitle">
-														<property name="text">
-															<string>已启用</string>
+											<widget class="QLabel" name="runningCountTitle">
+												<property name="text">
+													<string>运行中</string>
 														</property>
 													</widget>
 												</item>
@@ -309,15 +309,15 @@
 										</widget>
 									</item>
 									<item>
-										<widget class="QPushButton" name="initializeButton">
+										<widget class="QPushButton" name="pauseButton">
 											<property name="text">
-												<string>初始化</string>
+												<string>暂停</string>
 											</property>
 											<property name="enabled">
 												<bool>false</bool>
 											</property>
 											<property name="toolTip">
-												<string>等待服务器连接；运行控制需服务端协议支持</string>
+												<string>暂停运行中的策略</string>
 											</property>
 										</widget>
 									</item>
@@ -348,15 +348,15 @@
 										</widget>
 									</item>
 									<item>
-										<widget class="QPushButton" name="moreButton">
+										<widget class="QPushButton" name="deleteButton">
 											<property name="text">
-												<string>更多</string>
+												<string>删除</string>
 											</property>
 											<property name="enabled">
 												<bool>false</bool>
 											</property>
 											<property name="toolTip">
-												<string>等待服务器连接；运行控制需服务端协议支持</string>
+												<string>删除选中的策略配置</string>
 											</property>
 										</widget>
 									</item>

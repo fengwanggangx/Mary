@@ -191,6 +191,23 @@ namespace request
 		return req;
 	}
 
+	CRequest QueryStrategyRuntime()
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd("strategy_runtime_query");
+		return req;
+	}
+
+	CRequest ControlStrategy(const std::string& command, std::uint64_t id)
+	{
+		CRequest req;
+		req.SetType(CRequest::Type::STRATEGY);
+		req.SetCmd(command);
+		req.SetExtraData("strategy_id", std::to_string(id));
+		return req;
+	}
+
 	CRequest HeartBeat()
 	{
 		CRequest req;

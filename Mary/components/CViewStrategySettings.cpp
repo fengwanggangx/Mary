@@ -10,6 +10,7 @@
 #include <QMetaObject>
 #include <QTimer>
 #include <QMessageBox>
+#include <QStringList>
 
 namespace
 {
@@ -22,6 +23,35 @@ namespace
 			pTable->setItem(nRow, nColumn, new QTableWidgetItem(values[nColumn]));
 		}
 	}
+
+	QString RuntimeStatus(bool enabled, const CStrategyService::CRuntimeSnapshot* snapshot, bool stale)
+	{
+		if (!enabled)
+		{
+			return "已禁用";
+		}
+		if (stale)
+		{
+			return "状态已过期";
+		}
+		if (nullptr == snapshot)
+		{
+			return "运行状态未知";
+		}
+		switch (snapshot->m_state)
+		{
+		case 0: return "已创建";
+		case 1: return "已初始化";
+		case 2: return "启动中";
+		case 3: return "运行中";
+		case 4: return "暂停中";
+		case 5: return "已暂停";
+		case 6: return "停止中";
+		case 7: return "已停止";
+		case 8: return "异常";
+		default: return "运行状态未知";
+		}
+	}
 } // namespace
 
 CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent), m_ui(std::make_unique<Ui::CViewStrategySettingsClass>())
@@ -31,6 +61,33 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	m_pDetails = m_ui->detailsLabel;
 	m_pSearch = m_ui->searchEdit;
 	m_pStatus = m_ui->statusCombo;
+	m_pStatus->clear();
+	m_pStatus->addItems({ "全部状态", "已创建", "已初始化", "启动中", "运行中", "暂停中", "已暂停", "停止中", "已停止", "已禁用", "异常", "状态已过期", "运行状态未知" });
+	m_ui->runningCountTitle->setText("运行中");
+	m_ui->pauseButton->setText("暂停");
+	m_ui->deleteButton->setText("删除");
+	m_ui->newButton->setToolTip("新建策略配置");
+	m_ui->modifyButton->setToolTip("修改选中的策略配置");
+	m_ui->pauseButton->setToolTip("暂停运行中的策略");
+	m_ui->startButton->setToolTip("启动已初始化、已暂停或已停止的策略");
+	m_ui->stopButton->setToolTip("停止选中的策略");
+	m_ui->deleteButton->setToolTip("删除选中的策略配置");
+	m_ui->totalProfitCard->hide();
+	m_ui->todayProfitCard->hide();
+	m_ui->recentLogsLabel->hide();
+	m_ui->logsTable->hide();
+	for (int column : { 2, 4, 6, 7, 8 })
+	{
+		m_pInstances->setColumnHidden(column, true);
+	}
+	while (1 < m_ui->strategyTabs->count())
+	{
+		m_ui->strategyTabs->removeTab(1);
+	}
+	while (1 < m_ui->detailsTabs->count())
+	{
+		m_ui->detailsTabs->removeTab(1);
+	}
 	for (const auto& tabs : QList<QTabWidget*>{ m_ui->strategyTabs, m_ui->detailsTabs })
 	{
 		tabs->tabBar()->setDrawBase(false);
@@ -61,6 +118,32 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 			}, Qt::QueuedConnection);
 		}
 	});
+	m_nRuntimeToken = service.AddRuntimeHandler([safeThis](const CStrategyService::_TyRuntimeMap& runtimes, const std::string& strError)
+	{
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, runtimes, strError]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshRuntime(runtimes, strError);
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
+	m_nOperationToken = service.AddOperationHandler([safeThis](const CStrategyService::COperationResult& result)
+	{
+		if (!safeThis.isNull())
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis, result]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->HandleOperation(result);
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
 	connect(m_ui->newButton, &QPushButton::clicked, this, [this]()
 	{
 		EditStrategy(true);
@@ -69,23 +152,41 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	{
 		EditStrategy(false);
 	});
+	connect(m_ui->deleteButton, &QPushButton::clicked, this, &CViewStrategySettings::DeleteStrategy);
+	connect(m_ui->startButton, &QPushButton::clicked, this, [this]()
+	{
+		ControlStrategy("strategy_start");
+	});
+	connect(m_ui->pauseButton, &QPushButton::clicked, this, [this]()
+	{
+		ControlStrategy("strategy_pause");
+	});
+	connect(m_ui->stopButton, &QPushButton::clicked, this, [this]()
+	{
+		ControlStrategy("strategy_stop");
+	});
 	QTimer* timer = new QTimer(this);
-	connect(timer, &QTimer::timeout, this, &CViewStrategySettings::RefreshConnection);
+	connect(timer, &QTimer::timeout, this, [this]()
+	{
+		RefreshConnection();
+		if (CSession::InstanceRef().IsAuthenticated() && isVisible() && (0 == (++m_refreshTicks % 2)))
+		{
+			CStrategyService::InstanceRef().QueryRuntime();
+		}
+	});
 	timer->start(1000);
 	RefreshConnection();
 	if (service.IsCacheValid())
 	{
 		RefreshStrategies(service.GetStrategies(), std::string());
 	}
-	if (CSession::InstanceRef().IsAuthenticated() && !service.QueryStrategies())
-	{
-		m_ui->strategyCountHint->setText("策略查询未发送");
-	}
 }
 
 CViewStrategySettings::~CViewStrategySettings()
 {
 	CStrategyService::InstanceRef().RemoveQueryHandler(m_nQueryToken);
+	CStrategyService::InstanceRef().RemoveRuntimeHandler(m_nRuntimeToken);
+	CStrategyService::InstanceRef().RemoveOperationHandler(m_nOperationToken);
 }
 
 void CViewStrategySettings::RefreshFilter()
@@ -101,20 +202,25 @@ void CViewStrategySettings::RefreshFilter()
 		bMatches = bMatches && ((0 == m_pStatus->currentIndex()) || (m_pStatus->currentText() == m_pInstances->item(nRow, 5)->text()));
 		m_pInstances->setRowHidden(nRow, !bMatches);
 	}
+	if ((0 <= m_pInstances->currentRow()) && m_pInstances->isRowHidden(m_pInstances->currentRow()))
+	{
+		m_pInstances->clearSelection();
+	}
 	RefreshDetails();
 }
 
 void CViewStrategySettings::RefreshDetails()
 {
 	int nRow = m_pInstances->currentRow();
-	if ((0 > nRow) || m_pInstances->isRowHidden(nRow))
+	if ((0 > nRow) || (m_strategies.size() <= static_cast<std::size_t>(nRow)) || m_pInstances->isRowHidden(nRow))
 	{
 		m_pDetails->setText(QStringLiteral("请选择策略实例"));
 		m_ui->parametersTable->setRowCount(0);
 		RefreshConnection();
 		return;
 	}
-	m_pDetails->setText(QString("%1 · %2 · %3\n配置已加载；运行状态、持仓和收益暂无协议数据").arg(m_pInstances->item(nRow, 0)->text(), m_pInstances->item(nRow, 1)->text(), m_pInstances->item(nRow, 3)->text()));
+	m_selectedStrategyId = m_strategies[nRow].strategy_id();
+	m_pDetails->setText(QString("%1 · %2 · %3\n配置%4；运行状态由服务器快照提供").arg(m_pInstances->item(nRow, 0)->text(), m_pInstances->item(nRow, 1)->text(), m_pInstances->item(nRow, 3)->text(), m_bConfigStale ? "已过期" : "已加载"));
 	m_ui->parametersTable->setRowCount(0);
 	for (const auto& [strName, strValue] : m_strategies[nRow].parameters())
 	{
@@ -125,32 +231,85 @@ void CViewStrategySettings::RefreshDetails()
 
 void CViewStrategySettings::RefreshStrategies(const CStrategyService::_TyStrategyList& strategies, const std::string& strError)
 {
+	if (!CSession::InstanceRef().IsAuthenticated() && strError.empty())
+	{
+		return;
+	}
 	if (!strError.empty())
 	{
-		m_ui->strategyCountHint->setText(QString::fromStdString(strError));
-		m_pInstances->setRowCount(0);
-		m_strategies.clear();
-		m_ui->strategyCountValue->setText("--");
+		m_bConfigStale = true;
+		m_ui->strategyCountHint->setText("配置已过期：" + QString::fromStdString(strError));
 		RefreshDetails();
 		return;
 	}
+	m_bConfigStale = false;
 	m_strategies = strategies;
-	m_pInstances->setRowCount(0);
-	for (const auto& strategy : m_strategies)
+	m_ui->strategyCountHint->setText("服务器配置");
+	RefreshRows();
+}
+
+void CViewStrategySettings::RefreshRuntime(const CStrategyService::_TyRuntimeMap& runtimes, const std::string& strError)
+{
+	if (!CSession::InstanceRef().IsAuthenticated() && strError.empty())
 	{
+		return;
+	}
+	if (!strError.empty())
+	{
+		m_bRuntimeStale = true;
+		m_ui->runningCountHint->setText("运行状态已过期：" + QString::fromStdString(strError));
+	}
+	else
+	{
+		m_runtimes = runtimes;
+		m_bRuntimeStale = false;
+		m_ui->runningCountHint->setText("服务器运行快照");
+	}
+	RefreshRows();
+}
+
+void CViewStrategySettings::RefreshRows()
+{
+	m_pInstances->setRowCount(0);
+	int selectedRow = -1;
+	int runningCount = 0;
+	for (std::size_t index = 0; index < m_strategies.size(); ++index)
+	{
+		const request::StrategyInfo& strategy = m_strategies[index];
+		const auto mIter = m_runtimes.find(strategy.strategy_id());
+		const CStrategyService::CRuntimeSnapshot* snapshot = m_runtimes.end() == mIter ? nullptr : &mIter->second;
+		if (strategy.enabled() && !m_bRuntimeStale && (nullptr != snapshot) && (3 == snapshot->m_state))
+		{
+			++runningCount;
+		}
 		QStringList securities;
 		for (const auto& subscription : strategy.subscriptions())
 		{
 			securities.append(QString::fromStdString(subscription.security() + "." + subscription.exchange()));
 		}
-		AppendRow(m_pInstances, { QString::fromStdString(strategy.strategy_name()), QString::fromStdString(strategy.strategy_type()), "--", securities.join(", "), "--", strategy.enabled() ? "已启用" : "已禁用", "--", "--", "--" });
+		AppendRow(m_pInstances, { QString::fromStdString(strategy.strategy_name()), QString::fromStdString(strategy.strategy_type()), QString(), securities.join(", "), QString(), RuntimeStatus(strategy.enabled(), snapshot, m_bRuntimeStale), QString(), QString(), QString() });
+		if (m_selectedStrategyId == strategy.strategy_id())
+		{
+			selectedRow = static_cast<int>(index);
+		}
 	}
 	m_ui->strategyCountValue->setText(QString::number(m_strategies.size()));
-	m_ui->strategyCountHint->setText("服务器配置");
+	m_ui->runningCountValue->setText((m_bRuntimeStale || m_bConfigStale) ? "--" : QString::number(runningCount));
 	RefreshFilter();
-	if (0 < m_pInstances->rowCount())
+	if ((0 <= selectedRow) && !m_pInstances->isRowHidden(selectedRow))
 	{
-		m_pInstances->selectRow(0);
+		m_pInstances->selectRow(selectedRow);
+	}
+	else
+	{
+		for (int row = 0; row < m_pInstances->rowCount(); ++row)
+		{
+			if (!m_pInstances->isRowHidden(row))
+			{
+				m_pInstances->selectRow(row);
+				break;
+			}
+		}
 	}
 	RefreshDetails();
 }
@@ -158,10 +317,62 @@ void CViewStrategySettings::RefreshStrategies(const CStrategyService::_TyStrateg
 void CViewStrategySettings::RefreshConnection()
 {
 	bool bConnected = CSession::InstanceRef().IsAuthenticated();
-	m_ui->newButton->setEnabled(bConnected);
+	if (bConnected && !m_bWasConnected)
+	{
+		CStrategyService::InstanceRef().QueryStrategies();
+		CStrategyService::InstanceRef().QueryRuntime();
+	}
+	if (!bConnected && m_bWasConnected)
+	{
+		m_bWasConnected = false;
+		m_bConfigStale = true;
+		m_bRuntimeStale = true;
+		m_pendingOperations.clear();
+		m_ui->strategyCountHint->setText("连接中断，配置已过期");
+		m_ui->runningCountHint->setText("连接中断，运行状态已过期");
+		RefreshRows();
+	}
+	m_bWasConnected = bConnected;
+	bool bIdle = m_pendingOperations.empty();
+	m_ui->newButton->setEnabled(bConnected && bIdle);
 	int nRow = m_pInstances->currentRow();
-	m_ui->modifyButton->setEnabled(bConnected && (0 <= nRow) && (m_strategies.size() > static_cast<std::size_t>(nRow)) && !m_pInstances->isRowHidden(nRow));
-	m_ui->runtimeLabel->setText(bConnected ? "连接正常；运行状态、信号、持仓和收益暂无协议数据" : "连接不可用，等待登录或重连");
+	bool bSelected = (0 <= nRow) && (m_strategies.size() > static_cast<std::size_t>(nRow)) && !m_pInstances->isRowHidden(nRow);
+	m_ui->modifyButton->setEnabled(bConnected && bIdle && bSelected && !m_bConfigStale);
+	m_ui->deleteButton->setEnabled(bConnected && bIdle && bSelected && !m_bConfigStale);
+	m_ui->startButton->setEnabled(false);
+	m_ui->pauseButton->setEnabled(false);
+	m_ui->stopButton->setEnabled(false);
+	if (!bConnected)
+	{
+		m_ui->runtimeLabel->setText("连接不可用，等待登录或重连");
+		return;
+	}
+	if (!bSelected)
+	{
+		m_ui->runtimeLabel->setText("请选择策略实例");
+		return;
+	}
+	const request::StrategyInfo& strategy = m_strategies[nRow];
+	const auto mIter = m_runtimes.find(strategy.strategy_id());
+	const CStrategyService::CRuntimeSnapshot* snapshot = m_runtimes.end() == mIter ? nullptr : &mIter->second;
+	QString status = RuntimeStatus(strategy.enabled(), snapshot, m_bRuntimeStale);
+	QString runtimeText = status;
+	if ((nullptr != snapshot) && !m_bRuntimeStale)
+	{
+		runtimeText += QString("\n行情%1 · 待处理事件 %2 · 活跃委托 %3").arg(snapshot->m_marketAvailable ? "可用" : "不可用").arg(snapshot->m_queueLength).arg(snapshot->m_activeOrders);
+		if (!snapshot->m_lastError.empty())
+		{
+			runtimeText += "\n最近错误：" + QString::fromStdString(snapshot->m_lastError);
+		}
+	}
+	m_ui->runtimeLabel->setText(runtimeText);
+	if (!bIdle || m_bRuntimeStale || !strategy.enabled() || (nullptr == snapshot))
+	{
+		return;
+	}
+	m_ui->startButton->setEnabled((1 == snapshot->m_state) || (5 == snapshot->m_state) || (7 == snapshot->m_state));
+	m_ui->pauseButton->setEnabled(3 == snapshot->m_state);
+	m_ui->stopButton->setEnabled((2 == snapshot->m_state) || (3 == snapshot->m_state) || (4 == snapshot->m_state) || (5 == snapshot->m_state) || (6 == snapshot->m_state) || (8 == snapshot->m_state));
 }
 
 void CViewStrategySettings::EditStrategy(bool bNew)
@@ -185,13 +396,78 @@ void CViewStrategySettings::EditStrategy(bool bNew)
 		return;
 	}
 	request::StrategyInfo strategy = dialog.GetStrategy();
-	bool bSent = bNew ? CStrategyService::InstanceRef().AddStrategy(strategy) : CStrategyService::InstanceRef().ModifyStrategy(strategy);
-	if (!bSent)
+	std::uint64_t requestId = bNew ? CStrategyService::InstanceRef().AddStrategy(strategy) : CStrategyService::InstanceRef().ModifyStrategy(strategy);
+	if (0 == requestId)
 	{
 		QMessageBox::warning(this, "请求未发送", "请检查连接及策略配置");
 	}
 	else
 	{
+		m_pendingOperations.emplace(requestId, bNew ? "新建" : "修改");
 		m_ui->strategyCountHint->setText("配置请求已发送，等待服务器确认");
+		RefreshConnection();
 	}
+}
+
+void CViewStrategySettings::DeleteStrategy()
+{
+	int row = m_pInstances->currentRow();
+	if (!CSession::InstanceRef().IsAuthenticated() || (0 > row) || (m_strategies.size() <= static_cast<std::size_t>(row)))
+	{
+		return;
+	}
+	const request::StrategyInfo& strategy = m_strategies[row];
+	if (QMessageBox::Yes != QMessageBox::question(this, "删除策略", "确定删除策略“" + QString::fromStdString(strategy.strategy_name()) + "”？", QMessageBox::Yes | QMessageBox::No, QMessageBox::No))
+	{
+		return;
+	}
+	std::uint64_t requestId = CStrategyService::InstanceRef().DeleteStrategy(strategy.strategy_id());
+	if (0 == requestId)
+	{
+		QMessageBox::warning(this, "请求未发送", "请检查连接状态");
+		return;
+	}
+	m_pendingOperations.emplace(requestId, "删除");
+	m_ui->strategyCountHint->setText("删除请求已发送，等待服务器确认");
+	RefreshConnection();
+}
+
+void CViewStrategySettings::ControlStrategy(const std::string& command)
+{
+	int row = m_pInstances->currentRow();
+	if (!CSession::InstanceRef().IsAuthenticated() || (0 > row) || (m_strategies.size() <= static_cast<std::size_t>(row)))
+	{
+		return;
+	}
+	std::uint64_t requestId = CStrategyService::InstanceRef().ControlStrategy(command, m_strategies[row].strategy_id());
+	if (0 == requestId)
+	{
+		QMessageBox::warning(this, "请求未发送", "请检查连接和策略状态");
+		return;
+	}
+	m_pendingOperations.emplace(requestId, ("strategy_start" == command) ? "启动" : (("strategy_pause" == command) ? "暂停" : "停止"));
+	m_ui->strategyCountHint->setText("运行控制请求已发送，等待服务器确认");
+	RefreshConnection();
+}
+
+void CViewStrategySettings::HandleOperation(const CStrategyService::COperationResult& result)
+{
+	const auto mIter = m_pendingOperations.find(result.m_requestId);
+	if (m_pendingOperations.end() == mIter)
+	{
+		return;
+	}
+	QString action = mIter->second;
+	m_pendingOperations.erase(mIter);
+	if (result.m_success)
+	{
+		m_ui->strategyCountHint->setText(action + "已确认");
+	}
+	else
+	{
+		QString error = QString::fromStdString(result.m_error);
+		m_ui->strategyCountHint->setText(action + "失败：" + error);
+		QMessageBox::warning(this, action + "失败", error);
+	}
+	RefreshConnection();
 }
