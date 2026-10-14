@@ -1,12 +1,12 @@
-#include "CStrategyService.h"
+﻿#include "CStrategyService.h"
 
 #include "../../system/CSession.h"
 
-#include <utility>
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <system_error>
+#include <utility>
 
 namespace
 {
@@ -20,7 +20,7 @@ namespace
 		std::from_chars_result parsed = std::from_chars(value.data(), end, result);
 		return (std::errc() == parsed.ec) && (end == parsed.ptr);
 	}
-}
+} // namespace
 
 CStrategyService::CStrategyService() = default;
 
@@ -39,7 +39,6 @@ void CStrategyService::Initialize()
 			if (SessionState::Ready == state)
 			{
 				QueryStrategies();
-				QueryRuntime();
 			}
 		});
 	});

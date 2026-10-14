@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -151,6 +151,8 @@
     <ClCompile Include="components\CViewAShare.cpp" />
     <ClCompile Include="components\CDataTableModel.cpp" />
     <ClCompile Include="components\CUICurve.cpp" />
+    <ClCompile Include="components\CViewTradingAccounts.cpp" />
+    <ClCompile Include="service\account\CTradingAccountService.cpp" />
     <ClCompile Include="components\CViewStrategySettings.cpp" />
     <ClCompile Include="components\CStrategyEditDialog.cpp" />
     <ClCompile Include="system\CHostMgr.cpp" />
@@ -271,6 +273,8 @@
     <ClInclude Include="system\CSession.h" />
     <ClInclude Include="request\RequestCenter.h" />
     <ClInclude Include="request\MarketTypes.h" />
+    <ClInclude Include="components\CViewTradingAccounts.h" />
+    <ClInclude Include="service\account\CTradingAccountService.h" />
     <ClInclude Include="service\strategy\CStrategyService.h" />
     <ClInclude Include="service\hqmarket\CHQMarketService.h" />
     <ClInclude Include="service\hqmarket\defines_hqmarket.h" />

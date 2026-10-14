@@ -158,3 +158,5 @@ QLabel[strategyMetric="true"] { font-size: 23px; font-weight: 600; }
 QLabel[strategyMetric="true"][rising="true"] { color: #ef4354; }
 QLabel[strategyMetric="true"][falling="true"] { color: #00bfa5; }
 CMainWindow[darkTheme="true"] CViewStrategySettings QFrame[summaryCard="true"] { background: #131f32; border-color: #24334a; }
+
+QWidget#tradingAccountsPage QPushButton#addButton:disabled { background: palette(button); color: palette(button-text); border-color: palette(mid); }

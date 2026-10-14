@@ -1,4 +1,4 @@
-#include "CSession.h"
+﻿#include "CSession.h"
 
 #include "../network/CTcpClient.h"
 
@@ -89,6 +89,7 @@ void CSession::Stop()
 
 	m_stopping.store(true);
 	m_state.store(SessionState::Stopping);
+	NotifyState(SessionState::Stopping, "客户端正在关闭");
 	m_cv_loops.notify_all();
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_client);
@@ -234,7 +235,9 @@ void CSession::ConnectionLoop()
 		}
 		std::unique_lock<std::mutex> lock(m_mtx_loops);
 		m_cv_loops.wait_for(lock, std::chrono::seconds(reconnectSeconds), [this]()
-							{ return m_stopping.load(); });
+		{
+			return m_stopping.load();
+		});
 		reconnectSeconds = bAuthed ? 1 : (std::min)(m_maxReconnectSeconds, reconnectSeconds * 2);
 	}
 	NotifyState(SessionState::Disconnected, "已关闭");
@@ -247,7 +250,9 @@ void CSession::MaintenanceLoop()
 	{
 		std::unique_lock<std::mutex> lck(m_mtx_loops);
 		m_cv_loops.wait_for(lck, std::chrono::milliseconds(250), [this]()
-							{ return m_stopping.load(); });
+		{
+			return m_stopping.load();
+		});
 		lck.unlock();
 		if (m_stopping.load())
 		{

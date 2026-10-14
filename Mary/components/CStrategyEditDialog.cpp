@@ -1,4 +1,7 @@
-#include "CStrategyEditDialog.h"
+﻿#include "CStrategyEditDialog.h"
+#include "../service/account/CTradingAccountService.h"
+#include <QComboBox>
+#include <QFormLayout>
 
 #include "ui_CStrategyEditDialog.h"
 
@@ -19,6 +22,16 @@ CStrategyEditDialog::~CStrategyEditDialog()
 
 void CStrategyEditDialog::InitializeUI()
 {
+	m_accounts = new QComboBox(this);
+	for (const auto& account : CTradingAccountService::InstanceRef().GetAccounts())
+	{
+		m_accounts->addItem(QString::fromStdString(account.name()), QVariant::fromValue<qulonglong>(account.account_id()));
+	}
+	if (0 == m_accounts->count())
+	{
+		m_accounts->addItem(CTradingAccountService::InstanceRef().IsSupported() ? "请先加载或新增交易账户" : "默认账户（旧版 Wind）", QVariant::fromValue<qulonglong>(0));
+	}
+	ui->basicLayout->addRow("交易账户", m_accounts);
 	ui->parameterTable->horizontalHeader()->setStretchLastSection(true);
 	ui->subscriptionTable->horizontalHeader()->setStretchLastSection(true);
 	connect(ui->addParameterButton, &QPushButton::clicked, this, &CStrategyEditDialog::OnAddParameter);
@@ -32,6 +45,17 @@ void CStrategyEditDialog::InitializeUI()
 void CStrategyEditDialog::SetStrategy(const request::StrategyInfo& strategy)
 {
 	m_strategyId = strategy.strategy_id();
+	std::uint64_t accountId = 0 == strategy.account_id() ? 1 : strategy.account_id();
+	int accountIndex = m_accounts->findData(QVariant::fromValue<qulonglong>(accountId));
+	if ((0 > accountIndex) && CTradingAccountService::InstanceRef().IsSupported())
+	{
+		m_accounts->addItem("账户 #" + QString::number(accountId), QVariant::fromValue<qulonglong>(accountId));
+		accountIndex = m_accounts->count() - 1;
+	}
+	if (0 <= accountIndex)
+	{
+		m_accounts->setCurrentIndex(accountIndex);
+	}
 	ui->nameEdit->setText(QString::fromStdString(strategy.strategy_name()));
 	ui->typeCombo->setCurrentText(QString::fromStdString(strategy.strategy_type()));
 	ui->queueLimitSpin->setValue(static_cast<int>(strategy.event_queue_limit()));
@@ -60,6 +84,7 @@ request::StrategyInfo CStrategyEditDialog::GetStrategy() const
 {
 	request::StrategyInfo strategy;
 	strategy.set_strategy_id(m_strategyId);
+	strategy.set_account_id(m_accounts->currentData().toULongLong());
 	strategy.set_strategy_name(ui->nameEdit->text().trimmed().toStdString());
 	strategy.set_strategy_type(ui->typeCombo->currentText().trimmed().toStdString());
 	strategy.set_event_queue_limit(static_cast<std::uint32_t>(ui->queueLimitSpin->value()));
@@ -117,10 +142,21 @@ void CStrategyEditDialog::OnRemoveSubscription()
 void CStrategyEditDialog::OnAccept()
 {
 	request::StrategyInfo strategy = GetStrategy();
+	if (CTradingAccountService::InstanceRef().IsSupported() && (0 == strategy.account_id()))
+	{
+		QMessageBox::warning(this, "缺少交易账户", "请先在交易账户页加载或新增账户");
+		return;
+	}
 	if (strategy.strategy_name().empty() || strategy.strategy_type().empty() || (0 == strategy.subscriptions_size()))
 	{
 		QMessageBox::warning(this, "参数校验", "请填写策略名称、策略类型，并至少添加一个订阅标的。");
 		return;
 	}
 	accept();
+}
+
+void CStrategyEditDialog::SetAccountLocked(bool locked)
+{
+	m_accounts->setEnabled(!locked);
+	m_accounts->setToolTip(locked ? "运行期间不能更换交易账户" : "");
 }

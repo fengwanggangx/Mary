@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -76,6 +76,9 @@
     </Filter>
     <Filter Include="Source Files\service\hqmarket">
       <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa101}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\service\account">
+      <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa103}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\service\strategy">
       <UniqueIdentifier>{8e3d86c0-1f72-4f31-9a82-389a821aa102}</UniqueIdentifier>
@@ -288,6 +291,12 @@
     </ClCompile>
     <ClCompile Include="database\CAccountStorager.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="components\CViewTradingAccounts.cpp">
+      <Filter>Source Files\components</Filter>
+    </ClCompile>
+    <ClCompile Include="service\account\CTradingAccountService.cpp">
+      <Filter>Source Files\service\account</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -581,6 +590,12 @@
     </ClInclude>
     <ClInclude Include="database\CAccountStorager.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="components\CViewTradingAccounts.h">
+      <Filter>Source Files\components</Filter>
+    </ClInclude>
+    <ClInclude Include="service\account\CTradingAccountService.h">
+      <Filter>Source Files\service\account</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

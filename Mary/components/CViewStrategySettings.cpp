@@ -1,16 +1,18 @@
-#include "CViewStrategySettings.h"
-#include "CStrategyEditDialog.h"
+﻿#include "CViewStrategySettings.h"
 #include "../system/CSession.h"
+#include "CStrategyEditDialog.h"
+#include "CViewTradingAccounts.h"
 #include "ui_CViewStrategySettings.h"
+#include <QTabWidget>
 
 #include <QHeaderView>
-#include <QTableWidget>
-#include <QTabBar>
-#include <QPointer>
-#include <QMetaObject>
-#include <QTimer>
 #include <QMessageBox>
+#include <QMetaObject>
+#include <QPointer>
 #include <QStringList>
+#include <QTabBar>
+#include <QTableWidget>
+#include <QTimer>
 
 namespace
 {
@@ -40,16 +42,26 @@ namespace
 		}
 		switch (snapshot->m_state)
 		{
-		case 0: return "已创建";
-		case 1: return "已初始化";
-		case 2: return "启动中";
-		case 3: return "运行中";
-		case 4: return "暂停中";
-		case 5: return "已暂停";
-		case 6: return "停止中";
-		case 7: return "已停止";
-		case 8: return "异常";
-		default: return "运行状态未知";
+		case 0:
+			return "已创建";
+		case 1:
+			return "已初始化";
+		case 2:
+			return "启动中";
+		case 3:
+			return "运行中";
+		case 4:
+			return "暂停中";
+		case 5:
+			return "已暂停";
+		case 6:
+			return "停止中";
+		case 7:
+			return "已停止";
+		case 8:
+			return "异常";
+		default:
+			return "运行状态未知";
 		}
 	}
 } // namespace
@@ -76,7 +88,7 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	m_ui->todayProfitCard->hide();
 	m_ui->recentLogsLabel->hide();
 	m_ui->logsTable->hide();
-	for (int column : { 2, 4, 6, 7, 8 })
+	for (int column : { 4, 6, 7, 8 })
 	{
 		m_pInstances->setColumnHidden(column, true);
 	}
@@ -84,6 +96,19 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	{
 		m_ui->strategyTabs->removeTab(1);
 	}
+	m_pInstances->horizontalHeaderItem(2)->setText("交易账户");
+	CViewTradingAccounts* accountsPage = new CViewTradingAccounts(m_ui->strategyTabs);
+	m_ui->strategyTabs->insertTab(0, accountsPage, "交易账户");
+	m_ui->strategyTabs->setCurrentIndex(0);
+	accountsPage->SetStrategyNavigation([this](std::uint64_t strategyId)
+	{
+		m_ui->strategyTabs->setCurrentWidget(m_ui->instancesPage);
+		m_pSearch->clear();
+		m_pStatus->setCurrentIndex(0);
+		m_selectedStrategyId = strategyId;
+		RefreshRows();
+		CStrategyService::InstanceRef().QueryStrategies();
+	});
 	while (1 < m_ui->detailsTabs->count())
 	{
 		m_ui->detailsTabs->removeTab(1);
@@ -99,12 +124,32 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	}
 	m_ui->detailSplitter->setStretchFactor(0, 1);
 	m_ui->detailSplitter->setStretchFactor(1, 1);
+	connect(m_ui->strategyTabs, &QTabWidget::currentChanged, this, [this]()
+	{
+		if (m_ui->instancesPage->isVisible() && CSession::InstanceRef().IsAuthenticated())
+		{
+			CStrategyService::InstanceRef().QueryRuntime();
+		}
+	});
 	connect(m_pSearch, &QLineEdit::textChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pStatus, &QComboBox::currentIndexChanged, this, &CViewStrategySettings::RefreshFilter);
 	connect(m_pInstances, &QTableWidget::itemSelectionChanged, this, &CViewStrategySettings::RefreshDetails);
 	CStrategyService& service = CStrategyService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewStrategySettings> safeThis(this);
+	m_nAccountToken = CTradingAccountService::InstanceRef().Subscribe([safeThis](const CTradingAccountService::CResult& result)
+	{
+		if (!safeThis.isNull() && (("account_query" == result.m_command) || ("account_session_reset" == result.m_command)))
+		{
+			QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
+			{
+				if (!safeThis.isNull())
+				{
+					safeThis->RefreshRows();
+				}
+			}, Qt::QueuedConnection);
+		}
+	});
 	m_nQueryToken = service.AddQueryHandler([safeThis](const CStrategyService::_TyStrategyList& strategies, const std::string& strError)
 	{
 		if (!safeThis.isNull())
@@ -169,7 +214,7 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	connect(timer, &QTimer::timeout, this, [this]()
 	{
 		RefreshConnection();
-		if (CSession::InstanceRef().IsAuthenticated() && isVisible() && (0 == (++m_refreshTicks % 2)))
+		if (CSession::InstanceRef().IsAuthenticated() && m_ui->instancesPage->isVisible() && (0 == (++m_refreshTicks % 2)))
 		{
 			CStrategyService::InstanceRef().QueryRuntime();
 		}
@@ -184,6 +229,7 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 
 CViewStrategySettings::~CViewStrategySettings()
 {
+	CTradingAccountService::InstanceRef().Unsubscribe(m_nAccountToken);
 	CStrategyService::InstanceRef().RemoveQueryHandler(m_nQueryToken);
 	CStrategyService::InstanceRef().RemoveRuntimeHandler(m_nRuntimeToken);
 	CStrategyService::InstanceRef().RemoveOperationHandler(m_nOperationToken);
@@ -273,6 +319,7 @@ void CViewStrategySettings::RefreshRows()
 	m_pInstances->setRowCount(0);
 	int selectedRow = -1;
 	int runningCount = 0;
+	std::vector<request::TradingAccountInfo> accounts = CTradingAccountService::InstanceRef().GetAccounts();
 	for (std::size_t index = 0; index < m_strategies.size(); ++index)
 	{
 		const request::StrategyInfo& strategy = m_strategies[index];
@@ -287,7 +334,16 @@ void CViewStrategySettings::RefreshRows()
 		{
 			securities.append(QString::fromStdString(subscription.security() + "." + subscription.exchange()));
 		}
-		AppendRow(m_pInstances, { QString::fromStdString(strategy.strategy_name()), QString::fromStdString(strategy.strategy_type()), QString(), securities.join(", "), QString(), RuntimeStatus(strategy.enabled(), snapshot, m_bRuntimeStale), QString(), QString(), QString() });
+		QString accountName = "账户 #" + QString::number(0 == strategy.account_id() ? 1 : strategy.account_id());
+		for (const auto& account : accounts)
+		{
+			if (account.account_id() == (0 == strategy.account_id() ? 1 : strategy.account_id()))
+			{
+				accountName = QString::fromStdString(account.name());
+				break;
+			}
+		}
+		AppendRow(m_pInstances, { QString::fromStdString(strategy.strategy_name()), QString::fromStdString(strategy.strategy_type()), accountName, securities.join(", "), QString(), RuntimeStatus(strategy.enabled(), snapshot, m_bRuntimeStale), QString(), QString(), QString() });
 		if (m_selectedStrategyId == strategy.strategy_id())
 		{
 			selectedRow = static_cast<int>(index);
@@ -320,7 +376,10 @@ void CViewStrategySettings::RefreshConnection()
 	if (bConnected && !m_bWasConnected)
 	{
 		CStrategyService::InstanceRef().QueryStrategies();
-		CStrategyService::InstanceRef().QueryRuntime();
+		if (m_ui->instancesPage->isVisible())
+		{
+			CStrategyService::InstanceRef().QueryRuntime();
+		}
 	}
 	if (!bConnected && m_bWasConnected)
 	{
@@ -390,6 +449,8 @@ void CViewStrategySettings::EditStrategy(bool bNew)
 			return;
 		}
 		dialog.SetStrategy(m_strategies[nRow]);
+		const auto mIter = m_runtimes.find(m_strategies[nRow].strategy_id());
+		dialog.SetAccountLocked((m_runtimes.end() != mIter) && ((2 == mIter->second.m_state) || (3 == mIter->second.m_state) || (4 == mIter->second.m_state) || (6 == mIter->second.m_state)));
 	}
 	if (QDialog::Accepted != dialog.exec())
 	{
