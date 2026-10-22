@@ -1,4 +1,4 @@
-﻿#include "CTradingAccountService.h"
+#include "CTradingAccountService.h"
 #include "../../system/CSession.h"
 #include <algorithm>
 CTradingAccountService::CTradingAccountService() = default;
@@ -35,7 +35,7 @@ void CTradingAccountService::Unsubscribe(_TyCallbackId token)
 {
 	m_results.Unsubscribe(token);
 }
-std::vector<request::TradingAccountInfo> CTradingAccountService::GetAccounts() const
+std::vector<request::TradeAccountRecord> CTradingAccountService::GetAccounts() const
 {
 	std::lock_guard<std::mutex> lock(m_mtx_state);
 	return m_accounts;
@@ -50,23 +50,34 @@ std::uint64_t CTradingAccountService::GetGeneration() const
 	std::lock_guard<std::mutex> lock(m_mtx_state);
 	return m_generation;
 }
-std::uint64_t CTradingAccountService::Send(const std::string& command, std::uint64_t accountId, const request::TradingAccountInfo* info)
+std::uint64_t CTradingAccountService::Send(const std::string& command, std::uint64_t accountId, const std::unordered_map<std::string, std::string>& extra)
 {
 	Initialize();
 	if (!CSession::InstanceRef().IsAuthenticated())
 	{
 		return 0;
 	}
+	if (("account_query" == command) && ((0 != accountId) || !extra.empty()))
+	{
+		return 0;
+	}
 	CRequest req;
-	req.SetType(CRequest::Type::ACCOUNT);
-	req.SetCmd(command);
+	if ("account_query" == command)
+	{
+		req.SetType(CRequest::Type::TRADE_ACCOUNT_QUERY);
+	}
+	else
+	{
+		req.SetType("trade_account_login" == command ? CRequest::Type::TRADE_ACCOUNT_LOGIN : CRequest::Type::ACCOUNT);
+		req.SetCmd(command);
+	}
 	if (0 != accountId)
 	{
 		req.SetExtraData("account_id", std::to_string(accountId));
 	}
-	if (nullptr != info)
+	for (const auto& item : extra)
 	{
-		req.SetData(*info);
+		req.SetExtraData(item.first, item.second);
 	}
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_state);
@@ -110,7 +121,7 @@ void CTradingAccountService::OnResponse(const CRequest& response)
 		std::optional<std::pair<int, std::string>> error = response.GetErrorInfo();
 		if (error.has_value())
 		{
-			result.m_error = error->second;
+			result.m_error = error->second.empty() ? "账户请求失败，错误码：" + std::to_string(error->first) : error->second;
 			if (("account_query" == result.m_command) && ((std::string::npos != result.m_error.find("unsupported")) || (std::string::npos != result.m_error.find("unknown"))))
 			{
 				m_supported = false;
@@ -121,7 +132,7 @@ void CTradingAccountService::OnResponse(const CRequest& response)
 		{
 			result.m_error = "账户响应缺少有效数据";
 		}
-		else if (("account_add" == result.m_command) || ("account_modify" == result.m_command) || ("account_connect" == result.m_command) || ("account_disconnect" == result.m_command))
+		else if (("trade_account_login" == result.m_command) || ("account_add" == result.m_command) || ("account_modify" == result.m_command) || ("account_connect" == result.m_command) || ("account_disconnect" == result.m_command))
 		{
 			std::erase_if(m_pending, [](const auto& item)
 			{
@@ -139,7 +150,7 @@ void CTradingAccountService::OnResponse(const CRequest& response)
 			else
 			{
 				m_accounts.assign(result.m_data.account_list().accounts().begin(), result.m_data.account_list().accounts().end());
-				std::sort(m_accounts.begin(), m_accounts.end(), [](const request::TradingAccountInfo& left, const request::TradingAccountInfo& right)
+				std::sort(m_accounts.begin(), m_accounts.end(), [](const request::TradeAccountRecord& left, const request::TradeAccountRecord& right)
 				{
 					return left.account_id() < right.account_id();
 				});

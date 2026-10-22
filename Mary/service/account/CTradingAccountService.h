@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../../basic/TMessagePump.h"
 #include "../../common/ISingleton.h"
 #include "../../request/request.h"
@@ -23,8 +23,8 @@ class CTradingAccountService final : public ISingleton<CTradingAccountService>
 	void Initialize();
 	_TyCallbackId Subscribe(_TyHandler&& handler);
 	void Unsubscribe(_TyCallbackId token);
-	std::uint64_t Send(const std::string& command, std::uint64_t accountId = 0, const request::TradingAccountInfo* info = nullptr);
-	std::vector<request::TradingAccountInfo> GetAccounts() const;
+	std::uint64_t Send(const std::string& command, std::uint64_t accountId = 0, const std::unordered_map<std::string, std::string>& extra = {});
+	std::vector<request::TradeAccountRecord> GetAccounts() const;
 	bool IsSupported() const;
 	std::uint64_t GetGeneration() const;
 
@@ -38,7 +38,7 @@ class CTradingAccountService final : public ISingleton<CTradingAccountService>
 	std::once_flag m_initializeFlag;
 	mutable std::mutex m_mtx_state;
 	std::unordered_map<std::uint64_t, CPending> m_pending;
-	std::vector<request::TradingAccountInfo> m_accounts;
+	std::vector<request::TradeAccountRecord> m_accounts;
 	bool m_supported{ true };
 	std::uint64_t m_generation{ 0 };
 	TMessagePump<CResult> m_results;

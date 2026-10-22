@@ -1,13 +1,12 @@
-﻿#include "CViewTradingAccounts.h"
+#include "CViewTradingAccounts.h"
+#include "CTradeAccountLoginDialog.h"
+#include <QInputDialog>
 #include "../service/strategy/CStrategyService.h"
 #include "../system/CSession.h"
 #include <QAbstractTableModel>
 #include <QComboBox>
 #include <QDateTime>
 #include <QDialog>
-#include <QDialogButtonBox>
-#include <QDoubleSpinBox>
-#include <QFormLayout>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -27,10 +26,9 @@
 #include <QTableWidget>
 #include <QTimer>
 #include <QVBoxLayout>
-#include <cmath>
 namespace
 {
-	QString AccountState(const request::TradingAccountInfo& info)
+	QString AccountState(const request::TradeAccountRecord& info)
 	{
 		switch (info.state())
 		{
@@ -134,7 +132,7 @@ class CTradingAccountModel final : public QAbstractTableModel
 		{
 			return QVariant();
 		}
-		const request::TradingAccountInfo& info = m_rows[index.row()];
+		const request::TradeAccountRecord& info = m_rows[index.row()];
 		if (Qt::ToolTipRole == role)
 		{
 			return QString::fromStdString(info.last_error());
@@ -161,7 +159,7 @@ class CTradingAccountModel final : public QAbstractTableModel
 			return QVariant();
 		}
 	}
-	void SetRows(const std::vector<request::TradingAccountInfo>& rows)
+	void SetRows(const std::vector<request::TradeAccountRecord>& rows)
 	{
 		beginResetModel();
 		m_rows = rows;
@@ -169,7 +167,7 @@ class CTradingAccountModel final : public QAbstractTableModel
 	}
 
 	private:
-	std::vector<request::TradingAccountInfo> m_rows;
+	std::vector<request::TradeAccountRecord> m_rows;
 };
 CViewTradingAccounts::CViewTradingAccounts(QWidget* parent) : QWidget(parent)
 {
@@ -187,7 +185,7 @@ CViewTradingAccounts::CViewTradingAccounts(QWidget* parent) : QWidget(parent)
 	}
 	QHBoxLayout* actions = new QHBoxLayout();
 	root->addLayout(actions);
-	m_add = new QPushButton("+ 新增账户", this);
+	m_add = new QPushButton("+ 登录账户", this);
 	m_add->setObjectName("addButton");
 	m_edit = new QPushButton("编辑", this);
 	m_connect = new QPushButton("连接", this);
@@ -413,7 +411,7 @@ void CViewTradingAccounts::RefreshRows()
 	}
 	RefreshSelection();
 }
-const request::TradingAccountInfo* CViewTradingAccounts::SelectedAccount() const
+const request::TradeAccountRecord* CViewTradingAccounts::SelectedAccount() const
 {
 	for (const auto& info : m_visible)
 	{
@@ -449,7 +447,7 @@ void CViewTradingAccounts::RefreshSelection()
 		ClearDetails();
 		m_selectedId = nextId;
 	}
-	const request::TradingAccountInfo* info = SelectedAccount();
+	const request::TradeAccountRecord* info = SelectedAccount();
 	if (nullptr != info)
 	{
 		m_heading->setText(QString::fromStdString(info->name()) + "  ·  " + (request::ACCOUNT_SIMULATED == info->account_type() ? "模拟" : "实盘") + "  ·  " + AccountState(*info));
@@ -475,7 +473,7 @@ void CViewTradingAccounts::RefreshSelection()
 void CViewTradingAccounts::RefreshButtons()
 {
 	bool available = CSession::InstanceRef().IsAuthenticated() && CTradingAccountService::InstanceRef().IsSupported() && (0 == m_operationId);
-	const request::TradingAccountInfo* info = SelectedAccount();
+	const request::TradeAccountRecord* info = SelectedAccount();
 	m_add->setEnabled(available);
 	m_edit->setEnabled(available && (nullptr != info));
 	m_connect->setEnabled(available && (nullptr != info) && (request::ACCOUNT_CONNECTED != info->state()));
@@ -633,71 +631,35 @@ void CViewTradingAccounts::Operate(const std::string& command)
 	}
 	RefreshButtons();
 }
-void CViewTradingAccounts::EditAccount(bool isNew)
+void CViewTradingAccounts::EditAccount(bool bNew)
 {
-	const request::TradingAccountInfo* selected = SelectedAccount();
-	if (!isNew && (nullptr == selected))
+	if (bNew)
 	{
-		return;
-	}
-	request::TradingAccountInfo info;
-	if (nullptr != selected)
-	{
-		info.CopyFrom(*selected);
-	}
-	QDialog dialog(this);
-	dialog.setWindowTitle(isNew ? "新增账户" : "编辑账户");
-	dialog.setMinimumWidth(400);
-	QVBoxLayout* layout = new QVBoxLayout(&dialog);
-	QFormLayout* form = new QFormLayout();
-	layout->addLayout(form);
-	QLineEdit* name = new QLineEdit(isNew ? "" : QString::fromStdString(info.name()), &dialog);
-	name->setMaxLength(128);
-	form->addRow("账户名称", name);
-	QComboBox* type = new QComboBox(&dialog);
-	type->addItems({ "模拟账户", "实盘账户（尚未接入）" });
-	QStandardItemModel* typeModel = qobject_cast<QStandardItemModel*>(type->model());
-	if (nullptr != typeModel)
-	{
-		typeModel->item(1)->setEnabled(false);
-	}
-	type->setCurrentIndex(!isNew && (request::ACCOUNT_PRODUCTION == info.account_type()) ? 1 : 0);
-	type->setEnabled(isNew);
-	form->addRow("账户类型", type);
-	form->addRow("交易通道", new QLabel("Wind 模拟服务", &dialog));
-	QDoubleSpinBox* balance = new QDoubleSpinBox(&dialog);
-	balance->setDecimals(2);
-	balance->setRange(0.01, 1000000000000.0);
-	balance->setValue(isNew ? 1000000.0 : static_cast<double>(info.initial_balance()) / 100.0);
-	balance->setSuffix(" 元");
-	balance->setEnabled(isNew);
-	form->addRow("初始资金", balance);
-	QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, &dialog);
-	layout->addWidget(buttons);
-	buttons->button(QDialogButtonBox::Save)->setText("保存账户");
-	buttons->button(QDialogButtonBox::Cancel)->setText("取消");
-	connect(buttons, &QDialogButtonBox::accepted, &dialog, [&dialog, name]()
-	{
-		if (name->text().trimmed().isEmpty() || (128 < name->text().trimmed().toUtf8().size()))
+		CTradeAccountLoginDialog dialog(this);
+		if (QDialog::Accepted == dialog.exec())
 		{
-			QMessageBox::warning(&dialog, "账户名称无效", "请输入名称，长度不超过 128 字节");
-			return;
+			Refresh();
 		}
-		dialog.accept();
-	});
-	connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-	if (QDialog::Accepted != dialog.exec())
+		return;
+	}
+	const request::TradeAccountRecord* selected = SelectedAccount();
+	if (nullptr == selected)
 	{
 		return;
 	}
-	info.set_name(name->text().trimmed().toStdString());
-	if (isNew)
+	std::uint64_t nAccountId = selected->account_id();
+	bool bAccepted = false;
+	QString strName = QInputDialog::getText(this, "编辑账户", "账户名称", QLineEdit::Normal, QString::fromStdString(selected->name()), &bAccepted).trimmed();
+	if (!bAccepted)
 	{
-		info.set_account_id(0);
-		info.set_account_type(request::ACCOUNT_SIMULATED);
-		info.set_initial_balance(static_cast<std::int64_t>(std::llround(balance->value() * 100.0)));
+		return;
 	}
-	m_operationId = CTradingAccountService::InstanceRef().Send(isNew ? "account_add" : "account_modify", isNew ? 0 : info.account_id(), &info);
+	if (strName.isEmpty() || (128 < strName.toUtf8().size()))
+	{
+		QMessageBox::warning(this, "账户名称无效", "请输入名称，长度不超过 128 字节");
+		return;
+	}
+	m_operationId = CTradingAccountService::InstanceRef().Send("account_modify", nAccountId, { { "name", strName.toStdString() } });
 	if (0 == m_operationId)
 	{
 		QMessageBox::warning(this, "请求未发送", "请检查连接状态，或等待当前请求完成");

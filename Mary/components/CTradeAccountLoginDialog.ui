@@ -1,0 +1,386 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0">
+	<class>CTradeAccountLoginDialog</class>
+	<widget class="QDialog" name="CTradeAccountLoginDialog">
+		<property name="windowTitle">
+			<string>登录账户</string>
+		</property>
+		<layout class="QVBoxLayout" name="rootLayout">
+			<property name="leftMargin">
+				<number>1</number>
+			</property>
+			<property name="topMargin">
+				<number>1</number>
+			</property>
+			<property name="rightMargin">
+				<number>1</number>
+			</property>
+			<property name="bottomMargin">
+				<number>1</number>
+			</property>
+			<property name="spacing">
+				<number>0</number>
+			</property>
+			<item>
+				<widget class="QFrame" name="titleFrame">
+					<property name="minimumSize">
+						<size>
+							<width>0</width>
+							<height>33</height>
+						</size>
+					</property>
+					<property name="maximumSize">
+						<size>
+							<width>16777215</width>
+							<height>33</height>
+						</size>
+					</property>
+					<layout class="QHBoxLayout" name="titleLayout">
+						<property name="leftMargin">
+							<number>18</number>
+						</property>
+						<property name="topMargin">
+							<number>0</number>
+						</property>
+						<property name="rightMargin">
+							<number>12</number>
+						</property>
+						<property name="bottomMargin">
+							<number>0</number>
+						</property>
+						<item>
+							<widget class="QLabel" name="titleLabel">
+								<property name="text">
+									<string>登录账户</string>
+								</property>
+							</widget>
+						</item>
+						<item>
+							<widget class="QPushButton" name="closeButton">
+								<property name="text">
+									<string>×</string>
+								</property>
+								<property name="toolTip">
+									<string>关闭</string>
+								</property>
+								<property name="autoDefault">
+									<bool>false</bool>
+								</property>
+								<property name="minimumSize">
+									<size>
+										<width>28</width>
+										<height>28</height>
+									</size>
+								</property>
+								<property name="maximumSize">
+									<size>
+										<width>28</width>
+										<height>28</height>
+									</size>
+								</property>
+							</widget>
+						</item>
+					</layout>
+				</widget>
+			</item>
+			<item>
+				<widget class="QWidget" name="formBody">
+					<layout class="QVBoxLayout" name="bodyLayout">
+						<property name="leftMargin">
+							<number>20</number>
+						</property>
+						<property name="topMargin">
+							<number>16</number>
+						</property>
+						<property name="rightMargin">
+							<number>20</number>
+						</property>
+						<property name="bottomMargin">
+							<number>8</number>
+						</property>
+						<property name="spacing">
+							<number>8</number>
+						</property>
+						<item>
+							<layout class="QGridLayout" name="formLayout">
+								<item row="0" column="0">
+									<widget class="QLabel" name="brokerComboLabel">
+										<property name="text">
+											<string>券商</string>
+										</property>
+										<property name="alignment">
+											<set>Qt::AlignRight|Qt::AlignVCenter</set>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>40</width>
+												<height>0</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="0" column="1">
+									<widget class="QComboBox" name="brokerCombo">
+										<property name="placeholderText">
+											<string>请选择券商</string>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="1" column="0">
+									<widget class="QLabel" name="siteComboLabel">
+										<property name="text">
+											<string>站点</string>
+										</property>
+										<property name="alignment">
+											<set>Qt::AlignRight|Qt::AlignVCenter</set>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>40</width>
+												<height>0</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="1" column="1">
+									<widget class="QComboBox" name="siteCombo">
+										<property name="placeholderText">
+											<string>请选择站点</string>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="2" column="0">
+									<widget class="QLabel" name="accountEditLabel">
+										<property name="text">
+											<string>账户</string>
+										</property>
+										<property name="alignment">
+											<set>Qt::AlignRight|Qt::AlignVCenter</set>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>40</width>
+												<height>0</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="2" column="1">
+									<widget class="QLineEdit" name="accountEdit">
+										<property name="placeholderText">
+											<string>请输入账户</string>
+										</property>
+										<property name="maxLength">
+											<number>128</number>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="3" column="0">
+									<widget class="QLabel" name="passwordEditLabel">
+										<property name="text">
+											<string>密码</string>
+										</property>
+										<property name="alignment">
+											<set>Qt::AlignRight|Qt::AlignVCenter</set>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>40</width>
+												<height>0</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item row="3" column="1">
+									<widget class="QLineEdit" name="passwordEdit">
+										<property name="placeholderText">
+											<string>请输入密码</string>
+										</property>
+										<property name="maxLength">
+											<number>128</number>
+										</property>
+										<property name="echoMode">
+											<enum>QLineEdit::Password</enum>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<property name="verticalSpacing">
+									<number>12</number>
+								</property>
+								<property name="horizontalSpacing">
+									<number>14</number>
+								</property>
+							</layout>
+						</item>
+						<item>
+							<widget class="QLabel" name="errorLabel">
+								<property name="text">
+									<string />
+								</property>
+								<property name="wordWrap">
+									<bool>true</bool>
+								</property>
+								<property name="minimumSize">
+									<size>
+										<width>0</width>
+										<height>20</height>
+									</size>
+								</property>
+								<property name="visible">
+									<bool>false</bool>
+								</property>
+							</widget>
+						</item>
+					</layout>
+				</widget>
+			</item>
+			<item>
+				<widget class="QFrame" name="divider">
+					<property name="frameShape">
+						<enum>QFrame::NoFrame</enum>
+					</property>
+					<property name="minimumSize">
+						<size>
+							<width>0</width>
+							<height>1</height>
+						</size>
+					</property>
+					<property name="maximumSize">
+						<size>
+							<width>16777215</width>
+							<height>1</height>
+						</size>
+					</property>
+				</widget>
+			</item>
+			<item>
+				<widget class="QWidget" name="footer">
+					<layout class="QVBoxLayout" name="footerLayout">
+						<property name="leftMargin">
+							<number>20</number>
+						</property>
+						<property name="topMargin">
+							<number>12</number>
+						</property>
+						<property name="rightMargin">
+							<number>20</number>
+						</property>
+						<property name="bottomMargin">
+							<number>14</number>
+						</property>
+						<item>
+							<layout class="QHBoxLayout" name="buttonLayout">
+								<property name="spacing">
+									<number>12</number>
+								</property>
+								<item>
+									<spacer name="buttonSpacer">
+										<property name="orientation">
+											<enum>Qt::Horizontal</enum>
+										</property>
+										<property name="sizeHint" stdset="0">
+											<size>
+												<width>40</width>
+												<height>20</height>
+											</size>
+										</property>
+									</spacer>
+								</item>
+								<item>
+									<widget class="QPushButton" name="loginButton">
+										<property name="text">
+											<string>登录</string>
+										</property>
+										<property name="default">
+											<bool>true</bool>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>80</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QPushButton" name="cancelButton">
+										<property name="text">
+											<string>取消</string>
+										</property>
+										<property name="minimumSize">
+											<size>
+												<width>80</width>
+												<height>36</height>
+											</size>
+										</property>
+									</widget>
+								</item>
+							</layout>
+						</item>
+					</layout>
+					<property name="minimumSize">
+						<size>
+							<width>0</width>
+							<height>64</height>
+						</size>
+					</property>
+					<property name="maximumSize">
+						<size>
+							<width>16777215</width>
+							<height>64</height>
+						</size>
+					</property>
+				</widget>
+			</item>
+		</layout>
+		<property name="minimumSize">
+			<size>
+				<width>390</width>
+				<height>308</height>
+			</size>
+		</property>
+		<property name="maximumSize">
+			<size>
+				<width>390</width>
+				<height>308</height>
+			</size>
+		</property>
+		<property name="sizeGripEnabled">
+			<bool>false</bool>
+		</property>
+	</widget>
+	<tabstops>
+		<tabstop>brokerCombo</tabstop>
+		<tabstop>siteCombo</tabstop>
+		<tabstop>accountEdit</tabstop>
+		<tabstop>passwordEdit</tabstop>
+		<tabstop>loginButton</tabstop>
+		<tabstop>cancelButton</tabstop>
+	</tabstops>
+	<resources />
+	<connections />
+</ui>

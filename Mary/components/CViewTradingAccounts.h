@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "../service/account/CTradingAccountService.h"
 #include <QWidget>
 #include <array>
@@ -30,11 +30,11 @@ class CViewTradingAccounts final : public QWidget
 	void RefreshSelection();
 	void ClearDetails();
 	void RefreshButtons();
-	void EditAccount(bool isNew);
+	void EditAccount(bool bNew);
 	void Operate(const std::string& command);
 	void HandleResult(const CTradingAccountService::CResult& result);
 	void RefreshStrategies();
-	const request::TradingAccountInfo* SelectedAccount() const;
+	const request::TradeAccountRecord* SelectedAccount() const;
 	CTradingAccountModel* m_model{ nullptr };
 	QTableView* m_table{ nullptr };
 	QLineEdit* m_search{ nullptr };
@@ -53,8 +53,8 @@ class CViewTradingAccounts final : public QWidget
 	QTabWidget* m_details{ nullptr };
 	std::array<QLabel*, 4> m_summary{};
 	std::array<QLabel*, 4> m_funds{};
-	std::vector<request::TradingAccountInfo> m_accounts;
-	std::vector<request::TradingAccountInfo> m_visible;
+	std::vector<request::TradeAccountRecord> m_accounts;
+	std::vector<request::TradeAccountRecord> m_visible;
 	std::uint64_t m_selectedId{ 0 };
 	std::uint64_t m_operationId{ 0 };
 	std::uint64_t m_snapshotId{ 0 };

@@ -1,4 +1,4 @@
-﻿#include "CViewStrategySettings.h"
+#include "CViewStrategySettings.h"
 #include "../system/CSession.h"
 #include "CStrategyEditDialog.h"
 #include "CViewTradingAccounts.h"
@@ -319,7 +319,7 @@ void CViewStrategySettings::RefreshRows()
 	m_pInstances->setRowCount(0);
 	int selectedRow = -1;
 	int runningCount = 0;
-	std::vector<request::TradingAccountInfo> accounts = CTradingAccountService::InstanceRef().GetAccounts();
+	std::vector<request::TradeAccountRecord> accounts = CTradingAccountService::InstanceRef().GetAccounts();
 	for (std::size_t index = 0; index < m_strategies.size(); ++index)
 	{
 		const request::StrategyInfo& strategy = m_strategies[index];

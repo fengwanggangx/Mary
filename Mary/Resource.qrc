@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
+        <file alias="trade/chevron.svg">images/trade-chevron.svg</file>
+        <file alias="trade/password-eye.svg">images/trade-password-eye.svg</file>
+        <file alias="styles/trade-account-login.qss">components/trade-account-login.qss</file>
         <file alias="styles/theme-light.qss">components/theme-light.qss</file>
         <file alias="styles/theme-dark.qss">components/theme-dark.qss</file>
         <file alias="styles/theme.qss">components/theme.qss</file>
