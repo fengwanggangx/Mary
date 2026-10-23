@@ -1,5 +1,5 @@
 #pragma once
-#include "../service/account/CTradingAccountService.h"
+#include "../service/account/CTradeAccountService.h"
 #include <QDialog>
 #include <memory>
 namespace Ui
@@ -17,7 +17,7 @@ class CTradeAccountLoginDialog final : public QDialog
 
 	private:
 	void Login();
-	void HandleResult(const CTradingAccountService::CResult& result);
+	void HandleResult(const CTradeAccountService::CResult& result);
 	void SetBusy(bool bBusy);
 	void ShowError(const QString& strMessage);
 	std::unique_ptr<Ui::CTradeAccountLoginDialog> m_ui;

@@ -1,26 +1,10 @@
-﻿#include "CStrategyService.h"
+#include "CStrategyService.h"
 
 #include "../../system/CSession.h"
 
 #include <algorithm>
 #include <cctype>
-#include <charconv>
-#include <system_error>
 #include <utility>
-
-namespace
-{
-	bool ParseRuntimeNumber(const std::string& value, std::uint64_t& result)
-	{
-		if (value.empty())
-		{
-			return false;
-		}
-		const char* end = value.data() + value.size();
-		std::from_chars_result parsed = std::from_chars(value.data(), end, result);
-		return (std::errc() == parsed.ec) && (end == parsed.ptr);
-	}
-} // namespace
 
 CStrategyService::CStrategyService() = default;
 
@@ -163,14 +147,14 @@ std::uint64_t CStrategyService::DeleteStrategy(std::uint64_t id)
 	return CSession::InstanceRef().SendRequest(req) ? req.GetId() : 0;
 }
 
-std::uint64_t CStrategyService::ControlStrategy(const std::string& command, std::uint64_t id)
+std::uint64_t CStrategyService::ControlStrategy(_TyRequest type, std::uint64_t id)
 {
-	if ((0 == id) || (("strategy_start" != command) && ("strategy_pause" != command) && ("strategy_stop" != command)))
+	if ((0 == id) || ((_TyRequest::STRATEGY_START != type) && (_TyRequest::STRATEGY_PAUSE != type) && (_TyRequest::STRATEGY_STOP != type)))
 	{
 		return 0;
 	}
 	Initialize();
-	CRequest req = request::ControlStrategy(command, id);
+	CRequest req = request::ControlStrategy(type, id);
 	return CSession::InstanceRef().SendRequest(req) ? req.GetId() : 0;
 }
 
@@ -233,11 +217,11 @@ bool CStrategyService::ValidateStrategy(const request::StrategyInfo& strategy, s
 
 void CStrategyService::OnRequestReply(const CRequest& response)
 {
-	std::string strCmd = response.GetCmd();
+	_TyRequest type = response.GetType();
 	std::optional<std::pair<int, std::string>> errorInfo = response.GetErrorInfo();
 	std::string strError = (errorInfo.has_value() && (0 != errorInfo->first)) ? (errorInfo->second.empty() ? "策略请求失败" : errorInfo->second) : std::string();
 	const _TyReqData& message = response.GetData();
-	if ("strategy_query" == strCmd)
+	if (_TyRequest::STRATEGY_QUERY == type)
 	{
 		std::uint64_t expected = response.GetId();
 		if ((0 == expected) || !m_queryRequestId.compare_exchange_strong(expected, 0))
@@ -285,7 +269,7 @@ void CStrategyService::OnRequestReply(const CRequest& response)
 		return;
 	}
 
-	if ("strategy_runtime_query" == strCmd)
+	if (_TyRequest::STRATEGY_RUNTIME_QUERY == type)
 	{
 		std::uint64_t expected = response.GetId();
 		if ((0 == expected) || !m_runtimeRequestId.compare_exchange_strong(expected, 0))
@@ -293,31 +277,28 @@ void CStrategyService::OnRequestReply(const CRequest& response)
 			return;
 		}
 		_TyRuntimeMap runtimes;
-		std::uint64_t count = 0;
-		if (strError.empty() && (!ParseRuntimeNumber(response.GetReturnData("runtime_count"), count) || (10000 < count)))
+		if (strError.empty() && (!message.has_strategy_runtime_list() || (10000 < message.strategy_runtime_list().runtimes_size())))
 		{
-			strError = "运行快照数量无效";
+			strError = "运行快照列表无效";
 		}
-		for (std::uint64_t index = 0; strError.empty() && (index < count); ++index)
+		for (const auto& record : message.strategy_runtime_list().runtimes())
 		{
-			std::string prefix = "runtime_" + std::to_string(index) + "_";
-			std::uint64_t id = 0;
-			std::uint64_t state = 0;
-			std::uint64_t queueLength = 0;
-			std::uint64_t activeOrders = 0;
-			std::string marketAvailable = response.GetReturnData(prefix + "market_available");
-			if (!ParseRuntimeNumber(response.GetReturnData(prefix + "id"), id) || (0 == id) || !ParseRuntimeNumber(response.GetReturnData(prefix + "state"), state) || (8 < state) || !ParseRuntimeNumber(response.GetReturnData(prefix + "queue_length"), queueLength) || !ParseRuntimeNumber(response.GetReturnData(prefix + "active_orders"), activeOrders) || (("0" != marketAvailable) && ("1" != marketAvailable)))
+			if (!strError.empty())
+			{
+				break;
+			}
+			if ((0 == record.strategy_id()) || (0 > record.state()) || (8 < record.state()))
 			{
 				strError = "运行快照字段无效";
 				break;
 			}
 			CRuntimeSnapshot snapshot;
-			snapshot.m_state = static_cast<int>(state);
-			snapshot.m_marketAvailable = "1" == marketAvailable;
-			snapshot.m_queueLength = queueLength;
-			snapshot.m_activeOrders = activeOrders;
-			snapshot.m_lastError = response.GetReturnData(prefix + "last_error");
-			if (!runtimes.emplace(id, std::move(snapshot)).second)
+			snapshot.m_state = record.state();
+			snapshot.m_marketAvailable = record.market_available();
+			snapshot.m_queueLength = record.queue_length();
+			snapshot.m_activeOrders = record.active_orders();
+			snapshot.m_lastError = record.last_error();
+			if (!runtimes.emplace(record.strategy_id(), std::move(snapshot)).second)
 			{
 				strError = "运行快照含重复策略";
 			}
@@ -326,7 +307,7 @@ void CStrategyService::OnRequestReply(const CRequest& response)
 		return;
 	}
 
-	if (("strategy_add" != strCmd) && ("strategy_modify" != strCmd) && ("strategy_delete" != strCmd) && ("strategy_start" != strCmd) && ("strategy_pause" != strCmd) && ("strategy_stop" != strCmd))
+	if ((_TyRequest::STRATEGY_ADD != type) && (_TyRequest::STRATEGY_MODIFY != type) && (_TyRequest::STRATEGY_DELETE != type) && (_TyRequest::STRATEGY_START != type) && (_TyRequest::STRATEGY_PAUSE != type) && (_TyRequest::STRATEGY_STOP != type))
 	{
 		return;
 	}
@@ -335,7 +316,7 @@ void CStrategyService::OnRequestReply(const CRequest& response)
 	{
 		strategy.CopyFrom(message.strategy());
 	}
-	if (strError.empty() && (("strategy_add" == strCmd) || ("strategy_modify" == strCmd) || ("strategy_delete" == strCmd)))
+	if (strError.empty() && ((_TyRequest::STRATEGY_ADD == type) || (_TyRequest::STRATEGY_MODIFY == type) || (_TyRequest::STRATEGY_DELETE == type)))
 	{
 		// Mutation acknowledgements may omit the complete configuration or deleted ID.
 		// Keep the last list, but require a fresh query before treating it as current.
@@ -349,12 +330,12 @@ void CStrategyService::OnRequestReply(const CRequest& response)
 	}
 	if (handler)
 	{
-		handler(strCmd, strError.empty(), strategy, strError);
+		handler(type, strError.empty(), strategy, strError);
 	}
-	m_operationPump.Notify({ response.GetId(), strCmd, strError.empty(), strError });
+	m_operationPump.Notify({ response.GetId(), type, strError.empty(), strError });
 	if (strError.empty())
 	{
-		if (("strategy_add" == strCmd) || ("strategy_modify" == strCmd) || ("strategy_delete" == strCmd))
+		if ((_TyRequest::STRATEGY_ADD == type) || (_TyRequest::STRATEGY_MODIFY == type) || (_TyRequest::STRATEGY_DELETE == type))
 		{
 			QueryStrategies();
 		}

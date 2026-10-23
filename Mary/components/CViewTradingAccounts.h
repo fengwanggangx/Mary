@@ -1,5 +1,5 @@
 #pragma once
-#include "../service/account/CTradingAccountService.h"
+#include "../service/account/CTradeAccountService.h"
 #include <QWidget>
 #include <array>
 #include <functional>
@@ -31,8 +31,8 @@ class CViewTradingAccounts final : public QWidget
 	void ClearDetails();
 	void RefreshButtons();
 	void EditAccount(bool bNew);
-	void Operate(const std::string& command);
-	void HandleResult(const CTradingAccountService::CResult& result);
+	void Operate(_TyRequest type);
+	void HandleResult(const CTradeAccountService::CResult& result);
 	void RefreshStrategies();
 	const request::TradeAccountRecord* SelectedAccount() const;
 	CTradingAccountModel* m_model{ nullptr };

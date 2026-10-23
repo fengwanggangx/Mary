@@ -296,7 +296,7 @@
     <ClCompile Include="components\CViewTradingAccounts.cpp">
       <Filter>Source Files\components</Filter>
     </ClCompile>
-    <ClCompile Include="service\account\CTradingAccountService.cpp">
+    <ClCompile Include="service\account\CTradeAccountService.cpp">
       <Filter>Source Files\service\account</Filter>
     </ClCompile>
   </ItemGroup>
@@ -598,7 +598,7 @@
     <ClInclude Include="components\CViewTradingAccounts.h">
       <Filter>Source Files\components</Filter>
     </ClInclude>
-    <ClInclude Include="service\account\CTradingAccountService.h">
+    <ClInclude Include="service\account\CTradeAccountService.h">
       <Filter>Source Files\service\account</Filter>
     </ClInclude>
   </ItemGroup>

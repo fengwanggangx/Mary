@@ -6,16 +6,17 @@
 #include <mutex>
 #include <unordered_map>
 #include <vector>
-class CTradingAccountService final : public ISingleton<CTradingAccountService>
+class CTradeAccountService final : public ISingleton<CTradeAccountService>
 {
-	DECLARE_SINGLE_DFAULT(CTradingAccountService)
+	DECLARE_SINGLE_DFAULT(CTradeAccountService)
 	public:
 	struct CResult
 	{
+		bool m_bSessionReset{ false };
 		std::uint64_t m_requestId{ 0 };
 		std::uint64_t m_accountId{ 0 };
 		std::uint64_t m_generation{ 0 };
-		std::string m_command;
+		_TyRequest m_type{ _TyRequest::UNKNOWN };
 		std::string m_error;
 		request::RequestData m_data;
 	};
@@ -23,7 +24,7 @@ class CTradingAccountService final : public ISingleton<CTradingAccountService>
 	void Initialize();
 	_TyCallbackId Subscribe(_TyHandler&& handler);
 	void Unsubscribe(_TyCallbackId token);
-	std::uint64_t Send(const std::string& command, std::uint64_t accountId = 0, const std::unordered_map<std::string, std::string>& extra = {});
+	std::uint64_t Send(_TyRequest type, std::uint64_t accountId = 0, const std::unordered_map<std::string, std::string>& extra = {});
 	std::vector<request::TradeAccountRecord> GetAccounts() const;
 	bool IsSupported() const;
 	std::uint64_t GetGeneration() const;
@@ -33,7 +34,7 @@ class CTradingAccountService final : public ISingleton<CTradingAccountService>
 	struct CPending
 	{
 		std::uint64_t m_accountId{ 0 };
-		std::string m_command;
+		_TyRequest m_type{ _TyRequest::UNKNOWN };
 	};
 	std::once_flag m_initializeFlag;
 	mutable std::mutex m_mtx_state;

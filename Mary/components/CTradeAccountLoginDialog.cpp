@@ -86,7 +86,7 @@ CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent) : QDialog(p
 	connect(m_ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
 	connect(m_ui->passwordEdit, &QLineEdit::returnPressed, this, &CTradeAccountLoginDialog::Login);
 	QPointer<CTradeAccountLoginDialog> self(this);
-	m_nToken = CTradingAccountService::InstanceRef().Subscribe([self](const CTradingAccountService::CResult& result)
+	m_nToken = CTradeAccountService::InstanceRef().Subscribe([self](const CTradeAccountService::CResult& result)
 	{
 		if (nullptr != self)
 		{
@@ -104,7 +104,7 @@ CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent) : QDialog(p
 
 CTradeAccountLoginDialog::~CTradeAccountLoginDialog()
 {
-	CTradingAccountService::InstanceRef().Unsubscribe(m_nToken);
+	CTradeAccountService::InstanceRef().Unsubscribe(m_nToken);
 	m_ui->passwordEdit->clear();
 }
 
@@ -129,7 +129,7 @@ void CTradeAccountLoginDialog::Login()
 		ShowError("请选择券商、站点，并输入账户和密码");
 		return;
 	}
-	m_nRequestId = CTradingAccountService::InstanceRef().Send("trade_account_login", 0, { { "broker", m_ui->brokerCombo->currentData().toString().toStdString() }, { "site", m_ui->siteCombo->currentData().toString().toStdString() }, { "account", m_ui->accountEdit->text().trimmed().toStdString() }, { "password", m_ui->passwordEdit->text().toStdString() } });
+	m_nRequestId = CTradeAccountService::InstanceRef().Send(_TyRequest::TRADE_ACCOUNT_LOGIN, 0, { { "broker", m_ui->brokerCombo->currentData().toString().toStdString() }, { "site", m_ui->siteCombo->currentData().toString().toStdString() }, { "account", m_ui->accountEdit->text().trimmed().toStdString() }, { "password", m_ui->passwordEdit->text().toStdString() } });
 	if (0 == m_nRequestId)
 	{
 		ShowError("请求未发送，请检查 Wind 登录状态或等待当前请求完成");
@@ -139,16 +139,16 @@ void CTradeAccountLoginDialog::Login()
 	SetBusy(true);
 }
 
-void CTradeAccountLoginDialog::HandleResult(const CTradingAccountService::CResult& result)
+void CTradeAccountLoginDialog::HandleResult(const CTradeAccountService::CResult& result)
 {
-	if ((0 == m_nRequestId) || ((m_nRequestId != result.m_requestId) && ("account_session_reset" != result.m_command)))
+	if ((0 == m_nRequestId) || ((m_nRequestId != result.m_requestId) && (!result.m_bSessionReset)))
 	{
 		return;
 	}
 	m_nRequestId = 0;
 	SetBusy(false);
 	m_ui->passwordEdit->clear();
-	if (!result.m_error.empty() || ("account_session_reset" == result.m_command))
+	if (!result.m_error.empty() || (result.m_bSessionReset))
 	{
 		ShowError(result.m_error.empty() ? "连接已断开，请重新登录 Wind" : QString::fromStdString(result.m_error));
 		return;

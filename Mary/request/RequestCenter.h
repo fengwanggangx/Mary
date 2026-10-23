@@ -33,7 +33,7 @@ namespace request
 	CRequest QueryStrategies();
 	CRequest DeleteStrategy(std::uint64_t id);
 	CRequest QueryStrategyRuntime();
-	CRequest ControlStrategy(const std::string& command, std::uint64_t id);
+	CRequest ControlStrategy(_TyRequest type, std::uint64_t id);
 	CRequest HeartBeat();
 } // namespace request
 

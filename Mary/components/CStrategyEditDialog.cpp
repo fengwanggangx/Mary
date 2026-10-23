@@ -1,5 +1,5 @@
 ﻿#include "CStrategyEditDialog.h"
-#include "../service/account/CTradingAccountService.h"
+#include "../service/account/CTradeAccountService.h"
 #include <QComboBox>
 #include <QFormLayout>
 
@@ -23,13 +23,13 @@ CStrategyEditDialog::~CStrategyEditDialog()
 void CStrategyEditDialog::InitializeUI()
 {
 	m_accounts = new QComboBox(this);
-	for (const auto& account : CTradingAccountService::InstanceRef().GetAccounts())
+	for (const auto& account : CTradeAccountService::InstanceRef().GetAccounts())
 	{
 		m_accounts->addItem(QString::fromStdString(account.name()), QVariant::fromValue<qulonglong>(account.account_id()));
 	}
 	if (0 == m_accounts->count())
 	{
-		m_accounts->addItem(CTradingAccountService::InstanceRef().IsSupported() ? "请先加载或新增交易账户" : "默认账户（旧版 Wind）", QVariant::fromValue<qulonglong>(0));
+		m_accounts->addItem(CTradeAccountService::InstanceRef().IsSupported() ? "请先加载或新增交易账户" : "默认账户（旧版 Wind）", QVariant::fromValue<qulonglong>(0));
 	}
 	ui->basicLayout->addRow("交易账户", m_accounts);
 	ui->parameterTable->horizontalHeader()->setStretchLastSection(true);
@@ -47,7 +47,7 @@ void CStrategyEditDialog::SetStrategy(const request::StrategyInfo& strategy)
 	m_strategyId = strategy.strategy_id();
 	std::uint64_t accountId = 0 == strategy.account_id() ? 1 : strategy.account_id();
 	int accountIndex = m_accounts->findData(QVariant::fromValue<qulonglong>(accountId));
-	if ((0 > accountIndex) && CTradingAccountService::InstanceRef().IsSupported())
+	if ((0 > accountIndex) && CTradeAccountService::InstanceRef().IsSupported())
 	{
 		m_accounts->addItem("账户 #" + QString::number(accountId), QVariant::fromValue<qulonglong>(accountId));
 		accountIndex = m_accounts->count() - 1;
@@ -142,7 +142,7 @@ void CStrategyEditDialog::OnRemoveSubscription()
 void CStrategyEditDialog::OnAccept()
 {
 	request::StrategyInfo strategy = GetStrategy();
-	if (CTradingAccountService::InstanceRef().IsSupported() && (0 == strategy.account_id()))
+	if (CTradeAccountService::InstanceRef().IsSupported() && (0 == strategy.account_id()))
 	{
 		QMessageBox::warning(this, "缺少交易账户", "请先在交易账户页加载或新增账户");
 		return;

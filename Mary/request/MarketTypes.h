@@ -12,9 +12,6 @@ namespace hqmarket::market::v1
 	class SecurityList;
 	class PriceLevel;
 	class SubscriptionAck;
-	class SubscribeRequest;
-	class UnsubscribeRequest;
-	class QueryRequest;
 	class QuoteData;
 	class DepthData;
 	class QueryResponse;

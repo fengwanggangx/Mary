@@ -63,7 +63,7 @@ class CSession final : public ISingleton<CSession>
   private:
 	struct PendingRequest
 	{
-		std::string m_cmd;
+		_TyRequest m_type{ _TyRequest::UNKNOWN };
 		std::chrono::steady_clock::time_point m_deadline;
 	};
 
@@ -76,6 +76,7 @@ class CSession final : public ISingleton<CSession>
 	struct AuthRequest
 	{
 		_TyRequestId m_id{ 0 };
+		_TyRequest m_type{ _TyRequest::UNKNOWN };
 		std::chrono::steady_clock::time_point m_deadline;
 	};
 

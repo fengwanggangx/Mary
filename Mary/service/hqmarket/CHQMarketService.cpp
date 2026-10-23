@@ -137,14 +137,14 @@ namespace
 CHQMarketService::CHQMarketService()
 {
 	m_request_handler = {
-		{ "query_sectors", std::bind_front(&CHQMarketService::OnSectorListReply, this) },
-		{ "query_sector_constituents", std::bind_front(&CHQMarketService::OnSectorConstituentsReply, this) },
-		{ "query_securities", std::bind_front(&CHQMarketService::OnSecurityListReply, this) },
-		{ "depth", std::bind_front(&CHQMarketService::OnDepthReply, this) },
-		{ "query_response", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
-		{ "query_bars", std::bind_front(&CHQMarketService::OnHistoryReply, this) },
-		{ "quote", std::bind_front(&CHQMarketService::OnQuoteReply, this) },
-		{ "subscription_ack", std::bind_front(&CHQMarketService::OnSubscriptionAck, this) }
+		{ _TyRequest::MARKET_SECTORS_QUERY, std::bind_front(&CHQMarketService::OnSectorListReply, this) },
+		{ _TyRequest::MARKET_SECTOR_CONSTITUENTS_QUERY, std::bind_front(&CHQMarketService::OnSectorConstituentsReply, this) },
+		{ _TyRequest::MARKET_SECURITIES_QUERY, std::bind_front(&CHQMarketService::OnSecurityListReply, this) },
+		{ _TyRequest::MARKET_DEPTH_PUSH, std::bind_front(&CHQMarketService::OnDepthReply, this) },
+		{ _TyRequest::MARKET_BARS_QUERY, std::bind_front(&CHQMarketService::OnHistoryReply, this) },
+		{ _TyRequest::MARKET_QUOTE_PUSH, std::bind_front(&CHQMarketService::OnQuoteReply, this) },
+		{ _TyRequest::MARKET_SUBSCRIBE, std::bind_front(&CHQMarketService::OnSubscriptionAck, this) },
+		{ _TyRequest::MARKET_UNSUBSCRIBE, std::bind_front(&CHQMarketService::OnSubscriptionAck, this) }
 	};
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Security), "代码", DataType::String });
 	m_quoteTable.AddColumn(CDataColumnSchema{ static_cast<_TyDataColumnId>(MarketQuoteColumn::Name), "名称", DataType::String });
@@ -409,8 +409,7 @@ bool CHQMarketService::QueryHistory(const CSecurity& info, MarketBarPeriod perio
 	{
 		return true;
 	}
-	request.SetReturnData("error_code", "-1");
-	request.SetReturnData("error_message", "历史行情请求发送失败");
+	request.SetErrorInfo(-1, "历史行情请求发送失败");
 	OnRequestReply(request);
 	return false;
 }
@@ -428,8 +427,7 @@ bool CHQMarketService::QuerySectors(SectorType type)
 	{
 		return true;
 	}
-	req.SetReturnData("error_code", "-1");
-	req.SetReturnData("error_message", "板块查询请求发送失败");
+	req.SetErrorInfo(-1, "板块查询请求发送失败");
 	OnRequestReply(req);
 	return false;
 }
@@ -442,8 +440,7 @@ bool CHQMarketService::QuerySectorConstituents(SectorType type, const std::strin
 	{
 		return true;
 	}
-	req.SetReturnData("error_code", "-1");
-	req.SetReturnData("error_message", "成分股查询请求发送失败");
+	req.SetErrorInfo(-1, "成分股查询请求发送失败");
 	OnRequestReply(req);
 	return false;
 }
@@ -748,7 +745,7 @@ void CHQMarketService::FlushQuotes(std::unordered_map<std::string, CQuote>& quot
 
 void CHQMarketService::OnRequestReply(const CRequest& req)
 {
-	const auto mIter = m_request_handler.find(req.GetCmd());
+	const auto mIter = m_request_handler.find(req.GetType());
 	if (m_request_handler.end() != mIter)
 	{
 		mIter->second(req);
@@ -973,7 +970,7 @@ bool CHQMarketService::OnQuoteReply(const CRequest& req)
 	}
 	const _TyQuoteData& quote = message.quote();
 	++m_runtimeMetrics.m_nQuoteReceived;
-	std::uint64_t sequence = ParseSequence(req.GetReturnData());
+	std::uint64_t sequence = ParseSequence(req.GetExtraData());
 	if (!AcceptQuoteSequence(sequence))
 	{
 		return false;
@@ -1019,7 +1016,12 @@ bool CHQMarketService::OnSubscriptionAck(const CRequest& req)
 		}
 		CSecurity security(result.security().symbol(), ToExchange(result.security().exchange()));
 		std::string strKey = "watchlist:" + security.String();
-		if (result.accepted())
+		if ((_TyRequest::MARKET_UNSUBSCRIBE == req.GetType()) && result.accepted() && !req.GetErrorInfo().has_value())
+		{
+			m_confirmedSubscriptions.erase(strKey);
+			m_failedSubscriptions.erase(strKey);
+		}
+		else if (result.accepted() && !req.GetErrorInfo().has_value())
 		{
 			m_confirmedSubscriptions.emplace(strKey);
 			m_failedSubscriptions.erase(strKey);

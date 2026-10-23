@@ -40,33 +40,33 @@ namespace
 			return QStringLiteral("未连接");
 		}
 	}
-	QString AccountAction(const std::string& command)
+	QString AccountAction(_TyRequest type)
 	{
-		if ("account_add" == command)
+		if (_TyRequest::TRADE_ACCOUNT_ADD == type)
 		{
 			return "新增账户";
 		}
-		if ("account_modify" == command)
+		if (_TyRequest::TRADE_ACCOUNT_MODIFY == type)
 		{
 			return "修改账户";
 		}
-		if ("account_connect" == command)
+		if (_TyRequest::TRADE_ACCOUNT_CONNECT == type)
 		{
 			return "连接账户";
 		}
-		if ("account_disconnect" == command)
+		if (_TyRequest::TRADE_ACCOUNT_DISCONNECT == type)
 		{
 			return "断开账户";
 		}
-		if ("account_query" == command)
+		if (_TyRequest::TRADE_ACCOUNT_QUERY == type)
 		{
 			return "查询账户";
 		}
-		if ("account_snapshot_query" == command)
+		if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == type)
 		{
 			return "查询资金";
 		}
-		if ("account_logs_query" == command)
+		if (_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == type)
 		{
 			return "查询日志";
 		}
@@ -285,11 +285,11 @@ CViewTradingAccounts::CViewTradingAccounts(QWidget* parent) : QWidget(parent)
 	});
 	connect(m_connect, &QPushButton::clicked, this, [this]()
 	{
-		Operate("account_connect");
+		Operate(_TyRequest::TRADE_ACCOUNT_CONNECT);
 	});
 	connect(m_disconnect, &QPushButton::clicked, this, [this]()
 	{
-		Operate("account_disconnect");
+		Operate(_TyRequest::TRADE_ACCOUNT_DISCONNECT);
 	});
 	connect(m_strategies, &QTableWidget::cellDoubleClicked, this, [this](int row, int)
 	{
@@ -299,7 +299,7 @@ CViewTradingAccounts::CViewTradingAccounts(QWidget* parent) : QWidget(parent)
 		}
 	});
 	QPointer<CViewTradingAccounts> safeThis(this);
-	m_accountToken = CTradingAccountService::InstanceRef().Subscribe([safeThis](const CTradingAccountService::CResult& result)
+	m_accountToken = CTradeAccountService::InstanceRef().Subscribe([safeThis](const CTradeAccountService::CResult& result)
 	{
 		if (!safeThis.isNull())
 		{
@@ -338,7 +338,7 @@ CViewTradingAccounts::CViewTradingAccounts(QWidget* parent) : QWidget(parent)
 }
 CViewTradingAccounts::~CViewTradingAccounts()
 {
-	CTradingAccountService::InstanceRef().Unsubscribe(m_accountToken);
+	CTradeAccountService::InstanceRef().Unsubscribe(m_accountToken);
 	CStrategyService::InstanceRef().RemoveQueryHandler(m_strategyToken);
 }
 void CViewTradingAccounts::SetStrategyNavigation(std::function<void(std::uint64_t)>&& handler)
@@ -357,20 +357,20 @@ void CViewTradingAccounts::showEvent(QShowEvent* event)
 void CViewTradingAccounts::Refresh()
 {
 	RefreshButtons();
-	if (!CSession::InstanceRef().IsAuthenticated() || !CTradingAccountService::InstanceRef().IsSupported())
+	if (!CSession::InstanceRef().IsAuthenticated() || !CTradeAccountService::InstanceRef().IsSupported())
 	{
 		return;
 	}
-	CTradingAccountService& service = CTradingAccountService::InstanceRef();
-	service.Send("account_query");
+	CTradeAccountService& service = CTradeAccountService::InstanceRef();
+	service.Send(_TyRequest::TRADE_ACCOUNT_QUERY);
 	if (0 != m_selectedId)
 	{
-		std::uint64_t id = service.Send("account_snapshot_query", m_selectedId);
+		std::uint64_t id = service.Send(_TyRequest::TRADE_ACCOUNT_INFO_QUERY, m_selectedId);
 		if (0 != id)
 		{
 			m_snapshotId = id;
 		}
-		id = 2 == m_details->currentIndex() ? service.Send("account_logs_query", m_selectedId) : 0;
+		id = 2 == m_details->currentIndex() ? service.Send(_TyRequest::TRADE_ACCOUNT_LOGS_QUERY, m_selectedId) : 0;
 		if (0 != id)
 		{
 			m_logsId = id;
@@ -472,13 +472,13 @@ void CViewTradingAccounts::RefreshSelection()
 }
 void CViewTradingAccounts::RefreshButtons()
 {
-	bool available = CSession::InstanceRef().IsAuthenticated() && CTradingAccountService::InstanceRef().IsSupported() && (0 == m_operationId);
+	bool available = CSession::InstanceRef().IsAuthenticated() && CTradeAccountService::InstanceRef().IsSupported() && (0 == m_operationId);
 	const request::TradeAccountRecord* info = SelectedAccount();
 	m_add->setEnabled(available);
 	m_edit->setEnabled(available && (nullptr != info));
 	m_connect->setEnabled(available && (nullptr != info) && (request::ACCOUNT_CONNECTED != info->state()));
 	m_disconnect->setEnabled(available && (nullptr != info) && (request::ACCOUNT_CONNECTED == info->state()));
-	QString reason = !CSession::InstanceRef().IsAuthenticated() ? "等待登录或重新连接 Wind" : (!CTradingAccountService::InstanceRef().IsSupported() ? "当前 Wind 不支持账户管理" : "");
+	QString reason = !CSession::InstanceRef().IsAuthenticated() ? "等待登录或重新连接 Wind" : (!CTradeAccountService::InstanceRef().IsSupported() ? "当前 Wind 不支持账户管理" : "");
 	for (QPushButton* button : { m_add, m_edit, m_connect, m_disconnect })
 	{
 		button->setToolTip(reason);
@@ -489,13 +489,13 @@ void CViewTradingAccounts::RefreshButtons()
 		m_notice->show();
 	}
 }
-void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& result)
+void CViewTradingAccounts::HandleResult(const CTradeAccountService::CResult& result)
 {
-	if (result.m_generation != CTradingAccountService::InstanceRef().GetGeneration())
+	if (result.m_generation != CTradeAccountService::InstanceRef().GetGeneration())
 	{
 		return;
 	}
-	if ("account_session_reset" == result.m_command)
+	if (result.m_bSessionReset)
 	{
 		m_accounts.clear();
 		m_operationId = 0;
@@ -511,14 +511,14 @@ void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& r
 		}
 		return;
 	}
-	if ((("account_snapshot_query" == result.m_command) && ((result.m_accountId != m_selectedId) || (result.m_requestId != m_snapshotId))) || (("account_logs_query" == result.m_command) && ((result.m_accountId != m_selectedId) || (result.m_requestId != m_logsId))))
+	if (((_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type) && ((result.m_accountId != m_selectedId) || (result.m_requestId != m_snapshotId))) || ((_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == result.m_type) && ((result.m_accountId != m_selectedId) || (result.m_requestId != m_logsId))))
 	{
 		return;
 	}
 	if (result.m_requestId == m_operationId)
 	{
 		m_operationId = 0;
-		if (result.m_error.empty() && ("account_add" == result.m_command) && result.m_data.has_account())
+		if (result.m_error.empty() && (_TyRequest::TRADE_ACCOUNT_ADD == result.m_type) && result.m_data.has_account())
 		{
 			ClearDetails();
 			m_selectedId = result.m_data.account().account_id();
@@ -533,7 +533,7 @@ void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& r
 	{
 		m_notice->setText(QString::fromStdString(result.m_error));
 		m_notice->show();
-		if (("account_snapshot_query" == result.m_command) && (result.m_requestId == m_snapshotId))
+		if ((_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type) && (result.m_requestId == m_snapshotId))
 		{
 			for (QLabel* value : m_funds)
 			{
@@ -545,9 +545,9 @@ void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& r
 		RefreshButtons();
 		return;
 	}
-	if ("account_query" == result.m_command)
+	if (_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type)
 	{
-		m_accounts = CTradingAccountService::InstanceRef().GetAccounts();
+		m_accounts = CTradeAccountService::InstanceRef().GetAccounts();
 		int connected = 0;
 		int strategies = 0;
 		int errors = 0;
@@ -566,9 +566,9 @@ void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& r
 	}
 	else if ((result.m_accountId == m_selectedId) && (0 != m_selectedId))
 	{
-		if ((result.m_requestId == m_snapshotId) && result.m_data.has_account_snapshot())
+		if ((result.m_requestId == m_snapshotId) && result.m_data.has_account_info_list() && (0 < result.m_data.account_info_list().accounts_size()))
 		{
-			const request::TradingAccountSnapshot& snapshot = result.m_data.account_snapshot();
+			const request::TradeAccountInfo& snapshot = result.m_data.account_info_list().accounts(0);
 			if ((snapshot.account_id() != m_selectedId) || (nullptr == SelectedAccount()) || (request::ACCOUNT_CONNECTED != SelectedAccount()->state()))
 			{
 				return;
@@ -585,7 +585,7 @@ void CViewTradingAccounts::HandleResult(const CTradingAccountService::CResult& r
 			{
 				int row = m_logs->rowCount();
 				m_logs->insertRow(row);
-				QStringList values{ QString::fromStdString(log.time()), QString::fromStdString(log.actor()), AccountAction(log.action()), QString::fromStdString(log.message()) };
+				QStringList values{ QString::fromStdString(log.time()), QString::fromStdString(log.actor()), QString::fromStdString(log.action()), QString::fromStdString(log.message()) };
 				for (int column = 0; 4 > column; ++column)
 				{
 					m_logs->setItem(row, column, new QTableWidgetItem(values[column]));
@@ -618,13 +618,13 @@ void CViewTradingAccounts::RefreshStrategies()
 		m_strategies->setItem(row, 2, new QTableWidgetItem(securities.join(", ")));
 	}
 }
-void CViewTradingAccounts::Operate(const std::string& command)
+void CViewTradingAccounts::Operate(_TyRequest type)
 {
 	if (0 != m_operationId)
 	{
 		return;
 	}
-	m_operationId = CTradingAccountService::InstanceRef().Send(command, m_selectedId);
+	m_operationId = CTradeAccountService::InstanceRef().Send(type, m_selectedId);
 	if (0 == m_operationId)
 	{
 		QMessageBox::warning(this, "请求未发送", "请检查连接状态，或等待当前请求完成");
@@ -659,7 +659,7 @@ void CViewTradingAccounts::EditAccount(bool bNew)
 		QMessageBox::warning(this, "账户名称无效", "请输入名称，长度不超过 128 字节");
 		return;
 	}
-	m_operationId = CTradingAccountService::InstanceRef().Send("account_modify", nAccountId, { { "name", strName.toStdString() } });
+	m_operationId = CTradeAccountService::InstanceRef().Send(_TyRequest::TRADE_ACCOUNT_MODIFY, nAccountId, { { "name", strName.toStdString() } });
 	if (0 == m_operationId)
 	{
 		QMessageBox::warning(this, "请求未发送", "请检查连接状态，或等待当前请求完成");

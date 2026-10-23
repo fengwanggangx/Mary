@@ -1,4 +1,4 @@
-﻿#include "CSession.h"
+#include "CSession.h"
 
 #include "../network/CTcpClient.h"
 
@@ -286,9 +286,8 @@ void CSession::MaintenanceLoop()
 				{
 					CRequest response;
 					response.SetId(mIter->first);
-					response.SetCmd(mIter->second.m_cmd);
-					response.SetReturnData("error_code", "-1");
-					response.SetReturnData("error_message", "请求超时");
+					response.SetType(mIter->second.m_type);
+					response.SetErrorInfo(-1, "请求超时");
 					expired.emplace_back(std::move(response));
 					mIter = m_reqs_sendout.erase(mIter);
 				}
@@ -338,11 +337,14 @@ void CSession::HandleResponse(const CRequest& response)
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
 		if (0 != id)
 		{
+			auto mIter = m_reqs_sendout.find(id);
+			if ((m_reqs_sendout.end() != mIter) && (response.GetType() != mIter->second.m_type))
+			{
+				return;
+			}
 			m_reqs_sendout.erase(id);
 		}
 	}
-
-	std::string strCmd = response.GetCmd();
 
 	std::optional<std::pair<int, std::string>> errorInfo = response.GetErrorInfo();
 	std::string strError;
@@ -351,20 +353,20 @@ void CSession::HandleResponse(const CRequest& response)
 		strError = errorInfo->second;
 	}
 
-	CRequest::Type t = response.GetType();
-	if ((CRequest::Type::HEARTBEAT == t) && ("heartbeat" == strCmd))
+	_TyRequest t = response.GetType();
+	if (_TyRequest::HEARTBEAT == t)
 	{
 		return;
 	}
 
-	if (((CRequest::Type::QUERY_AUTH == t) && ("auth" == strCmd)) || ((CRequest::Type::UPDATE_AUTH == t) && ("register" == strCmd)))
+	if ((_TyRequest::AUTH_LOGIN == t) || (_TyRequest::AUTH_REGISTER == t))
 	{
-		AuthOperation op = CRequest::Type::QUERY_AUTH == t ? AuthOperation::Login : AuthOperation::Register;
+		AuthOperation op = _TyRequest::AUTH_LOGIN == t ? AuthOperation::Login : AuthOperation::Register;
 		std::optional<CAuthParam> authParam;
 		AuthCallback authCallback;
 		{
 			std::lock_guard<std::mutex> lock(m_mtx_auth);
-			if (!m_authRequest.has_value() || (id != m_authRequest->m_id))
+			if (!m_authRequest.has_value() || (id != m_authRequest->m_id) || (response.GetType() != m_authRequest->m_type))
 			{
 				return;
 			}
@@ -405,7 +407,7 @@ void CSession::HandleResponse(const CRequest& response)
 			{
 				CLoginInfo info;
 				info.m_strAccount = authParam->m_strAccount;
-				info.m_strToken = response.GetReturnData("token");
+				info.m_strToken = response.GetExtraData("token");
 				info.m_host = authParam->m_host;
 				std::lock_guard<std::mutex> lock(m_mtx_auth);
 				m_loginInfo = std::move(info);
@@ -465,7 +467,7 @@ void CSession::SendAuthentication()
 		{
 			return;
 		}
-		m_authRequest.emplace(AuthRequest{ request.GetId(), std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
+		m_authRequest.emplace(AuthRequest{ request.GetId(), request.GetType(), std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
 	}
 	m_state.store(SessionState::Authenticating);
 	if (hasAuthContext)
@@ -486,28 +488,33 @@ void CSession::FailAuthentication(_TyRequestId id, const std::string& message)
 {
 	CRequest response;
 	response.SetId(id);
-	response.SetType(CRequest::Type::QUERY_AUTH);
-	response.SetCmd("auth");
-	response.SetReturnData("error_code", "-1");
-	response.SetReturnData("error_message", message);
+	{
+		std::lock_guard<std::mutex> lock(m_mtx_auth);
+		if (!m_authRequest.has_value() || (id != m_authRequest->m_id))
+		{
+			return;
+		}
+		response.SetType(m_authRequest->m_type);
+	}
+	response.SetErrorInfo(-1, message);
 	HandleResponse(response);
 }
 
 bool CSession::SendRequest(const CRequest& req)
 {
-	CRequest::Type t = req.GetType();
-	bool bAuthRequest = (CRequest::Type::QUERY_AUTH == t) || (CRequest::Type::UPDATE_AUTH == t);
+	_TyRequest t = req.GetType();
+	bool bAuthRequest = (_TyRequest::AUTH_LOGIN == t) || (_TyRequest::AUTH_REGISTER == t);
 	if (!bAuthRequest && !IsAuthenticated())
 	{
 		return false;
 	}
 
 	_TyRequestId id = req.GetId();
-	std::string strCmd = req.GetCmd();
+	_TyRequest type = req.GetType();
 	if (!bAuthRequest)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx_pending);
-		m_reqs_sendout.emplace(id, PendingRequest{ strCmd, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
+		m_reqs_sendout.emplace(id, PendingRequest{ type, std::chrono::steady_clock::now() + std::chrono::seconds(m_timeoutSeconds) });
 	}
 	bool bRet = false;
 	{
@@ -550,9 +557,8 @@ void CSession::FailPending(const std::string& strReson)
 		{
 			CRequest response;
 			response.SetId(id);
-			response.SetCmd(pending.m_cmd);
-			response.SetReturnData("error_code", "-1");
-			response.SetReturnData("error_message", strReson);
+			response.SetType(pending.m_type);
+			response.SetErrorInfo(-1, strReson);
 			failed.emplace_back(std::move(response));
 		}
 		m_reqs_sendout.clear();

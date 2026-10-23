@@ -10,46 +10,24 @@ namespace request
 		CRequest MarketSubscription(const std::vector<CSecurity>& securities, const std::vector<Channel>& channels, bool bSubscribe)
 		{
 			CRequest req;
-			req.SetType(CRequest::Type::HQMARKET);
-			req.SetCmd(bSubscribe ? "subscribe" : "unsubscribe");
-			if (bSubscribe)
+			req.SetType(bSubscribe ? _TyRequest::MARKET_SUBSCRIBE : _TyRequest::MARKET_UNSUBSCRIBE);
+			CRequest::_TyExtraRows rows;
+			rows.reserve(securities.size() * channels.size());
+			for (const auto& security : securities)
 			{
-				hqmarket::market::v1::SubscribeRequest payload;
-				for (const CSecurity& security : securities)
-				{
-					hqmarket::market::v1::Security* pSecurity = payload.add_securities();
-					pSecurity->set_symbol(security.m_strCode);
-					pSecurity->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
-				}
 				for (Channel channel : channels)
 				{
-					payload.add_channels(static_cast<hqmarket::market::v1::Channel>(channel));
+					rows.emplace_back(std::unordered_map<std::string, std::string>{ { "security", security.String() }, { "channel", GetChannelString(channel) } });
 				}
-				req.SetData(payload);
 			}
-			else
-			{
-				hqmarket::market::v1::UnsubscribeRequest payload;
-				for (const CSecurity& security : securities)
-				{
-					hqmarket::market::v1::Security* pSecurity = payload.add_securities();
-					pSecurity->set_symbol(security.m_strCode);
-					pSecurity->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
-				}
-				for (Channel channel : channels)
-				{
-					payload.add_channels(static_cast<hqmarket::market::v1::Channel>(channel));
-				}
-				req.SetData(payload);
-			}
+			req.SetExtraData("subscriptions", rows);
 			return req;
 		}
 	}
 	CRequest Auth(AuthAction action, const std::string& strAccount, const std::string& strPassword)
 	{
 		CRequest req;
-		req.SetType(AuthAction::Login == action ? CRequest::Type::QUERY_AUTH : CRequest::Type::UPDATE_AUTH);
-		req.SetCmd(AuthAction::Login == action ? "auth" : "register");
+		req.SetType(AuthAction::Login == action ? _TyRequest::AUTH_LOGIN : _TyRequest::AUTH_REGISTER);
 		req.SetExtraData("user", strAccount);
 		req.SetExtraData("password", strPassword);
 		return req;
@@ -58,8 +36,7 @@ namespace request
 	CRequest Auth(const std::string& strToken)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::QUERY_AUTH);
-		req.SetCmd("auth");
+		req.SetType(_TyRequest::AUTH_LOGIN);
 		req.SetExtraData("token", strToken);
 		return req;
 	}
@@ -67,36 +44,22 @@ namespace request
 	CRequest Subscription(const _TyParams& param)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("subscribe");
+		req.SetType(_TyRequest::MARKET_SUBSCRIBE);
 		for (const auto& [k, v] : param)
 		{
 			req.SetExtraData(k, v);
 		}
-		hqmarket::market::v1::SubscribeRequest payload;
-		CSecurity security = ParseSecurity(req.GetExtraData("security"));
-		payload.add_securities()->set_symbol(security.m_strCode);
-		payload.mutable_securities(0)->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
-		payload.add_channels(static_cast<hqmarket::market::v1::Channel>(ParseChannel(req.GetExtraData("channel"))));
-		req.SetData(payload);
 		return req;
 	}
 
 	CRequest UnSubscription(const _TyParams& param)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("unsubscribe");
+		req.SetType(_TyRequest::MARKET_UNSUBSCRIBE);
 		for (const auto& [k, v] : param)
 		{
 			req.SetExtraData(k, v);
 		}
-		hqmarket::market::v1::UnsubscribeRequest payload;
-		CSecurity security = ParseSecurity(req.GetExtraData("security"));
-		payload.add_securities()->set_symbol(security.m_strCode);
-		payload.mutable_securities(0)->set_exchange(static_cast<hqmarket::market::v1::Exchange>(security.m_market));
-		payload.add_channels(static_cast<hqmarket::market::v1::Channel>(ParseChannel(req.GetExtraData("channel"))));
-		req.SetData(payload);
 		return req;
 	}
 
@@ -113,35 +76,25 @@ namespace request
 	CRequest QueryMarketBars(const CSecurity& info, const std::string& strChannel, std::int64_t nBeginTime, std::int64_t nEndTime)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("query_bars");
+		req.SetType(_TyRequest::MARKET_BARS_QUERY);
 		req.SetExtraData("security", info.String());
 		req.SetExtraData("channel", strChannel);
 		req.SetExtraData("begin_time_ms", std::to_string(nBeginTime));
 		req.SetExtraData("end_time_ms", std::to_string(nEndTime));
-		hqmarket::market::v1::QueryRequest payload;
-		payload.mutable_security()->set_symbol(info.m_strCode);
-		payload.mutable_security()->set_exchange(static_cast<hqmarket::market::v1::Exchange>(info.m_market));
-		payload.set_channel(static_cast<hqmarket::market::v1::Channel>(ParseChannel(strChannel)));
-		payload.set_begin_time_ms(nBeginTime);
-		payload.set_end_time_ms(nEndTime);
-		req.SetData(payload);
 		return req;
 	}
 
 	CRequest QueryMarketSecurities()
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("query_securities");
+		req.SetType(_TyRequest::MARKET_SECURITIES_QUERY);
 		return req;
 	}
 
 	CRequest QueryMarketSectors(SectorType type)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("query_sectors");
+		req.SetType(_TyRequest::MARKET_SECTORS_QUERY);
 		req.SetExtraData("sector_type", std::to_string(static_cast<int>(type)));
 		return req;
 	}
@@ -149,8 +102,7 @@ namespace request
 	CRequest QueryMarketSectorConstituents(SectorType type, const std::string& strSectorCode)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HQMARKET);
-		req.SetCmd("query_sector_constituents");
+		req.SetType(_TyRequest::MARKET_SECTOR_CONSTITUENTS_QUERY);
 		req.SetExtraData("sector_type", std::to_string(static_cast<int>(type)));
 		req.SetExtraData("sector_code", strSectorCode);
 		return req;
@@ -159,8 +111,7 @@ namespace request
 	CRequest AddStrategy(const _TyStrategyInfo& strategy)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd("strategy_add");
+		req.SetType(_TyRequest::STRATEGY_ADD);
 		req.SetData(strategy);
 		return req;
 	}
@@ -168,8 +119,7 @@ namespace request
 	CRequest ModifyStrategy(const _TyStrategyInfo& strategy)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd("strategy_modify");
+		req.SetType(_TyRequest::STRATEGY_MODIFY);
 		req.SetData(strategy);
 		return req;
 	}
@@ -177,16 +127,14 @@ namespace request
 	CRequest QueryStrategies()
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd("strategy_query");
+		req.SetType(_TyRequest::STRATEGY_QUERY);
 		return req;
 	}
 
 	CRequest DeleteStrategy(std::uint64_t id)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd("strategy_delete");
+		req.SetType(_TyRequest::STRATEGY_DELETE);
 		req.SetExtraData("strategy_id", std::to_string(id));
 		return req;
 	}
@@ -194,16 +142,14 @@ namespace request
 	CRequest QueryStrategyRuntime()
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd("strategy_runtime_query");
+		req.SetType(_TyRequest::STRATEGY_RUNTIME_QUERY);
 		return req;
 	}
 
-	CRequest ControlStrategy(const std::string& command, std::uint64_t id)
+	CRequest ControlStrategy(_TyRequest type, std::uint64_t id)
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::STRATEGY);
-		req.SetCmd(command);
+		req.SetType(type);
 		req.SetExtraData("strategy_id", std::to_string(id));
 		return req;
 	}
@@ -211,8 +157,7 @@ namespace request
 	CRequest HeartBeat()
 	{
 		CRequest req;
-		req.SetType(CRequest::Type::HEARTBEAT);
-		req.SetCmd("heartbeat");
+		req.SetType(_TyRequest::HEARTBEAT);
 		std::int64_t nClientTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		req.SetExtraData("client_time_ms", std::to_string(nClientTime));
 		return req;

@@ -103,7 +103,7 @@ class CHQMarketService final : public ISingleton<CHQMarketService>
 
 	private:
 	bool m_bInitialized{ false }; // 服务是否已初始化
-	std::unordered_map<std::string, _TyRequestHandler> m_request_handler;
+	std::unordered_map<_TyRequest, _TyRequestHandler> m_request_handler;
 
 	mutable std::shared_mutex m_mtx_quotes;
 	std::unordered_map<std::string, CQuote> m_quotes; // 各证券最新行情

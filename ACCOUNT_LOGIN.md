@@ -5,7 +5,6 @@
 ## 请求
 
 - `type = TRADE_ACCOUNT_LOGIN (8)`
-- `cmd = trade_account_login`
 - `extra["broker"]`：券商配置键
 - `extra["site"]`：所选券商下的站点配置键
 - `extra["account"]`：交易账户
@@ -34,6 +33,6 @@ Mary、Wind、HQMarket 的枚举及生成协议同步更新；Mary 和 Wind 的�
 
 ## 查询全部交易账户
 
-请求仅含 `type=TRADE_ACCOUNT_QUERY (9)` 和 `id`；cmd 为空，不传 scope，也不传其他 extra。Wind 按类型路由，要求用户已经认证，返回当前服务管理的全部交易账户（现有存储是共享账户池，没有按用户划分所有权）。
+请求仅含 `type=TRADE_ACCOUNT_QUERY (9)` 和 `id`；协议不再包含 cmd，不传 scope，也不传其他 extra。Wind 按类型路由，要求用户已经认证，返回当前服务管理的全部交易账户（现有存储是共享账户池，没有按用户划分所有权）。
 
-响应同 type、同 id，payload.account_list 为 TradeAccountList，元素为 TradeAccountRecord。成功时 error_code=0、error_message 为空；无账户也返回显式空 account_list。失败时 error_code 非零，error_message 为错误说明。查询响应不使用 ret。现有其他业务的 ret 保留兼容，不在本次全局移除。Mary、Wind 必须同步升级。
+响应同 type、同 id，payload.account_list 为 TradeAccountList，元素为 TradeAccountRecord。成功时 error_code=0、error_message 为空；无账户也返回显式空 account_list。失败时 error_code 非零，error_message 为错误说明。所有请求统一使用 error_code/error_message 返回状态，普通返回字段使用 extra。协议已删除 cmd 和 ret，保留其字段编号；Mary、Wind、HQMarket 必须同步升级。

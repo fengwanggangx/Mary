@@ -1,4 +1,5 @@
-﻿#ifndef MARY_COMPONENTS_CVIEWSTRATEGYSETTINGS_H
+#include "../request/request.h"
+#ifndef MARY_COMPONENTS_CVIEWSTRATEGYSETTINGS_H
 #define MARY_COMPONENTS_CVIEWSTRATEGYSETTINGS_H
 
 #include "../service/strategy/CStrategyService.h"
@@ -35,7 +36,7 @@ class CViewStrategySettings final : public QWidget
 	void HandleOperation(const CStrategyService::COperationResult& result);
 	void EditStrategy(bool bNew);
 	void DeleteStrategy();
-	void ControlStrategy(const std::string& command);
+	void ControlStrategy(_TyRequest type);
 	void RefreshConnection();
 	CStrategyService::_TyStrategyList m_strategies;
 	CStrategyService::_TyRuntimeMap m_runtimes;

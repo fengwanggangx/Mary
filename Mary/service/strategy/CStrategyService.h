@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
-class CRequest;
+#include "../../request/request.h"
 
 class CStrategyService final : public ISingleton<CStrategyService>
 {
@@ -23,11 +23,11 @@ class CStrategyService final : public ISingleton<CStrategyService>
 	public:
 		using _TyStrategyList = std::vector<request::StrategyInfo>;
 		using _TyQueryHandler = std::function<void(const _TyStrategyList&, const std::string&)>;
-		using _TyOperationHandler = std::function<void(const std::string&, bool, const request::StrategyInfo&, const std::string&)>;
+		using _TyOperationHandler = std::function<void(_TyRequest, bool, const request::StrategyInfo&, const std::string&)>;
 		struct COperationResult
 		{
 			std::uint64_t m_requestId{ 0 };
-			std::string m_command;
+			_TyRequest m_type{ _TyRequest::UNKNOWN };
 			bool m_success{ false };
 			std::string m_error;
 		};
@@ -57,7 +57,7 @@ class CStrategyService final : public ISingleton<CStrategyService>
 		std::uint64_t AddStrategy(const request::StrategyInfo& strategy);
 		std::uint64_t ModifyStrategy(const request::StrategyInfo& strategy);
 		std::uint64_t DeleteStrategy(std::uint64_t id);
-		std::uint64_t ControlStrategy(const std::string& command, std::uint64_t id);
+		std::uint64_t ControlStrategy(_TyRequest type, std::uint64_t id);
 		_TyStrategyList GetStrategies() const;
 		bool FindStrategy(std::uint64_t id, request::StrategyInfo& result) const;
 		bool IsCacheValid() const;

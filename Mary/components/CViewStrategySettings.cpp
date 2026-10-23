@@ -137,9 +137,9 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	CStrategyService& service = CStrategyService::InstanceRef();
 	service.Initialize();
 	QPointer<CViewStrategySettings> safeThis(this);
-	m_nAccountToken = CTradingAccountService::InstanceRef().Subscribe([safeThis](const CTradingAccountService::CResult& result)
+	m_nAccountToken = CTradeAccountService::InstanceRef().Subscribe([safeThis](const CTradeAccountService::CResult& result)
 	{
-		if (!safeThis.isNull() && (("account_query" == result.m_command) || ("account_session_reset" == result.m_command)))
+		if (!safeThis.isNull() && ((_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type) || (result.m_bSessionReset)))
 		{
 			QMetaObject::invokeMethod(safeThis.data(), [safeThis]()
 			{
@@ -200,15 +200,15 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 	connect(m_ui->deleteButton, &QPushButton::clicked, this, &CViewStrategySettings::DeleteStrategy);
 	connect(m_ui->startButton, &QPushButton::clicked, this, [this]()
 	{
-		ControlStrategy("strategy_start");
+		ControlStrategy(_TyRequest::STRATEGY_START);
 	});
 	connect(m_ui->pauseButton, &QPushButton::clicked, this, [this]()
 	{
-		ControlStrategy("strategy_pause");
+		ControlStrategy(_TyRequest::STRATEGY_PAUSE);
 	});
 	connect(m_ui->stopButton, &QPushButton::clicked, this, [this]()
 	{
-		ControlStrategy("strategy_stop");
+		ControlStrategy(_TyRequest::STRATEGY_STOP);
 	});
 	QTimer* timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, this, [this]()
@@ -229,7 +229,7 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent) : QWidget(pParent
 
 CViewStrategySettings::~CViewStrategySettings()
 {
-	CTradingAccountService::InstanceRef().Unsubscribe(m_nAccountToken);
+	CTradeAccountService::InstanceRef().Unsubscribe(m_nAccountToken);
 	CStrategyService::InstanceRef().RemoveQueryHandler(m_nQueryToken);
 	CStrategyService::InstanceRef().RemoveRuntimeHandler(m_nRuntimeToken);
 	CStrategyService::InstanceRef().RemoveOperationHandler(m_nOperationToken);
@@ -319,7 +319,7 @@ void CViewStrategySettings::RefreshRows()
 	m_pInstances->setRowCount(0);
 	int selectedRow = -1;
 	int runningCount = 0;
-	std::vector<request::TradeAccountRecord> accounts = CTradingAccountService::InstanceRef().GetAccounts();
+	std::vector<request::TradeAccountRecord> accounts = CTradeAccountService::InstanceRef().GetAccounts();
 	for (std::size_t index = 0; index < m_strategies.size(); ++index)
 	{
 		const request::StrategyInfo& strategy = m_strategies[index];
@@ -493,20 +493,20 @@ void CViewStrategySettings::DeleteStrategy()
 	RefreshConnection();
 }
 
-void CViewStrategySettings::ControlStrategy(const std::string& command)
+void CViewStrategySettings::ControlStrategy(_TyRequest type)
 {
 	int row = m_pInstances->currentRow();
 	if (!CSession::InstanceRef().IsAuthenticated() || (0 > row) || (m_strategies.size() <= static_cast<std::size_t>(row)))
 	{
 		return;
 	}
-	std::uint64_t requestId = CStrategyService::InstanceRef().ControlStrategy(command, m_strategies[row].strategy_id());
+	std::uint64_t requestId = CStrategyService::InstanceRef().ControlStrategy(type, m_strategies[row].strategy_id());
 	if (0 == requestId)
 	{
 		QMessageBox::warning(this, "请求未发送", "请检查连接和策略状态");
 		return;
 	}
-	m_pendingOperations.emplace(requestId, ("strategy_start" == command) ? "启动" : (("strategy_pause" == command) ? "暂停" : "停止"));
+	m_pendingOperations.emplace(requestId, (_TyRequest::STRATEGY_START == type) ? "启动" : ((_TyRequest::STRATEGY_PAUSE == type) ? "暂停" : "停止"));
 	m_ui->strategyCountHint->setText("运行控制请求已发送，等待服务器确认");
 	RefreshConnection();
 }
