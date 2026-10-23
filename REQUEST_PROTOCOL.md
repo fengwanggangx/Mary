@@ -82,3 +82,7 @@ MARKET_BARS_QUERY 的 ExtraData：security、channel、begin_time_ms、end_time_
 - `tests/RequestProtocolTests.cpp`：CRequest 的 JSON 参数、边界、序列化及请求构造。
 
 在 Visual Studio x64 开发者命令行中，运行 `tests\run_request_protocol_tests.cmd`。测试产物写入临时目录，不加入项目源码目录。
+
+## 统一交易柜台扩展
+
+请求类型49–60、委托/成交/持仓行列表、账户快照与事件水位同步已加入三个项目。完整参数、状态和部署说明见 `Wind/Wind/counter/README.md`；本文件上表列出原基础协议，新增后共41个类型（含UNKNOWN）。

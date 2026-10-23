@@ -55,7 +55,7 @@ class UnifiedProtocolTest(unittest.TestCase):
             cpp_enum = re.search(r"enum class types\s*\{(.*?)\};", header, re.S).group(1)
             cpp_values = {name: int(number) for name, number in re.findall(r"(\w+)\s*=\s*(\d+)", cpp_enum)}
             self.assertEqual(cpp_values, {value.name: value.number for value in wire_types.value})
-            self.assertEqual(29, len(cpp_values))
+            self.assertEqual(41, len(cpp_values))
             envelope = next(message for file in descriptor.file for message in file.message_type if message.name == "RequestData")
             fields = {field.name for field in envelope.field}
             self.assertFalse(fields.intersection({"cmd", "ret", "auth_request", "subscribe_request", "unsubscribe_request", "query_request", "account_snapshot"}))
@@ -100,6 +100,25 @@ class UnifiedProtocolTest(unittest.TestCase):
         self.assertIn("strategy_runtime_list {", text)
         self.assertIn("strategy_id: 100", text)
         self.assertNotIn("runtime_count", text)
+
+
+class TradingCounterWireTest(unittest.TestCase):
+    def test_order_request_is_environment_neutral_metadata(self):
+        request = 'type: TRADE_ORDER_SUBMIT id: 90 extra { key: "account_id" value: "1" } extra { key: "client_order_id" value: "900" } extra { key: "security" value: "600000.SSE" } extra { key: "order_type" value: "limit" }'
+        for target in ("Wind", "HQMarket"):
+            text = transcode("Mary", target, request)
+            self.assertIn("TRADE_ORDER_SUBMIT", text)
+            self.assertNotIn("simulated", text)
+            self.assertNotIn("order_request", text)
+
+    def test_snapshot_and_event_watermark_round_trip(self):
+        text = transcode("Wind", "Mary", 'type: TRADE_SYNC_QUERY id: 91 trade_sync { watermark: 12 ready: true accounts { account_id: 1 balance: 100 } orders { account_id: 1 order_id: 2 client_order_id: 900 price: 1000 price_scale: 2 quantity: 100 filled_quantity: 50 } trades { account_id: 1 trade_id: 3 order_id: 2 quantity: 50 } positions { account_id: 1 security: "600000.SSE" total_quantity: 50 today_quantity: 50 } events { sequence: 12 request_id: 90 account_id: 1 kind: 2 trade { trade_id: 3 } } }')
+        self.assertIn("watermark: 12", text)
+        self.assertIn("today_quantity: 50", text)
+        self.assertIn("client_order_id: 900", text)
+        push = transcode("Wind", "HQMarket", 'type: TRADE_ORDER_PUSH extra { key: "sequence" value: "12" } trade_orders { orders { order_id: 2 } }')
+        self.assertIn("TRADE_ORDER_PUSH", push)
+        self.assertNotIn("id:", push.split("trade_orders")[0])
 
 
 if __name__ == "__main__":
