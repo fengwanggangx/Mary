@@ -1,8 +1,8 @@
-# Mary 行情图表与表格高性能实现方案
+# XTrader 行情图表与表格高性能实现方案
 
 ## 1. 最终选型
 
-Mary 当前是 Qt 6 + C++ Widgets，采用统一数据层、独立展示层：
+XTrader 当前是 Qt 6 + C++ Widgets，采用统一数据层、独立展示层：
 
 ```text
 HQMarket
@@ -26,7 +26,7 @@ CMarketDataGateway
 
 ### 类型命名约定
 
-实时行情快照类型统一命名为 `CQuote`，不再使用 `CQuoteSnapshot`。现有 Mary 原型中的 `CMarketQuoteSnapshot` 后续统一迁移为 `CQuote`。
+实时行情快照类型统一命名为 `CQuote`，不再使用 `CQuoteSnapshot`。现有 XTrader 原型中的 `CMarketQuoteSnapshot` 后续统一迁移为 `CQuote`。
 
 QWT 原生提供 `QwtPlotTradingCurve`，支持 Bar 和 CandleStick 两种金融交易曲线，适合日 K、周 K、月 K 和分钟 K。
 
@@ -169,7 +169,7 @@ QOpenGLWidget / QRhi
 
 ## 9. 结论
 
-Mary 采用：
+XTrader 采用：
 
 ```text
 K 线图：QWT QwtPlotTradingCurve

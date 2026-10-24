@@ -1,0 +1,30 @@
+#ifndef XTRADER_COMPONENTS_CVIEWCONSTITUENTS_H
+#define XTRADER_COMPONENTS_CVIEWCONSTITUENTS_H
+
+#include <QWidget>
+#include <memory>
+#include <vector>
+
+struct CSectorInfo;
+struct CSecurity;
+
+namespace Ui
+{
+	class CViewConstituentsClass;
+}
+class CMarketPageController;
+
+class CViewConstituents final : public QWidget
+{
+	public:
+	explicit CViewConstituents(QWidget* pParent = nullptr);
+	~CViewConstituents() override;
+	void SetSector(const CSectorInfo& sector, const std::vector<CSecurity>& securities);
+
+	private:
+	std::unique_ptr<Ui::CViewConstituentsClass> m_ui;
+	QString m_strSector;
+	std::unique_ptr<CMarketPageController> m_controller;
+};
+
+#endif

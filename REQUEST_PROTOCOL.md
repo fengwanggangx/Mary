@@ -1,6 +1,6 @@
 # 请求协议
 
-Mary、Wind、HQMarket 使用相同 RequestData 定义，必须一起升级。本次为不兼容的协议调整，旧客户端不再支持。
+XTrader、XEngine、HQMarket 使用相同 RequestData 定义，必须一起升级。本次为不兼容的协议调整，旧客户端不再支持。
 
 - C++ 枚举定义为 `request::types`，通过全局别名 `using _TyRequest = request::types;` 使用。Protobuf 的 RequestType 及其数值保持不变。
 - Type 唯一决定业务操作，不再发送 cmd。删除的字段编号和旧分类枚举编号均保留，不复用。
@@ -85,4 +85,4 @@ MARKET_BARS_QUERY 的 ExtraData：security、channel、begin_time_ms、end_time_
 
 ## 统一交易柜台扩展
 
-请求类型49–60、委托/成交/持仓行列表、账户快照与事件水位同步已加入三个项目。完整参数、状态和部署说明见 `Wind/Wind/counter/README.md`；本文件上表列出原基础协议，新增后共41个类型（含UNKNOWN）。
+请求类型49–60、委托/成交/持仓行列表、账户快照与事件水位同步已加入三个项目。完整参数、状态和部署说明见 `XEngine/XEngine/counter/README.md`；本文件上表列出原基础协议，新增后共41个类型（含UNKNOWN）。

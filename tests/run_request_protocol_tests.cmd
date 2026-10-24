@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "taskProjectRoot=%~dp0..\Mary"
+set "taskProjectRoot=%~dp0..\XTrader"
 set "taskTestDir=%TEMP%\xtrade-request-protocol-%RANDOM%"
 mkdir "%taskTestDir%"
 pushd "%taskTestDir%"

@@ -1,4 +1,4 @@
-#include "../Mary/components/CSinglePixelBorder.h"
+#include "../XTrader/components/CSinglePixelBorder.h"
 #include <QApplication>
 #include <QLineEdit>
 #include <QImage>

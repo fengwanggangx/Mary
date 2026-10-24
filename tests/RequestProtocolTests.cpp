@@ -1,5 +1,5 @@
-#include "../Mary/request/RequestCenter.h"
-#include "../Mary/request/request.pb.h"
+#include "../XTrader/request/RequestCenter.h"
+#include "../XTrader/request/request.pb.h"
 #include <iostream>
 #include <limits>
 
