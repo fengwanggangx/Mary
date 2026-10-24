@@ -56,7 +56,6 @@ namespace request
 		TRADE_POSITION_PUSH = 58,
 		TRADE_SYNC_QUERY = 59,
 		TRADE_CAPABILITIES_QUERY = 60,
-
 	};
 
 	class RequestData;
@@ -101,16 +100,18 @@ class CRequest
 	void SetType(_TyRequest t);
 	bool IsMarket() const;
 	bool IsStrategy() const;
-	bool IsTradeAccount() const;
 	std::string GetTypeName() const;
 
 	std::string GetExtraData(const std::string& strKey) const;
 	std::unordered_map<std::string, std::string> GetExtraData() const;
 	void SetExtraData(const std::string& strKey, const std::string& strValue);
-	using _TyExtraRows = std::vector<std::unordered_map<std::string, std::string>>;
-	void SetExtraData(const std::string& strKey, const std::vector<std::uint64_t>& values);
+	using _TyExtraRows =
+		std::vector<std::unordered_map<std::string, std::string>>;
+	void SetExtraData(const std::string& strKey,
+		const std::vector<std::uint64_t>& values);
 	void SetExtraData(const std::string& strKey, const _TyExtraRows& rows);
-	bool GetExtraData(const std::string& strKey, std::vector<std::uint64_t>& values) const;
+	bool GetExtraData(const std::string& strKey,
+		std::vector<std::uint64_t>& values) const;
 	bool GetExtraData(const std::string& strKey, _TyExtraRows& rows) const;
 
 	void SetData(const _TySubscriptionAck& value);
