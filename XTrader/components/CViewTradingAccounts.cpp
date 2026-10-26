@@ -566,9 +566,9 @@ void CViewTradingAccounts::HandleResult(const CTradeAccountService::CResult& res
 	}
 	else if ((result.m_accountId == m_selectedId) && (0 != m_selectedId))
 	{
-		if ((result.m_requestId == m_snapshotId) && result.m_data.has_account_info_list() && (0 < result.m_data.account_info_list().accounts_size()))
+		if ((result.m_requestId == m_snapshotId) && result.m_data.has_counter_reply() && result.m_data.counter_reply().has_funds())
 		{
-			const request::TradeAccountInfo& snapshot = result.m_data.account_info_list().accounts(0);
+			const request::TradeAccountInfo& snapshot = result.m_data.counter_reply().funds();
 			if ((snapshot.account_id() != m_selectedId) || (nullptr == SelectedAccount()) || (request::ACCOUNT_CONNECTED != SelectedAccount()->state()))
 			{
 				return;

@@ -2,7 +2,15 @@
 #include "../../system/CSession.h"
 #include <algorithm>
 CTradeAccountService::CTradeAccountService() = default;
-CTradeAccountService::~CTradeAccountService() = default;
+CTradeAccountService::~CTradeAccountService()
+{
+	m_timeouts.request_stop();
+	m_wake.notify_all();
+	if (m_timeouts.joinable())
+	{
+		m_timeouts.join();
+	}
+}
 void CTradeAccountService::Initialize()
 {
 	std::call_once(m_initializeFlag, [this]()
@@ -25,6 +33,40 @@ void CTradeAccountService::Initialize()
 				result.m_generation = ++m_generation;
 			}
 			m_results.Notify(result);
+		});
+		m_timeouts = std::jthread([this](std::stop_token stop)
+		{
+			while (!stop.stop_requested())
+			{
+				std::vector<CRequest> expired;
+				{
+					std::unique_lock<std::mutex> lock(m_mtx_state);
+					m_wake.wait_for(lock, std::chrono::seconds(1),
+						[&stop]()
+					{
+						return stop.stop_requested();
+					});
+					if (stop.stop_requested())
+					{
+						return;
+					}
+					for (const auto& item : m_pending)
+					{
+						if (item.second.m_deadline <= std::chrono::steady_clock::now())
+						{
+							CRequest response;
+							response.SetId(item.first);
+							response.SetType(item.second.m_type);
+							response.SetErrorInfo(1203, "账户请求超时");
+							expired.emplace_back(std::move(response));
+						}
+					}
+				}
+				for (const auto& response : expired)
+				{
+					OnResponse(response);
+				}
+			}
 		});
 	});
 }
@@ -83,16 +125,12 @@ std::uint64_t CTradeAccountService::Send(
 	default:
 		return 0;
 	}
-	if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == type)
+	if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == type &&
+		(0 == accountId || extra.contains("account_ids")))
 	{
-		if (!extra.contains("account_ids"))
-		{
-			req.SetExtraData("account_ids",
-				0 == accountId ? std::vector<std::uint64_t>{}
-							   : std::vector<std::uint64_t>{ accountId });
-		}
+		return 0;
 	}
-	else if (0 != accountId)
+	if (0 != accountId)
 	{
 		req.SetExtraData("account_id", std::to_string(accountId));
 	}
@@ -114,7 +152,9 @@ std::uint64_t CTradeAccountService::Send(
 				return 0;
 			}
 		}
-		m_pending.emplace(req.GetId(), CPending{ accountId, type });
+		m_pending.emplace(req.GetId(), CPending{ accountId, type,
+										   std::chrono::steady_clock::now() +
+											   std::chrono::seconds(10) });
 	}
 	if (CSession::InstanceRef().SendRequest(req))
 	{
@@ -158,32 +198,25 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 				m_accounts.clear();
 			}
 		}
-		else if (((_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type) &&
-					 !result.m_data.has_account_info_list()) ||
-				 ((_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == result.m_type) &&
-					 !result.m_data.has_account_logs()))
+		else if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type)
 		{
-			result.m_error = "账户响应缺少有效数据";
-		}
-		else if ((_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type) &&
-				 (0 != result.m_accountId))
-		{
-			const auto& rows = result.m_data.account_info_list().accounts();
-			auto mRow =
-				std::find_if(rows.begin(), rows.end(),
-					[&result](const request::TradeAccountInfo& info)
-			{
-				return result.m_accountId == info.account_id();
-			});
-			if (rows.end() == mRow)
+			if (!result.m_data.has_counter_reply() ||
+				!result.m_data.counter_reply().has_funds() ||
+				result.m_accountId != result.m_data.counter_reply().account_id() ||
+				result.m_accountId !=
+					result.m_data.counter_reply().funds().account_id())
 			{
 				result.m_error = "账户响应缺少指定账户信息";
 			}
-			else if (0 != mRow->error_code())
+			else if (0 != result.m_data.counter_reply().error_code())
 			{
-				result.m_error = mRow->error_message().empty() ? "账户信息查询失败"
-															   : mRow->error_message();
+				result.m_error = result.m_data.counter_reply().error_message();
 			}
+		}
+		else if (_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == result.m_type &&
+				 !result.m_data.has_account_logs())
+		{
+			result.m_error = "账户响应缺少有效数据";
 		}
 		else if ((_TyRequest::TRADE_ACCOUNT_LOGIN == result.m_type) ||
 				 (_TyRequest::TRADE_ACCOUNT_ADD == result.m_type) ||
