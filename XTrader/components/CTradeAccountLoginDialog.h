@@ -8,14 +8,16 @@ namespace Ui
 }
 class CTradeAccountLoginDialog final : public QDialog
 {
-	public:
+public:
 	explicit CTradeAccountLoginDialog(QWidget* pParent = nullptr);
 	~CTradeAccountLoginDialog() override;
 
-	protected:
+protected:
 	bool eventFilter(QObject* pObject, QEvent* pEvent) override;
 
-	private:
+private:
+	std::vector<request::BrokerRecord> m_brokers;
+	std::uint64_t m_directoryId{ 0 };
 	void Login();
 	void HandleResult(const CTradeAccountService::CResult& result);
 	void SetBusy(bool bBusy);

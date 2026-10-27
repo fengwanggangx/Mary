@@ -1,20 +1,22 @@
 #include "CTradeAccountLoginDialog.h"
-#include "CUIStyle.h"
 #include "CSinglePixelBorder.h"
+#include "CUIStyle.h"
 #include "ui_CTradeAccountLoginDialog.h"
-#include <QAction>
 #include <QAbstractItemView>
+#include <QAction>
 #include <QCoreApplication>
+#include <QIcon>
 #include <QMetaObject>
+#include <QMouseEvent>
 #include <QPointer>
 #include <QSettings>
-#include <QIcon>
-#include <QMouseEvent>
 #include <QWindow>
 
-CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent) : QDialog(pParent), m_ui(std::make_unique<Ui::CTradeAccountLoginDialog>())
+CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent)
+	: QDialog(pParent), m_ui(std::make_unique<Ui::CTradeAccountLoginDialog>())
 {
-	setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+	setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint |
+				   Qt::NoDropShadowWindowHint);
 	m_ui->setupUi(this);
 	setFixedSize(390, 308);
 	m_ui->titleFrame->installEventFilter(this);
@@ -35,7 +37,11 @@ CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent) : QDialog(p
 		}
 		CSinglePixelBorder::Install(*pCombo->view());
 	}
-	for (QWidget* pControl : { static_cast<QWidget*>(this), static_cast<QWidget*>(m_ui->accountEdit), static_cast<QWidget*>(m_ui->passwordEdit), static_cast<QWidget*>(m_ui->brokerCombo), static_cast<QWidget*>(m_ui->siteCombo) })
+	for (QWidget* pControl :
+		{ static_cast<QWidget*>(this), static_cast<QWidget*>(m_ui->accountEdit),
+			static_cast<QWidget*>(m_ui->passwordEdit),
+			static_cast<QWidget*>(m_ui->brokerCombo),
+			static_cast<QWidget*>(m_ui->siteCombo) })
 	{
 		CSinglePixelBorder::Install(*pControl);
 	}
@@ -43,62 +49,61 @@ CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent) : QDialog(p
 	CSinglePixelBorder::Install(*m_ui->divider, 0.0, Qt::TopEdge);
 	CSinglePixelBorder::Install(*m_ui->loginButton, 5.0);
 	CSinglePixelBorder::Install(*m_ui->cancelButton, 5.0);
-	QSettings settings(QCoreApplication::applicationDirPath() + "/ini/trade-accounts.ini", QSettings::IniFormat);
-	settings.beginGroup("brokers");
-	for (const auto& strBroker : settings.childGroups())
-	{
-		settings.beginGroup(strBroker);
-		m_ui->brokerCombo->addItem(settings.value("name", strBroker).toString(), strBroker);
-		settings.endGroup();
-	}
-	settings.endGroup();
-	if (0 == m_ui->brokerCombo->count())
-	{
-		m_ui->brokerCombo->addItem("XEngine 模拟服务", "wind_simulated");
-	}
-	connect(m_ui->brokerCombo, &QComboBox::currentIndexChanged, this, [this]()
-	{
-		m_ui->siteCombo->clear();
-		QSettings settings(QCoreApplication::applicationDirPath() + "/ini/trade-accounts.ini", QSettings::IniFormat);
-		settings.beginGroup("brokers/" + m_ui->brokerCombo->currentData().toString() + "/sites");
-		for (const auto& strSite : settings.childKeys())
+	connect(m_ui->brokerCombo, &QComboBox::currentIndexChanged, this,
+		[this](int index)
 		{
-			m_ui->siteCombo->addItem(settings.value(strSite).toString(), strSite);
-		}
-		if ((0 == m_ui->siteCombo->count()) && ("wind_simulated" == m_ui->brokerCombo->currentData().toString()))
-		{
-			m_ui->siteCombo->addItem("默认站点", "default");
-		}
-	});
-	m_ui->brokerCombo->setCurrentIndex(-1);
-	m_ui->brokerCombo->setCurrentIndex(0);
-	QAction* pReveal = m_ui->passwordEdit->addAction(QIcon(":/trade/password-eye.svg"), QLineEdit::TrailingPosition);
+			m_ui->siteCombo->clear();
+			if (0 <= index &&
+				static_cast<std::size_t>(index) < m_brokers.size())
+			{
+				for (const auto& site : m_brokers[index].sites())
+				{
+					m_ui->siteCombo->addItem(QString::fromStdString(site.name()),
+						QString::fromStdString(site.site()));
+				}
+			}
+		});
+	QAction* pReveal = m_ui->passwordEdit->addAction(
+		QIcon(":/trade/password-eye.svg"), QLineEdit::TrailingPosition);
 	pReveal->setCheckable(true);
 	pReveal->setText("显示密码");
 	pReveal->setToolTip("显示密码");
 	connect(pReveal, &QAction::toggled, this, [this, pReveal](bool bVisible)
-	{
-		m_ui->passwordEdit->setEchoMode(bVisible ? QLineEdit::Normal : QLineEdit::Password);
-		pReveal->setText(bVisible ? "隐藏密码" : "显示密码");
-		pReveal->setToolTip(pReveal->text());
-	});
-	connect(m_ui->loginButton, &QPushButton::clicked, this, &CTradeAccountLoginDialog::Login);
-	connect(m_ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
-	connect(m_ui->passwordEdit, &QLineEdit::returnPressed, this, &CTradeAccountLoginDialog::Login);
-	QPointer<CTradeAccountLoginDialog> self(this);
-	m_nToken = CTradeAccountService::InstanceRef().Subscribe([self](const CTradeAccountService::CResult& result)
-	{
-		if (nullptr != self)
 		{
-			QMetaObject::invokeMethod(self, [self, result]()
+			m_ui->passwordEdit->setEchoMode(bVisible ? QLineEdit::Normal
+													 : QLineEdit::Password);
+			pReveal->setText(bVisible ? "隐藏密码" : "显示密码");
+			pReveal->setToolTip(pReveal->text());
+		});
+	connect(m_ui->loginButton, &QPushButton::clicked, this,
+		&CTradeAccountLoginDialog::Login);
+	connect(m_ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
+	connect(m_ui->passwordEdit, &QLineEdit::returnPressed, this,
+		&CTradeAccountLoginDialog::Login);
+	QPointer<CTradeAccountLoginDialog> self(this);
+	m_nToken = CTradeAccountService::InstanceRef().Subscribe(
+		[self](const CTradeAccountService::CResult& result)
+		{
+			if (nullptr != self)
 			{
-				if (nullptr != self)
-				{
-					self->HandleResult(result);
-				}
-			}, Qt::QueuedConnection);
-		}
-	});
+				QMetaObject::invokeMethod(
+					self,
+					[self, result]()
+					{
+						if (nullptr != self)
+						{
+							self->HandleResult(result);
+						}
+					},
+					Qt::QueuedConnection);
+			}
+		});
+	m_directoryId =
+		CTradeAccountService::InstanceRef().Send(_TyRequest::BROKER_QUERY);
+	if (0 == m_directoryId)
+	{
+		ShowError("无法加载券商目录，请重新打开登录窗口");
+	}
 	m_ui->accountEdit->setFocus();
 }
 
@@ -124,12 +129,20 @@ void CTradeAccountLoginDialog::Login()
 	{
 		return;
 	}
-	if ((0 > m_ui->brokerCombo->currentIndex()) || (0 > m_ui->siteCombo->currentIndex()) || m_ui->accountEdit->text().trimmed().isEmpty() || m_ui->passwordEdit->text().isEmpty())
+	if ((0 > m_ui->brokerCombo->currentIndex()) ||
+		(0 > m_ui->siteCombo->currentIndex()) ||
+		m_ui->accountEdit->text().isEmpty() ||
+		m_ui->passwordEdit->text().isEmpty())
 	{
 		ShowError("请选择券商、站点，并输入账户和密码");
 		return;
 	}
-	m_nRequestId = CTradeAccountService::InstanceRef().Send(_TyRequest::TRADE_ACCOUNT_LOGIN, 0, { { "broker", m_ui->brokerCombo->currentData().toString().toStdString() }, { "site", m_ui->siteCombo->currentData().toString().toStdString() }, { "account", m_ui->accountEdit->text().trimmed().toStdString() }, { "password", m_ui->passwordEdit->text().toStdString() } });
+	m_nRequestId = CTradeAccountService::InstanceRef().Send(
+		_TyRequest::TRADE_ACCOUNT_LOGIN, {},
+		{ { "broker_id", m_ui->brokerCombo->currentData().toString().toStdString() },
+			{ "site", m_ui->siteCombo->currentData().toString().toStdString() },
+			{ "account", m_ui->accountEdit->text().toStdString() },
+			{ "password", m_ui->passwordEdit->text().toStdString() } });
 	if (0 == m_nRequestId)
 	{
 		ShowError("请求未发送，请检查 XEngine 登录状态或等待当前请求完成");
@@ -139,9 +152,30 @@ void CTradeAccountLoginDialog::Login()
 	SetBusy(true);
 }
 
-void CTradeAccountLoginDialog::HandleResult(const CTradeAccountService::CResult& result)
+void CTradeAccountLoginDialog::HandleResult(
+	const CTradeAccountService::CResult& result)
 {
-	if ((0 == m_nRequestId) || ((m_nRequestId != result.m_requestId) && (!result.m_bSessionReset)))
+	if (0 != m_directoryId && result.m_requestId == m_directoryId)
+	{
+		m_directoryId = 0;
+		if (!result.m_error.empty() || !result.m_data.has_broker_list())
+		{
+			ShowError("无法加载券商目录");
+			return;
+		}
+		m_brokers.assign(result.m_data.broker_list().brokers().begin(),
+			result.m_data.broker_list().brokers().end());
+		m_ui->brokerCombo->clear();
+		for (const auto& broker : m_brokers)
+		{
+			m_ui->brokerCombo->addItem(QString::fromStdString(broker.name()),
+				QString::number(broker.broker_id()));
+		}
+		return;
+	}
+
+	if ((0 == m_nRequestId) ||
+		((m_nRequestId != result.m_requestId) && (!result.m_bSessionReset)))
 	{
 		return;
 	}
@@ -150,7 +184,8 @@ void CTradeAccountLoginDialog::HandleResult(const CTradeAccountService::CResult&
 	m_ui->passwordEdit->clear();
 	if (!result.m_error.empty() || (result.m_bSessionReset))
 	{
-		ShowError(result.m_error.empty() ? "连接已断开，请重新登录 XEngine" : QString::fromStdString(result.m_error));
+		ShowError(result.m_error.empty() ? "连接已断开，请重新登录 XEngine"
+										 : QString::fromStdString(result.m_error));
 		return;
 	}
 	accept();
@@ -158,7 +193,8 @@ void CTradeAccountLoginDialog::HandleResult(const CTradeAccountService::CResult&
 
 bool CTradeAccountLoginDialog::eventFilter(QObject* pObject, QEvent* pEvent)
 {
-	if (((m_ui->titleFrame == pObject) || (m_ui->titleLabel == pObject)) && (QEvent::MouseButtonPress == pEvent->type()))
+	if (((m_ui->titleFrame == pObject) || (m_ui->titleLabel == pObject)) &&
+		(QEvent::MouseButtonPress == pEvent->type()))
 	{
 		QMouseEvent* pMouse = static_cast<QMouseEvent*>(pEvent);
 		if ((Qt::LeftButton == pMouse->button()) && (nullptr != windowHandle()))
@@ -176,7 +212,10 @@ void CTradeAccountLoginDialog::ShowError(const QString& strMessage)
 	int nExtraHeight = 0;
 	if (!strMessage.isEmpty())
 	{
-		nExtraHeight = qMax(m_ui->errorLabel->minimumHeight(), m_ui->errorLabel->heightForWidth(m_ui->errorLabel->width())) + m_ui->bodyLayout->spacing();
+		nExtraHeight =
+			qMax(m_ui->errorLabel->minimumHeight(),
+				m_ui->errorLabel->heightForWidth(m_ui->errorLabel->width())) +
+			m_ui->bodyLayout->spacing();
 	}
 	setFixedSize(390, 308 + nExtraHeight);
 }

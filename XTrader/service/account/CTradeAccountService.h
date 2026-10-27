@@ -12,12 +12,12 @@
 class CTradeAccountService final : public ISingleton<CTradeAccountService>
 {
 	DECLARE_SINGLE_DFAULT(CTradeAccountService)
-	public:
+public:
 	struct CResult
 	{
 		bool m_bSessionReset{ false };
 		std::uint64_t m_requestId{ 0 };
-		std::uint64_t m_accountId{ 0 };
+		_TyAccountIndex m_accountIndex{};
 		std::uint64_t m_generation{ 0 };
 		_TyRequest m_type{ _TyRequest::UNKNOWN };
 		std::string m_error;
@@ -28,17 +28,17 @@ class CTradeAccountService final : public ISingleton<CTradeAccountService>
 	_TyCallbackId Subscribe(_TyHandler&& handler);
 	void Unsubscribe(_TyCallbackId token);
 	std::uint64_t
-	Send(_TyRequest type, std::uint64_t accountId = 0,
+	Send(_TyRequest type, const _TyAccountIndex& accountIndex = {},
 		const std::unordered_map<std::string, std::string>& extra = {});
 	std::vector<request::TradeAccountRecord> GetAccounts() const;
 	bool IsSupported() const;
 	std::uint64_t GetGeneration() const;
 
-	private:
+private:
 	void OnResponse(const CRequest& response);
 	struct CPending
 	{
-		std::uint64_t m_accountId{ 0 };
+		_TyAccountIndex m_accountIndex{};
 		_TyRequest m_type{ _TyRequest::UNKNOWN };
 		std::chrono::steady_clock::time_point m_deadline;
 	};

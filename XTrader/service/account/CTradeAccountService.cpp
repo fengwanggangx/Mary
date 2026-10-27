@@ -14,61 +14,61 @@ CTradeAccountService::~CTradeAccountService()
 void CTradeAccountService::Initialize()
 {
 	std::call_once(m_initializeFlag, [this]()
-	{
-		CSession::InstanceRef().RegisterResponseHandler(
-			[this](const CRequest& response)
 		{
-			OnResponse(response);
-		});
-		CSession::InstanceRef().RegisterStateHandler(
-			[this](SessionState, const std::string&)
-		{
-			CResult result;
-			result.m_bSessionReset = true;
-			{
-				std::lock_guard<std::mutex> lock(m_mtx_state);
-				m_pending.clear();
-				m_accounts.clear();
-				m_supported = true;
-				result.m_generation = ++m_generation;
-			}
-			m_results.Notify(result);
-		});
-		m_timeouts = std::jthread([this](std::stop_token stop)
-		{
-			while (!stop.stop_requested())
-			{
-				std::vector<CRequest> expired;
-				{
-					std::unique_lock<std::mutex> lock(m_mtx_state);
-					m_wake.wait_for(lock, std::chrono::seconds(1),
-						[&stop]()
-					{
-						return stop.stop_requested();
-					});
-					if (stop.stop_requested())
-					{
-						return;
-					}
-					for (const auto& item : m_pending)
-					{
-						if (item.second.m_deadline <= std::chrono::steady_clock::now())
-						{
-							CRequest response;
-							response.SetId(item.first);
-							response.SetType(item.second.m_type);
-							response.SetErrorInfo(1203, "账户请求超时");
-							expired.emplace_back(std::move(response));
-						}
-					}
-				}
-				for (const auto& response : expired)
+			CSession::InstanceRef().RegisterResponseHandler(
+				[this](const CRequest& response)
 				{
 					OnResponse(response);
-				}
-			}
+				});
+			CSession::InstanceRef().RegisterStateHandler(
+				[this](SessionState, const std::string&)
+				{
+					CResult result;
+					result.m_bSessionReset = true;
+					{
+						std::lock_guard<std::mutex> lock(m_mtx_state);
+						m_pending.clear();
+						m_accounts.clear();
+						m_supported = true;
+						result.m_generation = ++m_generation;
+					}
+					m_results.Notify(result);
+				});
+			m_timeouts = std::jthread([this](std::stop_token stop)
+				{
+					while (!stop.stop_requested())
+					{
+						std::vector<CRequest> expired;
+						{
+							std::unique_lock<std::mutex> lock(m_mtx_state);
+							m_wake.wait_for(lock, std::chrono::seconds(1),
+								[&stop]()
+								{
+									return stop.stop_requested();
+								});
+							if (stop.stop_requested())
+							{
+								return;
+							}
+							for (const auto& item : m_pending)
+							{
+								if (item.second.m_deadline <= std::chrono::steady_clock::now())
+								{
+									CRequest response;
+									response.SetId(item.first);
+									response.SetType(item.second.m_type);
+									response.SetErrorInfo(1203, "账户请求超时");
+									expired.emplace_back(std::move(response));
+								}
+							}
+						}
+						for (const auto& response : expired)
+						{
+							OnResponse(response);
+						}
+					}
+				});
 		});
-	});
 }
 _TyCallbackId CTradeAccountService::Subscribe(_TyHandler&& handler)
 {
@@ -96,7 +96,7 @@ std::uint64_t CTradeAccountService::GetGeneration() const
 	return m_generation;
 }
 std::uint64_t CTradeAccountService::Send(
-	_TyRequest type, std::uint64_t accountId,
+	_TyRequest type, const _TyAccountIndex& accountIndex,
 	const std::unordered_map<std::string, std::string>& extra)
 {
 	Initialize();
@@ -105,7 +105,7 @@ std::uint64_t CTradeAccountService::Send(
 		return 0;
 	}
 	if ((_TyRequest::TRADE_ACCOUNT_QUERY == type) &&
-		((0 != accountId) || !extra.empty()))
+		((IsAccountValid(accountIndex)) || !extra.empty()))
 	{
 		return 0;
 	}
@@ -113,26 +113,24 @@ std::uint64_t CTradeAccountService::Send(
 	req.SetType(type);
 	switch (type)
 	{
+	case _TyRequest::BROKER_QUERY:
+	case _TyRequest::SIMULATED_ACCOUNT_OPEN:
 	case _TyRequest::TRADE_ACCOUNT_LOGIN:
 	case _TyRequest::TRADE_ACCOUNT_QUERY:
-	case _TyRequest::TRADE_ACCOUNT_ADD:
-	case _TyRequest::TRADE_ACCOUNT_MODIFY:
-	case _TyRequest::TRADE_ACCOUNT_CONNECT:
 	case _TyRequest::TRADE_ACCOUNT_DISCONNECT:
 	case _TyRequest::TRADE_ACCOUNT_INFO_QUERY:
-	case _TyRequest::TRADE_ACCOUNT_LOGS_QUERY:
 		break;
 	default:
 		return 0;
 	}
 	if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == type &&
-		(0 == accountId || extra.contains("account_ids")))
+		(!IsAccountValid(accountIndex) || extra.contains("account_ids")))
 	{
 		return 0;
 	}
-	if (0 != accountId)
+	if (IsAccountValid(accountIndex))
 	{
-		req.SetExtraData("account_id", std::to_string(accountId));
+		WriteAccountIdentity(accountIndex, req);
 	}
 	for (const auto& item : extra)
 	{
@@ -147,12 +145,12 @@ std::uint64_t CTradeAccountService::Send(
 		for (const auto& item : m_pending)
 		{
 			if ((type == item.second.m_type) &&
-				(accountId == item.second.m_accountId))
+				(accountIndex == item.second.m_accountIndex))
 			{
 				return 0;
 			}
 		}
-		m_pending.emplace(req.GetId(), CPending{ accountId, type,
+		m_pending.emplace(req.GetId(), CPending{ accountIndex, type,
 										   std::chrono::steady_clock::now() +
 											   std::chrono::seconds(10) });
 	}
@@ -178,7 +176,7 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 		{
 			return;
 		}
-		result.m_accountId = mIter->second.m_accountId;
+		result.m_accountIndex = mIter->second.m_accountIndex;
 		result.m_type = mIter->second.m_type;
 		result.m_requestId = response.GetId();
 		result.m_generation = m_generation;
@@ -202,9 +200,10 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 		{
 			if (!result.m_data.has_counter_reply() ||
 				!result.m_data.counter_reply().has_funds() ||
-				result.m_accountId != result.m_data.counter_reply().account_id() ||
-				result.m_accountId !=
-					result.m_data.counter_reply().funds().account_id())
+				result.m_accountIndex !=
+					AccountIndex(result.m_data.counter_reply()) ||
+				result.m_accountIndex !=
+					AccountIndex(result.m_data.counter_reply().funds()))
 			{
 				result.m_error = "账户响应缺少指定账户信息";
 			}
@@ -213,23 +212,14 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 				result.m_error = result.m_data.counter_reply().error_message();
 			}
 		}
-		else if (_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == result.m_type &&
-				 !result.m_data.has_account_logs())
-		{
-			result.m_error = "账户响应缺少有效数据";
-		}
-		else if ((_TyRequest::TRADE_ACCOUNT_LOGIN == result.m_type) ||
-				 (_TyRequest::TRADE_ACCOUNT_ADD == result.m_type) ||
-				 (_TyRequest::TRADE_ACCOUNT_MODIFY == result.m_type) ||
-				 (_TyRequest::TRADE_ACCOUNT_CONNECT == result.m_type) ||
-				 (_TyRequest::TRADE_ACCOUNT_DISCONNECT == result.m_type))
+		else if (_TyRequest::TRADE_ACCOUNT_LOGIN == result.m_type ||
+				 _TyRequest::TRADE_ACCOUNT_DISCONNECT == result.m_type)
 		{
 			std::erase_if(m_pending, [](const auto& item)
-			{
-				return (_TyRequest::TRADE_ACCOUNT_QUERY == item.second.m_type) ||
-					   (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == item.second.m_type) ||
-					   (_TyRequest::TRADE_ACCOUNT_LOGS_QUERY == item.second.m_type);
-			});
+				{
+					return _TyRequest::TRADE_ACCOUNT_QUERY == item.second.m_type ||
+						   _TyRequest::TRADE_ACCOUNT_INFO_QUERY == item.second.m_type;
+				});
 		}
 		else if (_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type)
 		{
@@ -246,9 +236,9 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 				std::sort(m_accounts.begin(), m_accounts.end(),
 					[](const request::TradeAccountRecord& left,
 						const request::TradeAccountRecord& right)
-				{
-					return left.account_id() < right.account_id();
-				});
+					{
+						return AccountIndex(left) < AccountIndex(right);
+					});
 			}
 		}
 	}

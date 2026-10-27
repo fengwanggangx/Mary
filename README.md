@@ -4,6 +4,6 @@ XTrade 的桌面交易终端，原项目名 Mary。配合 XEngine 策略服务�
 
 打开 `XTrader.sln`，使用 Visual Studio 的 Qt/MSBuild、Qt 6.11.2 MSVC 64 位及 C++20 工具链构建。主工程为 `XTrader/XTrader.vcxproj`，输出程序为 `XTrader.exe`；运行目录仍为 `XTrader/exec/Debug` 或 `XTrader/exec/Release`。
 
-改名保留已有本地数据与连接设置。登录选项继续读取原有 `QSettings("Mary", "Mary")` 命名空间；历史 `local.wind` 配置键及 `wind_simulated` 登录键保留兼容，不需要重新创建账户。模拟柜台实际由 XBroker 提供。
+交易账户登录从 Broker 获取券商和站点目录，按 broker_id、site、account 登录；不使用旧模拟券商别名。账户页面显示已登录会话和分项资金查询，策略绑定保存完整账户身份，账号保留前导零。Broker、XEngine 和 XTrader 必须配套升级，旧账户编号和策略绑定不迁移。
 
-GitHub 仓库：https://github.com/fengwanggangx/XTrader
+共享协议采用 protoc 29.3 生成；四端协议检查可运行 `tests/test_trade_account_protocol.py`，通过 PROTOC 指定编译器路径。
