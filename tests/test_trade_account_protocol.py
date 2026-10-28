@@ -33,7 +33,7 @@ class IdentityProtocolTest(unittest.TestCase):
             self.assertNotIn('TradeAccountData',[m.name for m in messages])
         self.assertTrue(all(d==descriptors[0] for d in descriptors))
     def test_leading_zero_and_separate_identity_fields(self):
-        text='type: TRADE_ACCOUNT_QUERY account_list { accounts { broker_id: 2 site: "other" account: "000123" broker_name: "Broker" name: "Name" } }'
+        text='type: TRADE_ACCOUNT_LIST_QUERY account_list { accounts { broker_id: 2 site: "other" account: "000123" broker_name: "Broker" name: "Name" } }'
         encoded=subprocess.run(command('XBroker','encode'),input=text.encode(),capture_output=True,check=True).stdout
         for project in PROJECTS:
             decoded=subprocess.run(command(project,'decode'),input=encoded,capture_output=True,check=True).stdout.decode()

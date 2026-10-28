@@ -18,7 +18,7 @@ namespace
 int main()
 {
 	CRequest req;
-	req.SetType(_TyRequest::TRADE_ACCOUNT_INFO_QUERY);
+	req.SetType(_TyRequest::TRADE_FUNDS_QUERY);
 	std::vector<std::uint64_t> ids{ 1, (std::numeric_limits<std::uint64_t>::max)() };
 	req.SetExtraData("account_ids", ids);
 	std::vector<std::uint64_t> parsed;

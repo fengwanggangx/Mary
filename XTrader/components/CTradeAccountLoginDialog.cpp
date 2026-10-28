@@ -99,7 +99,7 @@ CTradeAccountLoginDialog::CTradeAccountLoginDialog(QWidget* pParent)
 			}
 		});
 	m_directoryId =
-		CTradeAccountService::InstanceRef().Send(_TyRequest::BROKER_QUERY);
+		CTradeAccountService::InstanceRef().Send(_TyRequest::SUPPORTED_BROKER_QUERY);
 	if (0 == m_directoryId)
 	{
 		ShowError("无法加载券商目录，请重新打开登录窗口");

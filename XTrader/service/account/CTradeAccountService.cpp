@@ -104,7 +104,7 @@ std::uint64_t CTradeAccountService::Send(
 	{
 		return 0;
 	}
-	if ((_TyRequest::TRADE_ACCOUNT_QUERY == type) &&
+	if ((_TyRequest::TRADE_ACCOUNT_LIST_QUERY == type) &&
 		((IsAccountValid(accountIndex)) || !extra.empty()))
 	{
 		return 0;
@@ -113,17 +113,16 @@ std::uint64_t CTradeAccountService::Send(
 	req.SetType(type);
 	switch (type)
 	{
-	case _TyRequest::BROKER_QUERY:
-	case _TyRequest::SIMULATED_ACCOUNT_OPEN:
+	case _TyRequest::SUPPORTED_BROKER_QUERY:
 	case _TyRequest::TRADE_ACCOUNT_LOGIN:
-	case _TyRequest::TRADE_ACCOUNT_QUERY:
+	case _TyRequest::TRADE_ACCOUNT_LIST_QUERY:
 	case _TyRequest::TRADE_ACCOUNT_DISCONNECT:
-	case _TyRequest::TRADE_ACCOUNT_INFO_QUERY:
+	case _TyRequest::TRADE_FUNDS_QUERY:
 		break;
 	default:
 		return 0;
 	}
-	if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == type &&
+	if (_TyRequest::TRADE_FUNDS_QUERY == type &&
 		(!IsAccountValid(accountIndex) || extra.contains("account_ids")))
 	{
 		return 0;
@@ -188,7 +187,7 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 			result.m_error = error->second.empty() ? "账户请求失败，错误码：" +
 														 std::to_string(error->first)
 												   : error->second;
-			if ((_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type) &&
+			if ((_TyRequest::TRADE_ACCOUNT_LIST_QUERY == result.m_type) &&
 				((std::string::npos != result.m_error.find("unsupported")) ||
 					(std::string::npos != result.m_error.find("unknown"))))
 			{
@@ -196,7 +195,7 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 				m_accounts.clear();
 			}
 		}
-		else if (_TyRequest::TRADE_ACCOUNT_INFO_QUERY == result.m_type)
+		else if (_TyRequest::TRADE_FUNDS_QUERY == result.m_type)
 		{
 			if (!result.m_data.has_counter_reply() ||
 				!result.m_data.counter_reply().has_funds() ||
@@ -217,11 +216,11 @@ void CTradeAccountService::OnResponse(const CRequest& response)
 		{
 			std::erase_if(m_pending, [](const auto& item)
 				{
-					return _TyRequest::TRADE_ACCOUNT_QUERY == item.second.m_type ||
-						   _TyRequest::TRADE_ACCOUNT_INFO_QUERY == item.second.m_type;
+					return _TyRequest::TRADE_ACCOUNT_LIST_QUERY == item.second.m_type ||
+						   _TyRequest::TRADE_FUNDS_QUERY == item.second.m_type;
 				});
 		}
-		else if (_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type)
+		else if (_TyRequest::TRADE_ACCOUNT_LIST_QUERY == result.m_type)
 		{
 			if (!result.m_data.has_account_list())
 			{

@@ -122,7 +122,7 @@ void CViewTradingAccounts::showEvent(QShowEvent* event)
 
 void CViewTradingAccounts::Refresh()
 {
-	CTradeAccountService::InstanceRef().Send(_TyRequest::TRADE_ACCOUNT_QUERY);
+	CTradeAccountService::InstanceRef().Send(_TyRequest::TRADE_ACCOUNT_LIST_QUERY);
 }
 
 void CViewTradingAccounts::RefreshRows()
@@ -187,7 +187,7 @@ void CViewTradingAccounts::RefreshSelection()
 											  " / " + m_accounts[row].site() +
 											  " / " + m_accounts[row].account()));
 	m_snapshotId = CTradeAccountService::InstanceRef().Send(
-		_TyRequest::TRADE_ACCOUNT_INFO_QUERY, m_selectedIndex);
+		_TyRequest::TRADE_FUNDS_QUERY, m_selectedIndex);
 	RefreshStrategies();
 	RefreshButtons();
 }
@@ -225,7 +225,7 @@ void CViewTradingAccounts::HandleResult(
 		m_operationId = 0;
 		Refresh();
 	}
-	if (_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type &&
+	if (_TyRequest::TRADE_ACCOUNT_LIST_QUERY == result.m_type &&
 		result.m_error.empty())
 	{
 		m_accounts = CTradeAccountService::InstanceRef().GetAccounts();

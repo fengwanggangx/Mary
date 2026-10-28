@@ -19,12 +19,12 @@ XTrader、XEngine、HQMarket 使用相同 RequestData 定义，必须一起升�
 | AUTH_REGISTER (3) | 无 | 无 |
 | HEARTBEAT (6) | 无 | 无 |
 | TRADE_ACCOUNT_LOGIN (8) | 无 | TradeAccountRecord（通道接入后） |
-| TRADE_ACCOUNT_QUERY (9) | 无 | TradeAccountList |
+| TRADE_ACCOUNT_LIST_QUERY (9) | 无 | TradeAccountList |
 | TRADE_ACCOUNT_ADD (10) | 无 | TradeAccountRecord |
 | TRADE_ACCOUNT_MODIFY (11) | 无 | TradeAccountRecord |
 | TRADE_ACCOUNT_CONNECT (12) | 无 | TradeAccountRecord |
 | TRADE_ACCOUNT_DISCONNECT (13) | 无 | TradeAccountRecord |
-| TRADE_ACCOUNT_INFO_QUERY (14) | 无 | TradeAccountInfoList |
+| TRADE_FUNDS_QUERY (14) | 无 | TradeAccountInfoList |
 | TRADE_ACCOUNT_LOGS_QUERY (15) | 无 | TradeAccountLogList |
 | STRATEGY_ADD (20) | StrategyInfo | StrategyInfo |
 | STRATEGY_MODIFY (21) | StrategyInfo | StrategyInfo |
@@ -51,7 +51,6 @@ AUTH_LOGIN 的请求 ExtraData 使用 user/password，或者 token。成功响�
 ## 交易账户
 
 - LOGIN：broker、site、account、password。
-- ADD：name、initial_balance（整数分）；当前只支持模拟账户。
 - QUERY：查询全部账户，无 scope。目前是共享账户池，尚未实现按用户归属隔离。
 - MODIFY：account_id、name。
 - CONNECT / DISCONNECT：account_id。

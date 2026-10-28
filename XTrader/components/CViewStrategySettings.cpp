@@ -155,7 +155,7 @@ CViewStrategySettings::CViewStrategySettings(QWidget* pParent)
 		[safeThis](const CTradeAccountService::CResult& result)
 		{
 			if (!safeThis.isNull() &&
-				((_TyRequest::TRADE_ACCOUNT_QUERY == result.m_type) ||
+				((_TyRequest::TRADE_ACCOUNT_LIST_QUERY == result.m_type) ||
 					(result.m_bSessionReset)))
 			{
 				QMetaObject::invokeMethod(
