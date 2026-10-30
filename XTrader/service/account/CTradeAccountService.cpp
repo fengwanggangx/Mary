@@ -151,7 +151,7 @@ std::uint64_t CTradeAccountService::Send(
 		}
 		m_pending.emplace(req.GetId(), CPending{ accountIndex, type,
 										   std::chrono::steady_clock::now() +
-											   std::chrono::seconds(10) });
+											   std::chrono::seconds(_TyRequest::TRADE_ACCOUNT_LOGIN == type ? 75 : 20) });
 	}
 	if (CSession::InstanceRef().SendRequest(req))
 	{

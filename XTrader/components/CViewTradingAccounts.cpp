@@ -137,8 +137,11 @@ void CViewTradingAccounts::RefreshRows()
 			QString::fromStdString(info.site()),
 			QString::fromStdString(info.account()),
 			QString::fromStdString(info.name()),
-			request::ACCOUNT_CONNECTED == info.state() ? "已连接"
-													   : "未连接" };
+			request::ACCOUNT_SYNCHRONIZING == info.state() ? "同步中" : request::ACCOUNT_RECONNECTING == info.state() ? "重连中"
+																	: request::ACCOUNT_CONNECTING == info.state()	  ? "连接中"
+																	: request::ACCOUNT_ERROR == info.state()		  ? "错误"
+																	: request::ACCOUNT_CONNECTED == info.state()	  ? "已连接"
+																													  : "未连接" };
 		for (int column = 0; column < values.size(); ++column)
 		{
 			m_logs->setItem(static_cast<int>(index), column,
@@ -241,9 +244,9 @@ void CViewTradingAccounts::HandleResult(
 		m_funds[0]->setText("余额 " +
 							QLocale().toString(funds.balance() / 100.0, 'f', 2));
 		m_funds[1]->setText("可用 " +
-							QLocale().toString(funds.available() / 100.0, 'f', 2));
+							(funds.extended_fields() && !funds.funds_valid() ? QString("失效") : QLocale().toString(funds.available() / 100.0, 'f', 2)));
 		m_funds[2]->setText("冻结 " +
-							QLocale().toString(funds.frozen() / 100.0, 'f', 2));
+							(funds.extended_fields() && !funds.frozen_known() ? QString("未知") : QLocale().toString(funds.frozen() / 100.0, 'f', 2)));
 		m_funds[3]->setText(funds.connected() ? "已连接" : "未连接");
 	}
 	m_notice->setText(QString::fromStdString(result.m_error));
